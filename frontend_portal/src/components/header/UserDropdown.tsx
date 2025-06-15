@@ -62,7 +62,8 @@ export default function UserDropdown() {
       closeDropdown();
       navigate('/');
     } catch (err) {
-      const error = err;
+      // FIX: Cast the error to `any` to allow accessing properties on it.
+      const error = err as any;
       toast.error(error.response?.data?.message || "Logout failed", {
         position: "top-right",
         autoClose: 3000,

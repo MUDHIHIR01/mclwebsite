@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { useNavigate } from "react-router";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -28,6 +28,90 @@ interface AdSlot {
   created_at: string;
   updated_at: string;
 }
+
+// FIX: Definition for the missing FilterBar component
+interface FilterBarProps {
+  onFilter: (filters: { 
+    placement_type: string; 
+    dimensions: string; 
+    maxPrice: number | null 
+  }) => void;
+}
+
+const FilterBar = ({ onFilter }: FilterBarProps) => {
+  const [placementType, setPlacementType] = useState('');
+  const [dimensions, setDimensions] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+
+  const handleFilterSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    onFilter({
+      placement_type: placementType,
+      dimensions: dimensions,
+      maxPrice: maxPrice === '' ? null : Number(maxPrice),
+    });
+  };
+
+  const handleReset = () => {
+    setPlacementType('');
+    setDimensions('');
+    setMaxPrice('');
+    onFilter({
+      placement_type: '',
+      dimensions: '',
+      maxPrice: null,
+    });
+    toast.info("Filters have been reset");
+  };
+
+  return (
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md mb-6 border-2 border-yellow-400 dark:border-yellow-500">
+      <form onSubmit={handleFilterSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        <div>
+          <label htmlFor="placement_type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Placement Type</label>
+          <input
+            type="text"
+            id="placement_type"
+            value={placementType}
+            onChange={(e) => setPlacementType(e.target.value)}
+            placeholder="e.g., Homepage Banner"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          />
+        </div>
+        <div>
+          <label htmlFor="dimensions" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dimensions</label>
+          <input
+            type="text"
+            id="dimensions"
+            value={dimensions}
+            onChange={(e) => setDimensions(e.target.value)}
+            placeholder="e.g., 728x90"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          />
+        </div>
+        <div>
+          <label htmlFor="max_price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max Price (TShs)</label>
+          <input
+            type="number"
+            id="max_price"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            placeholder="e.g., 50000"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          />
+        </div>
+        <div className="flex gap-2">
+          <button type="submit" className="w-full justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Filter
+          </button>
+          <button type="button" onClick={handleReset} className="w-full justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-gray-600 dark:text-gray-200 dark:border-gray-500 dark:hover:bg-gray-700">
+            Reset
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
 
 const TotalCostCard = ({ totalCost, selectedAds, filteredAds, handleProcess }: { 
   totalCost: number; 

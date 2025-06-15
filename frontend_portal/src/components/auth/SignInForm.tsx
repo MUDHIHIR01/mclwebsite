@@ -168,8 +168,8 @@ export default function SignInForm() {
                   </Link>
               </div>
 
-              {/* Submit Button with Gradient */}
-              <Button type="submit" className="w-full bg-gradient-to-br from-[#0A51A1] to-[#ff3333] text-white hover:opacity-90 rounded-lg py-3 text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed" disabled={isLoading}>
+              {/* Submit Button with Gradient - FIX: Removed 'type="submit"' prop */}
+              <Button className="w-full bg-gradient-to-br from-[#0A51A1] to-[#ff3333] text-white hover:opacity-90 rounded-lg py-3 text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed" disabled={isLoading}>
                 {isLoading ? (
                   <div className="flex items-center justify-center" aria-live="polite">
                     <svg className="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>

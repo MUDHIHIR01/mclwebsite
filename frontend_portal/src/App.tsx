@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
 import SignIn from "./pages/AuthPages/SignIn";
-import SignUp from "./pages/AuthPages/SignUp";
 import RequestForResetPass from "./pages/AuthPages/RequestForResetPass";
 import ResetPass from "./pages/AuthPages/ResetPass";
 import NotFound from "./pages/OtherPage/NotFound";
@@ -1249,7 +1248,7 @@ export default function App() {
               
                 
           <Route path="/sign-in" element={<SignIn />} />
-          <Route path="/sign-up" element={<SignUp />} />
+         
           <Route path="/reset-password" element={<ResetPass />} />
           <Route path="/request-for/reset-password" element={<RequestForResetPass/>} />
 

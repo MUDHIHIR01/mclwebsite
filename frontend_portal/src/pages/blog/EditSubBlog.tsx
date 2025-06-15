@@ -13,6 +13,16 @@ interface FormData {
   url_link: string;
 }
 
+// FIX: Create a dedicated interface for string-based error messages
+interface FormErrors {
+  blog_id?: string;
+  heading?: string;
+  description?: string;
+  video_file?: string;
+  image_file?: string;
+  url_link?: string;
+}
+
 interface Blog {
   blog_id: number;
   heading: string;
@@ -29,14 +39,8 @@ const EditSubBlog = () => {
     image_file: null,
     url_link: '',
   });
-  const [errors, setErrors] = useState<Partial<FormData>>({
-    blog_id: '',
-    heading: '',
-    description: '',
-    video_file: '',
-    image_file: '',
-    url_link: '',
-  });
+  // FIX: Use the new FormErrors type
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -52,7 +56,8 @@ const EditSubBlog = () => {
       setFetching(true);
       try {
         const response = await axiosInstance.get(`/api/sub-blogs/${subblog_id}`);
-        const { blog_id, heading, description, video_file, image_file, url_link } = response.data.sub_blog;
+        // FIX: Removed unused 'video_file' and 'image_file' from destructuring
+        const { blog_id, heading, description, url_link } = response.data.sub_blog;
         setFormData({
           blog_id: blog_id ? String(blog_id) : '',
           heading,
@@ -98,7 +103,8 @@ const EditSubBlog = () => {
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    // FIX: newErrors is now correctly typed
+    const newErrors: FormErrors = {};
 
     if (!formData.blog_id) {
       newErrors.blog_id = 'Please select a blog';
@@ -269,6 +275,7 @@ const EditSubBlog = () => {
               onChange={(e) => handleFileChange(e, 'video_file')}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
+            {/* FIX: This is now type-safe */}
             {errors.video_file && (
               <p id="video_file-error" className="mt-1 text-sm text-red-500">
                 {errors.video_file}
@@ -287,6 +294,7 @@ const EditSubBlog = () => {
               onChange={(e) => handleFileChange(e, 'image_file')}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
+            {/* FIX: This is now type-safe */}
             {errors.image_file && (
               <p id="image_file-error" className="mt-1 text-sm text-red-500">
                 {errors.image_file}

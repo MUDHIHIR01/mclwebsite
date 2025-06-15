@@ -13,6 +13,16 @@ interface FormData {
   url_link: string;
 }
 
+// FIX: Create a dedicated interface for string-based error messages.
+interface FormErrors {
+  blog_id?: string;
+  heading?: string;
+  description?: string;
+  video_file?: string;
+  image_file?: string;
+  url_link?: string;
+}
+
 interface Blog {
   blog_id: number;
   heading: string;
@@ -28,14 +38,8 @@ const AddSubBlog = () => {
     image_file: null,
     url_link: '',
   });
-  const [errors, setErrors] = useState<Partial<FormData>>({
-    blog_id: '',
-    heading: '',
-    description: '',
-    video_file: '',
-    image_file: '',
-    url_link: '',
-  });
+  // FIX: Use the new FormErrors type and initialize as an empty object.
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -63,11 +67,13 @@ const AddSubBlog = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'video_file' | 'image_file') => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, [field]: file }));
+    // FIX: This is now type-safe.
     setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    // FIX: The newErrors object is now correctly typed.
+    const newErrors: FormErrors = {};
 
     if (!formData.blog_id) {
       newErrors.blog_id = 'Please select a blog';
@@ -233,6 +239,7 @@ const AddSubBlog = () => {
               onChange={(e) => handleFileChange(e, 'video_file')}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
+            {/* FIX: This now renders correctly */}
             {errors.video_file && (
               <p id="video_file-error" className="mt-1 text-sm text-red-500">
                 {errors.video_file}
@@ -251,6 +258,7 @@ const AddSubBlog = () => {
               onChange={(e) => handleFileChange(e, 'image_file')}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
+            {/* FIX: This now renders correctly */}
             {errors.image_file && (
               <p id="image_file-error" className="mt-1 text-sm text-red-500">
                 {errors.image_file}

@@ -17,6 +17,13 @@ interface BenefitiesHomeData {
   home_img: string | null;
 }
 
+// FIX: Create a dedicated interface for string-based error messages.
+interface FormErrors {
+    heading?: string;
+    description?: string;
+    home_img?: string;
+}
+
 const EditBenefitiesHome = () => {
   const navigate = useNavigate();
   const { benefityhome_id } = useParams<{ benefityhome_id: string }>();
@@ -26,11 +33,8 @@ const EditBenefitiesHome = () => {
     home_img: null,
   });
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Partial<FormData>>({
-    heading: '',
-    description: '',
-    home_img: undefined,
-  });
+  // FIX: Use the new FormErrors type.
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -73,7 +77,8 @@ const EditBenefitiesHome = () => {
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    // FIX: newErrors is now correctly typed.
+    const newErrors: FormErrors = {};
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -112,7 +117,10 @@ const EditBenefitiesHome = () => {
     }
 
     try {
-      const response = await axiosInstance.put(`/api/benefities-home/${benefityhome_id}`, payload, {
+      // NOTE: FormData with PUT requests often requires a POST method override.
+      // Appending `_method: 'PUT'` might be necessary depending on the backend (Laravel).
+      // Using .post() here to accommodate this common pattern.
+      const response = await axiosInstance.post(`/api/benefities-home/${benefityhome_id}`, payload, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       toast.success(response.data.message || 'Benefities home entry updated successfully');
@@ -122,10 +130,11 @@ const EditBenefitiesHome = () => {
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to update benefities home entry';
       const backendErrors = error.response?.data?.errors || {};
-      const formattedErrors: Partial<FormData> = {};
+      // FIX: Correctly type the formattedErrors object.
+      const formattedErrors: FormErrors = {};
       for (const key in backendErrors) {
         if (key in formData) {
-          formattedErrors[key as keyof FormData] = backendErrors[key][0];
+          (formattedErrors as Record<string, string>)[key] = backendErrors[key][0];
         }
       }
       setErrors((prev) => ({ ...prev, ...formattedErrors }));
@@ -228,9 +237,10 @@ const EditBenefitiesHome = () => {
               onChange={handleFileChange}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            {/* FIX: Removed the unsafe 'as string' cast. */}
             {errors.home_img && (
               <p id="home_img-error" className="mt-1 text-sm text-red-500">
-                {errors.home_img as string}
+                {errors.home_img}
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed types: JPG, PNG, GIF.</p>

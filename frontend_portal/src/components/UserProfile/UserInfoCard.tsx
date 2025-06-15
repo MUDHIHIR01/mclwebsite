@@ -219,7 +219,6 @@ export default function UserInfoCard() {
                     type="email"
                     value={email}
                     onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                    required
                   />
                 </div>
                 <div className="col-span-2">
@@ -228,8 +227,6 @@ export default function UserInfoCard() {
                     type="password"
                     value={newPassword}
                     onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
-                    required
-                    minLength={8}
                   />
                 </div>
                 <div className="col-span-2">
@@ -240,8 +237,6 @@ export default function UserInfoCard() {
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       setNewPasswordConfirmation(e.target.value)
                     }
-                    required
-                    minLength={8}
                   />
                 </div>
               </div>

@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useTable, useGlobalFilter, usePagination } from 'react-table';
+// FIX: Import Column and CellProps for explicit typing
+import { useTable, useGlobalFilter, usePagination, Column, CellProps } from 'react-table';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -7,6 +8,21 @@ import { Link } from 'react-router-dom';
 import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
+// FIX: Add module augmentation to make react-table aware of plugin properties
+declare module 'react-table' {
+  export interface TableOptions<D extends object>
+    extends UsePaginationOptions<D>,
+      UseGlobalFiltersOptions<D> {}
+
+  export interface TableInstance<D extends object>
+    extends UsePaginationInstanceProps<D>,
+      UseGlobalFiltersInstanceProps<D> {}
+
+  export interface TableState<D extends object>
+    extends UsePaginationState<D>,
+      UseGlobalFiltersState<D> {}
+}
 
 interface BlogData {
   blog_id: number;
@@ -113,13 +129,14 @@ export default function Blogs() {
     fetchBlogs();
   }, [fetchBlogs]);
 
-  const columns = useMemo(
+  // FIX: Explicitly type the columns array
+  const columns: readonly Column<BlogData>[] = useMemo(
     () => [
       {
         Header: '#',
         id: 'rowIndex',
-        Cell: ({ row, flatRows }: any) => {
-          const originalIndex = flatRows.findIndex((flatRow: any) => flatRow.original === row.original);
+        Cell: ({ row, flatRows }: CellProps<BlogData>) => {
+          const originalIndex = flatRows.findIndex((flatRow) => flatRow.original === row.original);
           return <span>{originalIndex + 1}</span>;
         },
       },
@@ -127,17 +144,17 @@ export default function Blogs() {
       {
         Header: 'Description',
         accessor: 'description',
-        Cell: ({ value }: { value: string | null }) => <DescriptionCell value={value} />,
+        Cell: ({ value }: CellProps<BlogData, string | null>) => <DescriptionCell value={value} />,
       },
       {
         Header: 'Created At',
         accessor: 'created_at',
-        Cell: ({ value }: { value: string }) => new Date(value).toLocaleDateString(),
+        Cell: ({ value }: CellProps<BlogData, string>) => new Date(value).toLocaleDateString(),
       },
       {
         Header: 'Actions',
         accessor: 'blog_id',
-        Cell: ({ row }: any) => (
+        Cell: ({ row }: CellProps<BlogData>) => (
           <ActionButtons blog_id={row.original.blog_id} onDeletionSuccess={fetchBlogs} />
         ),
       },

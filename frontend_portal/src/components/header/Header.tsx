@@ -60,16 +60,33 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({ isOpen, items, onClose }) =
       transition={{ duration: 0.3 }}
     >
       <div className="py-2">
-        {items.map((item) => (
-          <Link
-            key={item.label}
-            to={item.path}
-            className="block px-4 py-2 text-sm font-bold text-white hover:bg-white/20 transition-colors duration-200 text-center rounded-md mx-2"
-            onClick={onClose}
-          >
-            {item.label}
-          </Link>
-        ))}
+        {/* MODIFICATION 2: Handle external links in the desktop dropdown */}
+        {items.map((item) => {
+          const isExternal = item.path.startsWith("http");
+          const itemClasses = "block px-4 py-2 text-sm font-bold text-white hover:bg-white/20 transition-colors duration-200 text-center rounded-md mx-2";
+
+          return isExternal ? (
+            <a
+              key={item.label}
+              href={item.path}
+              className={itemClasses}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={onClose}
+            >
+              {item.label}
+            </a>
+          ) : (
+            <Link
+              key={item.label}
+              to={item.path}
+              className={itemClasses}
+              onClick={onClose}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
       </div>
     </motion.div>
   );
@@ -91,7 +108,8 @@ const Header: React.FC = () => {
   ];
 
   const careersMenuItems: NavItem[] = [
-    { label: "Vacancies", path: "https://careers.mcl.co.tz/" },
+    // MODIFICATION 1: Changed the path to the external URL
+    { label: "Vacancies", path: "https://careers.mcl.co.tz" },
     { label: "What We Do", path: "/careers/what-we-do" },
     { label: "Life At MCL Blog", path: "/careers/mcl-blog" },
     { label: "Benefits", path: "/careers/benefits" },
@@ -215,18 +233,35 @@ const Header: React.FC = () => {
                 >
                   {item.label}
                 </NavLink>
+                {/* MODIFICATION 3: Handle external links in the mobile dropdown */}
                 {item.dropdown && (
                   <div className="mt-2 space-y-2">
-                    {item.dropdown.map((subItem) => (
-                      <Link
-                        key={subItem.label}
-                        to={subItem.path}
-                        className="block text-sm font-bold text-white/80 hover:text-white"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        {subItem.label}
-                      </Link>
-                    ))}
+                    {item.dropdown.map((subItem) => {
+                      const isExternal = subItem.path.startsWith("http");
+                      const subItemClasses = "block text-sm font-bold text-white/80 hover:text-white";
+
+                      return isExternal ? (
+                        <a
+                          key={subItem.label}
+                          href={subItem.path}
+                          className={subItemClasses}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          {subItem.label}
+                        </a>
+                      ) : (
+                        <Link
+                          key={subItem.label}
+                          to={subItem.path}
+                          className={subItemClasses}
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          {subItem.label}
+                        </Link>
+                      );
+                    })}
                   </div>
                 )}
               </div>

@@ -17,6 +17,13 @@ interface BlogHomeData {
   home_img: string | null;
 }
 
+// FIX: Create a dedicated interface for string-based error messages
+interface FormErrors {
+  heading?: string;
+  description?: string;
+  home_img?: string;
+}
+
 const EditBlogHome = () => {
   const navigate = useNavigate();
   const { bloghome_id } = useParams<{ bloghome_id: string }>();
@@ -26,11 +33,8 @@ const EditBlogHome = () => {
     home_img: null,
   });
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Partial<FormData>>({
-    heading: '',
-    description: '',
-    home_img: undefined,
-  });
+  // FIX: Use the new FormErrors type
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -73,7 +77,8 @@ const EditBlogHome = () => {
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    // FIX: The newErrors object is now correctly typed
+    const newErrors: FormErrors = {};
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -107,12 +112,19 @@ const EditBlogHome = () => {
     payload.append('description', formData.description || '');
     if (formData.home_img) {
       payload.append('home_img', formData.home_img);
-    } else if (currentImage && !formData.home_img) {
-      payload.append('home_img', '');
-    }
+    } 
+    // The following line is not needed when using POST with a _method field.
+    // If your backend strictly requires a file even on updates without changes,
+    // this logic would need adjustment.
+    // else if (currentImage && !formData.home_img) {
+    //   payload.append('home_img', '');
+    // }
+
+    // Using POST with _method for FormData compatibility with Laravel's PUT/PATCH
+    payload.append('_method', 'PUT');
 
     try {
-      const response = await axiosInstance.put(`/api/blog-home-sliders/${bloghome_id}`, payload, {
+      const response = await axiosInstance.post(`/api/blog-home-sliders/${bloghome_id}`, payload, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       toast.success(response.data.message || 'Blog home entry updated successfully');
@@ -122,10 +134,10 @@ const EditBlogHome = () => {
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to update blog home entry';
       const backendErrors = error.response?.data?.errors || {};
-      const formattedErrors: Partial<FormData> = {};
+      const formattedErrors: FormErrors = {};
       for (const key in backendErrors) {
         if (key in formData) {
-          formattedErrors[key as keyof FormData] = backendErrors[key][0];
+          (formattedErrors as Record<string, string>)[key] = backendErrors[key][0];
         }
       }
       setErrors((prev) => ({ ...prev, ...formattedErrors }));
@@ -228,9 +240,10 @@ const EditBlogHome = () => {
               onChange={handleFileChange}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            {/* FIX: Removed the unsafe 'as string' cast */}
             {errors.home_img && (
               <p id="home_img-error" className="mt-1 text-sm text-red-500">
-                {errors.home_img as string}
+                {errors.home_img}
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed types: JPG, PNG, GIF.</p>

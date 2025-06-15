@@ -10,6 +10,12 @@ interface FormDataState {
   home_img: File | null;
 }
 
+interface FormErrors {
+  heading?: string;
+  description?: string;
+  home_img?: string;
+}
+
 const EditAbout: React.FC = () => {
   const navigate = useNavigate();
   const { aboutId } = useParams<{ aboutId: string }>();
@@ -19,11 +25,7 @@ const EditAbout: React.FC = () => {
     home_img: null,
   });
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Partial<FormDataState>>({
-    heading: '',
-    description: '',
-    home_img: undefined,
-  });
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -66,7 +68,7 @@ const EditAbout: React.FC = () => {
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormDataState> = {};
+    const newErrors: FormErrors = {};
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -80,9 +82,9 @@ const EditAbout: React.FC = () => {
 
     if (formData.home_img) {
       if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.home_img.type)) {
-        (newErrors.home_img as any) = 'Only JPEG, PNG, JPG, or GIF files are allowed';
+        newErrors.home_img = 'Only JPEG, PNG, JPG, or GIF files are allowed';
       } else if (formData.home_img.size > 2 * 1024 * 1024) { // 2MB
-        (newErrors.home_img as any) = 'Image size must not exceed 2MB';
+        newErrors.home_img = 'Image size must not exceed 2MB';
       }
     }
 
@@ -120,10 +122,12 @@ const EditAbout: React.FC = () => {
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to update about entry';
       const backendErrors = error.response?.data?.errors || {};
-      const formattedErrors: Partial<FormDataState> = {};
+      // FIX: Changed type from Partial<FormDataState> to FormErrors
+      const formattedErrors: FormErrors = {};
       for (const key in backendErrors) {
         if (key in formData) {
-          (formattedErrors as any)[key] = backendErrors[key][0];
+          // FIX: The `as any` cast is no longer needed because the types now match.
+          (formattedErrors as Record<string, string>)[key] = backendErrors[key][0];
         }
       }
       setErrors(prev => ({ ...prev, ...formattedErrors }));
@@ -230,7 +234,7 @@ const EditAbout: React.FC = () => {
             />
             {errors.home_img && (
               <p id="home_img-error" className="mt-1 text-sm text-red-500">
-                {errors.home_img as string}
+                {errors.home_img}
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed types: JPG, PNG, GIF.</p>

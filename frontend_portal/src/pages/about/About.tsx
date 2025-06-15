@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useTable, useGlobalFilter, usePagination, Row, Column, CellProps, HeaderProps } from 'react-table';
+// FIX: Removed unused imports. Only the hooks are needed here.
+import { useTable, useGlobalFilter, usePagination, Row, Column, CellProps } from 'react-table';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -7,6 +8,23 @@ import { Link } from 'react-router-dom';
 import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
+// FIX: Augment react-table types with the correct generic parameter <D extends object>
+declare module 'react-table' {
+  export interface TableOptions<D extends object>
+    extends UsePaginationOptions<D>,
+      UseGlobalFiltersOptions<D> {}
+
+  export interface TableInstance<D extends object>
+    extends UsePaginationInstanceProps<D>,
+      UseGlobalFiltersInstanceProps<D> {}
+
+  export interface TableState<D extends object>
+    extends UsePaginationState<D>,
+      UseGlobalFiltersState<D> {}
+}
+
+// --- Rest of the file remains the same ---
 
 // About data interface
 interface AboutData {

@@ -5,7 +5,8 @@ import axiosInstance from '../../axios'; // Assuming your pre-configured axios i
 
 interface CardItem {
   name: string;
-  icon: JSX.Element;
+  // FIX: Use React.ReactNode instead of JSX.Element. This fixes both errors.
+  icon: React.ReactNode;
   apiUrl: string;
   apiKey: string; // The key in the JSON response that holds the count
 }

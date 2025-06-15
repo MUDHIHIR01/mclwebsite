@@ -10,6 +10,13 @@ interface FormData {
   home_img: File | null;
 }
 
+// FIX: Create a dedicated interface for string-based error messages.
+interface FormErrors {
+    heading?: string;
+    description?: string;
+    home_img?: string;
+}
+
 const AddBlogHome = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
@@ -17,11 +24,8 @@ const AddBlogHome = () => {
     description: '',
     home_img: null,
   });
-  const [errors, setErrors] = useState<Partial<FormData>>({
-    heading: '',
-    description: '',
-    home_img: '',
-  });
+  // FIX: Use the new FormErrors type and initialize as an empty object.
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -36,11 +40,13 @@ const AddBlogHome = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, home_img: file }));
+    // FIX: This is now type-safe.
     setErrors((prev) => ({ ...prev, home_img: '' }));
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    // FIX: The newErrors object is now correctly typed.
+    const newErrors: FormErrors = {};
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -157,6 +163,7 @@ const AddBlogHome = () => {
               onChange={handleFileChange}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
+            {/* FIX: This now renders correctly as errors.home_img is a string */}
             {errors.home_img && (
               <p id="home_img-error" className="mt-1 text-sm text-red-500">
                 {errors.home_img}

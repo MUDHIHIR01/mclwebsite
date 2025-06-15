@@ -10,12 +10,14 @@ interface FormData {
   img_file: File | null;
 }
 
-interface BenefitData {
-  benefit_id: number;
-  category: string;
-  description: string | null;
-  img_file: string | null;
+// FIX: Create a dedicated interface for string-based error messages.
+interface FormErrors {
+  category?: string;
+  description?: string;
+  img_file?: string;
 }
+
+// FIX: Removed unused BenefitData interface.
 
 const EditBenefit = () => {
   const navigate = useNavigate();
@@ -26,11 +28,8 @@ const EditBenefit = () => {
     img_file: null,
   });
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Partial<FormData>>({
-    category: '',
-    description: '',
-    img_file: '',
-  });
+  // FIX: Use the new FormErrors type and initialize as an empty object.
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -70,11 +69,13 @@ const EditBenefit = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, img_file: file }));
+    // FIX: This assignment is now type-safe.
     setErrors((prev) => ({ ...prev, img_file: '' }));
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    // FIX: The newErrors object is now correctly typed as FormErrors.
+    const newErrors: FormErrors = {};
 
     if (!formData.category.trim()) {
       newErrors.category = 'Category is required';
@@ -220,6 +221,7 @@ const EditBenefit = () => {
               onChange={handleFileChange}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            {/* FIX: This is now type-safe because errors.img_file is a string. */}
             {errors.img_file && (
               <p id="img_file-error" className="mt-1 text-sm text-red-500">
                 {errors.img_file}

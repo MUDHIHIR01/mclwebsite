@@ -268,7 +268,8 @@ const AboutContentSection: React.FC = () => {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5 }}
-                                whileHover={{ y: -8, scale: 1.03, shadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+                                // FIX: Changed 'shadow' to 'boxShadow'
+                                whileHover={{ y: -8, scale: 1.03, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
                             >
                                 <div className="relative">
                                     {/* CHANGED: Added safe check for card.imageUrl to prevent crash on null */}
