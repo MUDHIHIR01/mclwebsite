@@ -49,6 +49,35 @@ class NewsController extends Controller
         }
     }
 
+
+    /**
+     * Count the total number of news records.
+     */
+    public function countNews()
+    {
+        try {
+            // Verify database connection
+            DB::connection()->getPdo();
+            
+            // Check if table exists
+            if (!Schema::hasTable('news')) {
+                \Log::error('Table news does not exist in the database.');
+                return response()->json(['error' => 'Database table not found.'], 500);
+            }
+
+            $count = News::count();
+            \Log::info('Successfully counted news records.', ['count' => $count]);
+
+            return response()->json(['count_news' => $count], 200);
+        } catch (Exception $e) {
+            \Log::error('Error counting news records: ' . $e->getMessage(), [
+                'exception' => get_class($e),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['error' => 'Failed to count news records.', 'details' => $e->getMessage()], 500);
+        }
+    }
+
      public function index()
     {
         try {

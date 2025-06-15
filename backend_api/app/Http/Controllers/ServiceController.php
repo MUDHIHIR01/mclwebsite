@@ -39,6 +39,21 @@ class ServiceController extends Controller
         }
     }
 
+       /**
+     * Count the total number of service records.
+     *
+     * @return JsonResponse
+     */
+    public function countServices(): JsonResponse
+    {
+        try {
+            $count = Service::count();
+            return response()->json(['count_services' => $count], 200);
+        } catch (Exception $e) {
+            Log::error('Error counting service records: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to count service records.'], 500);
+        }
+    }
 
      public function allService(): JsonResponse
     {

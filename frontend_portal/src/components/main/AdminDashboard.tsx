@@ -1,95 +1,140 @@
-import { NavItem } from "./types"; // Assuming NavItem type is defined elsewhere
+import React, { useState, useEffect } from 'react';
+import axiosInstance from '../../axios'; // Assuming your pre-configured axios instance is here
 
-// Define navigation items as specified
-const navItems: NavItem[] = [
+// --- Type Definitions ---
+
+interface CardItem {
+  name: string;
+  icon: JSX.Element;
+  apiUrl: string;
+  apiKey: string; // The key in the JSON response that holds the count
+}
+
+// --- Data Configuration for Dashboard Cards ---
+
+// An array defining the properties for each dashboard card.
+// This makes it easy to add or remove cards in the future.
+const cardItems: CardItem[] = [
   {
-    name: "Company",
+    name: "MCL Groups",
     icon: (
-      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-pink-600 text-white">
+      <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white bg-opacity-20 text-white text-2xl">
         🏢
       </span>
     ),
-    subItems: [
-      { name: "Home Page", path: "/company" },
-      { name: "FT Group", path: "/company/ft-group" },
-      { name: "Leadership", path: "/company/leadership" },
-      { name: "Diversity and Inclusion", path: "/company/diversity-inclusion" },
-      { name: "Sustainability", path: "/company/sustainability" },
-      { name: "Giving Back", path: "/company/giving-back" },
-      { name: "FT Pink 130", path: "/company/ft-pink-130" },
-      { name: "Our Standards", path: "/company/standards" },
-    ],
+    apiUrl: "/api/count/mcl-groups",
+    apiKey: "count_mcl_group",
   },
   {
     name: "Services",
     icon: (
-      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white">
+      <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white bg-opacity-20 text-white text-2xl">
         ⚙️
       </span>
     ),
-    subItems: [{ name: "Manage Services", path: "/services" }],
+    apiUrl: "/api/count/services",
+    apiKey: "count_services",
   },
   {
-    name: "Careers",
+    name: "Leaders",
     icon: (
-      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-600 text-white">
+      <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white bg-opacity-20 text-white text-2xl">
         💼
       </span>
     ),
-    subItems: [
-      { name: "Vacancies", path: "/careers/vacancies" },
-      { name: "What We Do", path: "/careers/what-we-do" },
-      { name: "Life at FT Blog", path: "/careers/blog" },
-      { name: "Benefits", path: "/careers/benefits" },
-      { name: "Values", path: "/careers/values" },
-      { name: "Early Careers", path: "/careers/early-careers" },
-      { name: "Join Our Talent Community", path: "/careers/talent-community" },
-    ],
+    apiUrl: "/api/count/leadership",
+    apiKey: "count_leaders",
   },
   {
     name: "News",
     icon: (
-      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white">
+      <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white bg-opacity-20 text-white text-2xl">
         📰
       </span>
     ),
-    subItems: [{ name: "Manage News", path: "/news" }],
-  },
-  {
-    name: "Contact",
-    icon: (
-      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 text-white">
-        📞
-      </span>
-    ),
-    subItems: [{ name: "Manage Contact", path: "/contact" }],
+    apiUrl: "/api/count/news",
+    apiKey: "count_news",
   },
 ];
 
-// Component to render individual dashboard card
-function DashboardCard({ item }: { item: NavItem }) {
-  const subItemCount = item.subItems ? item.subItems.length : 0;
+// --- Reusable Dashboard Card Component ---
+
+/**
+ * A single card component that fetches and displays data from a given API endpoint.
+ */
+function DashboardCard({ item }: { item: CardItem }) {
+  const [count, setCount] = useState<number | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        setLoading(true);
+        const response = await axiosInstance.get(item.apiUrl);
+        // Access the count using the dynamic key from our cardItems config
+        const fetchedCount = response.data[item.apiKey];
+
+        if (typeof fetchedCount !== 'number') {
+            throw new Error(`Invalid data format received for ${item.name}`);
+        }
+        
+        setCount(fetchedCount);
+        setError(null);
+      } catch (err: any) {
+        console.error(`Failed to fetch count for ${item.name}:`, err);
+        setError("Failed to load data.");
+        setCount(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCount();
+  }, [item.apiUrl, item.name, item.apiKey]); // Dependencies for the effect
+
+  // Renders a placeholder with a pulsing animation while loading
+  const renderLoadingState = () => (
+    <div className="h-16 w-24 bg-white bg-opacity-20 rounded-md animate-pulse"></div>
+  );
+  
+  // Renders the fetched count or an error message
+  const renderCount = () => {
+    if (error) {
+        return <span className="text-2xl font-bold text-red-200">{error}</span>;
+    }
+    return <span className="text-6xl font-bold">{count ?? '--'}</span>;
+  }
 
   return (
-    <div className="p-4 bg-white rounded-lg shadow-md flex items-center space-x-4 hover:bg-gray-50 transition">
-      <div className="flex-shrink-0">{item.icon}</div>
-      <div>
-        <h3 className="text-lg font-semibold text-gray-800">{item.name}</h3>
-        <p className="text-sm text-gray-600">
-          {subItemCount} {subItemCount === 1 ? "Sub-Item" : "Sub-Items"}
-        </p>
+    <div className="p-6 rounded-xl shadow-lg flex flex-col justify-between
+                   bg-gradient-to-br from-[#0A51A1] to-[#ff3333] 
+                   text-white hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+      <div className="flex items-center justify-between">
+        <h3 className="text-xl font-semibold">{item.name}</h3>
+        {item.icon}
+      </div>
+      <div className="mt-4 text-right">
+        {loading ? renderLoadingState() : renderCount()}
       </div>
     </div>
   );
 }
 
-// Main AdminDashboard component
+// --- Main AdminDashboard Component ---
+
+/**
+ * The main dashboard container that lays out all the cards.
+ */
 export default function AdminDashboard() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-6 bg-gray-100">
-      {navItems.map((item, index) => (
-        <DashboardCard key={index} item={item} />
-      ))}
+    <div className="p-6 bg-gray-100 min-h-screen">
+      <h1 className="text-3xl font-bold text-[#0A51A1] mb-6">Admin Dashboard</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {cardItems.map((item) => (
+          <DashboardCard key={item.name} item={item} />
+        ))}
+      </div>
     </div>
   );
 }

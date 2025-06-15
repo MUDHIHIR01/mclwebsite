@@ -26,6 +26,20 @@ class MclGroupController extends Controller
         }
     }
 
+    /**
+     * Count the total number of MCL group records.
+     */
+    public function countMclGroups(): JsonResponse
+    {
+        try {
+            $count = MclGroup::count();
+            return response()->json(['count_mcl_group' => $count], 200);
+        } catch (\Exception $e) {
+            \Log::error('Error counting MCL groups: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to count MCL groups'], 500);
+        }
+    }
+
     public function allMclGroups(): JsonResponse
     {
         try {

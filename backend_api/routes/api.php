@@ -143,15 +143,6 @@ Route::middleware(['auth:sanctum', 'token.expiration'])->group(function () {
     Route::delete('/companies/{company_id}', [CompanyController::class, 'destroy']);
 
 
-
-    // Leadership Routes
-Route::get('/leadership', [LeadershipController::class, 'index']);
-Route::get('/leadership/{leadership_id}', [LeadershipController::class, 'show']);
-Route::post('/leadership', [LeadershipController::class, 'store']);
-Route::post('/leadership/{leadership_id}/update', [LeadershipController::class, 'update']);
-Route::delete('/leadership/{leadership_id}', [LeadershipController::class, 'destroy']);
-
-    
     
 
 
@@ -251,6 +242,17 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 
+
+
+    // Leadership Routes
+Route::get('/leadership', [LeadershipController::class, 'index']);
+Route::get('/leadership/{leadership_id}', [LeadershipController::class, 'show']);
+Route::post('/leadership', [LeadershipController::class, 'store']);
+Route::post('/leadership/{leadership_id}/update', [LeadershipController::class, 'update']);
+Route::delete('/leadership/{leadership_id}', [LeadershipController::class, 'destroy']);
+Route::get('/count/leadership', [LeadershipController::class, 'countLeadership'])->name('leadership.count');
+    
+
 Route::prefix('mcl-home')->group(function () {
     Route::get('/', [MclHomeController::class, 'index'])->name('mcl-home.index'); // List all sliders
     Route::get('/sliders', [MclHomeController::class, 'mclhmeSlider'])->name('mcl-home.sliders'); // Possibly a frontend slider endpoint
@@ -272,6 +274,7 @@ Route::prefix('mcl-groups')->group(function () {
         Route::delete('/{mcl_id}', [MclGroupController::class, 'destroy'])->name('mcl-groups.destroy');
 });
 
+Route::get('/count/mcl-groups', [MclGroupController::class, 'countMclGroups'])->name('mcl-groups.count');
 
 Route::prefix('diversity-home')->group(function () {
     Route::get('/', [DiversityHomeController::class, 'index']); // Get all diversity_home entries
@@ -326,7 +329,7 @@ Route::get('/services/{service_id}', [ServiceController::class, 'show']);
 Route::post('/services', [ServiceController::class, 'store']);
 Route::post('/services/{service_id}/update', [ServiceController::class, 'update']);
 Route::delete('/services/{service_id}', [ServiceController::class, 'destroy']);
-
+Route::get('/count/services', [ServiceController::class, 'countServices'])->name('services.count');
 
 
 Route::get('/news-homes', [NewsHomeController::class, 'index']);
@@ -345,7 +348,7 @@ Route::prefix('news')->group(function () {
     Route::post('/{news_id}/update', [NewsController::class, 'update'])->middleware('auth:sanctum');
     Route::delete('/{news_id}', [NewsController::class, 'destroy'])->middleware('auth:sanctum');
 });
-
+   Route::get('/count/news', [NewsController::class, 'countNews'])->name('news.count');
    
 // Existing Routes (Modified for Route Model Binding)
 Route::get('/sub-news', [SubNewsController::class, 'index']);

@@ -58,6 +58,20 @@ class LeadershipController extends Controller
     }
 
     /**
+ * Count the total number of leadership records.
+ */
+public function countLeadership()
+{
+    try {
+        $count = Leadership::count();
+        return response()->json(['count_leaders' => $count], 200);
+    } catch (Exception $e) {
+        \Log::error('Error counting leadership records: ' . $e->getMessage());
+        return response()->json(['error' => 'Failed to count leadership records.'], 500);
+    }
+}
+
+    /**
      * Store a newly created leadership record.
      */
     public function store(Request $request)
