@@ -3,8 +3,8 @@ import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn } from "react-icons/f
 
 const Footer: React.FC = () => {
   return (
-    // The main footer background. Padding is now handled by the sections inside.
-    <footer className="sticky top-0 z-50 w-full bg-gradient-to-r from-[#0A51A1] to-[#ff3333] shadow-2xl  text-white">
+    // Replaced gradient with a single color and removed sticky positioning/shadow.
+    <footer className="w-full bg-[#000] text-white">
       {/* The top, constrained-width section of the footer */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -23,6 +23,7 @@ const Footer: React.FC = () => {
 
           <div>
             <h3 className="text-xl font-bold mb-4">Our Brands</h3>
+            {/* Kept hover:underline as it's a standard link style, not a color change */}
             <ul className="text-sm space-y-2">
               <li><Link to="/brands/mwanaclick" className="hover:underline">MwanaClick</Link></li>
               <li><Link to="/brands/mwananchi-newspaper" className="hover:underline">Mwananchi newspaper</Link></li>
@@ -49,18 +50,19 @@ const Footer: React.FC = () => {
             <div className="mt-6">
               <h4 className="text-sm font-semibold mb-2">Follow us</h4>
               <div className="flex gap-4 text-lg">
-                <a href="https://www.facebook.com/mwananchipapers" target="_blank" rel="noopener noreferrer" className="hover:text-gray-300"><FaFacebookF /></a>
-                <a href="https://twitter.com/mwananchi" target="_blank" rel="noopener noreferrer" className="hover:text-gray-300"><FaTwitter /></a>
-                <a href="https://www.instagram.com/mwananchipapers" target="_blank" rel="noopener noreferrer" className="hover:text-gray-300"><FaInstagram /></a>
-                <a href="https://www.linkedin.com/company/mwananchi-communications-ltd" target="_blank" rel="noopener noreferrer" className="hover:text-gray-300"><FaLinkedinIn /></a>
+                {/* Removed hover color, using opacity instead */}
+                <a href="https://www.facebook.com/mwananchipapers" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><FaFacebookF /></a>
+                <a href="https://twitter.com/mwananchi" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><FaTwitter /></a>
+                <a href="https://www.instagram.com/mwananchipapers" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><FaInstagram /></a>
+                <a href="https://www.linkedin.com/company/mwananchi-communications-ltd" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity"><FaLinkedinIn /></a>
               </div>
             </div>
           </div>
         </div>
       </div>
       
-      {/* Full-width footer section with red background */}
-      <div className="bg-[#0A51A] border-t border-white/20">
+      {/* Removed the separate background color to make the whole footer one color */}
+      <div className="border-t border-white/20">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-sm">© {new Date().getFullYear()} Mwananchi Communications LTD. All rights reserved.</p>
         </div>

@@ -112,13 +112,13 @@ export default function SignInForm() {
 
   // --- MODERNIZED JSX & STYLING (with Split-Panel Layout) ---
   return (
-    <section className="min-h-screen w-full flex items-center justify-center p-4 bg-gradient-to-br from-[#0A51A1] to-[#ff3333]">
+    <section className="min-h-screen w-full flex items-center justify-center p-4  bg-[#0A51A1] ">
       
       {/* Main Container: This has the fixed width and shadow */}
       <div className="w-full max-w-sm lg:max-w-none lg:w-[700px] lg:min-h-[620px] bg-white rounded-2xl shadow-2xl flex flex-col lg:flex-row transition-all duration-300">
         
         {/* Decorative Panel (Left Side) - Hidden on mobile, visible on desktop */}
-        <div className="hidden lg:flex lg:w-2/5 flex-col justify-center items-center text-center p-8 text-white bg-gradient-to-br from-[#0A51A1] to-[#ff3333] rounded-l-2xl">
+        <div className="hidden lg:flex lg:w-2/5 flex-col justify-center items-center text-center p-8 text-white  bg-[#0A51A1] rounded-l-2xl">
             <button onClick={handleLogoClick} className="focus:outline-none">
                 <BrandLogo />
                 <h2 className="text-2xl font-bold tracking-wide">Mwananchi</h2>
@@ -131,7 +131,7 @@ export default function SignInForm() {
         <div className="w-full lg:w-3/5 p-8 sm:p-12 flex flex-col justify-center">
             {/* Header for Form */}
             <div className="text-center lg:text-left mb-8">
-              <h1 className="text-3xl font-bold text-gray-800">
+              <h1 className="text-3xl font-bold text-[#0A51A1]">
                 Sign In
               </h1>
               <p className="text-gray-500 mt-2">
@@ -169,7 +169,7 @@ export default function SignInForm() {
               </div>
 
               {/* Submit Button with Gradient - FIX: Removed 'type="submit"' prop */}
-              <Button className="w-full bg-gradient-to-br from-[#0A51A1] to-[#ff3333] text-white hover:opacity-90 rounded-lg py-3 text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed" disabled={isLoading}>
+              <Button className="w-full  bg-[#0A51A1]  text-white hover:opacity-90 rounded-lg py-3 text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed" disabled={isLoading}>
                 {isLoading ? (
                   <div className="flex items-center justify-center" aria-live="polite">
                     <svg className="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>

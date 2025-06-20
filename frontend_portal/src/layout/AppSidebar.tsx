@@ -117,6 +117,14 @@ const getNavItemsForRole = (roleId: number) => {
           ],
         },
 
+        
+        { name: "MCL Pink 130", path: "/company/mcl-pink-10",
+              subItems: [
+             { name: "Home page", path: "/mcl-pink-130-home" },
+            { name: "MCL Pink 130", path: "/pink-130" }
+          ],
+        },
+
         { name: "Diversity and Inclusion",
            path: "/company/diversity-inclusion" ,
              subItems: [
@@ -124,6 +132,12 @@ const getNavItemsForRole = (roleId: number) => {
             { name: "Diversity and Inclusion", path: "/diversityInclusion" }
           ],
           },
+           { name: "Giving Back", path: "/sustainability/home",
+              subItems: [
+            { name: "Home page", path: "/giving-back" },
+            { name: "Giving Back", path: "/giving/back" }
+          ],
+        },
         { name: "Sustainability", 
           path: "/company/sustainability",
                subItems: [
@@ -131,20 +145,9 @@ const getNavItemsForRole = (roleId: number) => {
             { name: "Sustainability", path: "/sustainability" }
           ],
          },
-        { name: "Giving Back", path: "/sustainability/home",
-              subItems: [
-            { name: "Home page", path: "/giving-back" },
-            { name: "Giving Back", path: "/giving/back" }
-          ],
-        },
        
        
-        { name: "MCL Pink 130", path: "/company/mcl-pink-10",
-              subItems: [
-             { name: "Home page", path: "/mcl-pink-130-home" },
-            { name: "MCL Pink 130", path: "/pink-130" }
-          ],
-        },
+       
 
       ],
     },
@@ -167,15 +170,7 @@ const getNavItemsForRole = (roleId: number) => {
         </span>
       ),
       subItems: [
-        { name: "Vacancies", path: "/careers/vacancies" },
-        { name: "What We Do", path: "",
-          subItems: [{ name: "Home page", path: "/what-we-do" },
-        { name: "Categories", path: "/we-do" },
-         { name: "Sub-Categories", path: "/subcategories/we-do" }
-        
-      ],
-         },
-        { name: "Life at Mcl Blog", path: "",
+         { name: "Life at Mcl Blog", path: "",
            subItems: [{ name: "Home page", path: "/blog/home" },
          { name: "Blogs", path: "/blogs" },
          { name: "Sub-Blogs", path: "/sub-blogs" }
@@ -183,15 +178,15 @@ const getNavItemsForRole = (roleId: number) => {
       ],
          },
 
-
-        { name: "Benefits", path: "/benefities/home",
-          
-            subItems: [
-              { name: "Home page", path: "/benefities/home" },
-        { name: "Benefities", path: "/benefities" },
+        { name: "What We Do", path: "",
+          subItems: [{ name: "Home page", path: "/what-we-do" },
+        { name: "Categories", path: "/we-do" },
+         { name: "Sub-Categories", path: "/subcategories/we-do" }
+        
       ],
          },
 
+         
           { name: "Early Careers", path: "/careers/early-careers" ,
           
             subItems: [
@@ -200,20 +195,27 @@ const getNavItemsForRole = (roleId: number) => {
          ],
           
         },
+       
+            { name: "Join Our Talent Community", path: "/",
+           subItems: [
+              { name: "Home page", path: "/stay-connected/home" },
+        { name: "Stay connected", path: "/stay-connected" },
+      ],
+         },
 
+        { name: "Benefits", path: "/benefities/home",
+          
+            subItems: [
+              { name: "Home page", path: "/benefities/home" },
+        { name: "Benefities", path: "/benefities" },
+      ],
+         },
+         
         { name: "Values", path: "/careers/values",
             subItems: [{ name: "Home page", path: "/value/home" },
          { name: "Values", path: "/values" },
          ],
          
-         },
-
-
-        { name: "Join Our Talent Community", path: "/",
-           subItems: [
-              { name: "Home page", path: "/stay-connected/home" },
-        { name: "Stay connected", path: "/stay-connected" },
-      ],
          },
       ],
     },

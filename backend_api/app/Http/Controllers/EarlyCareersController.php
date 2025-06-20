@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\EarlyCareer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Exception;
 
@@ -11,7 +12,7 @@ class EarlyCareersController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:sanctum')->except(['index', 'show', 'allEarlyCareers']);
+        $this->middleware('auth:sanctum')->except(['index', 'show', 'allEarlyCareers','latestEarlyCareer']);
     }
 
     /**
@@ -30,6 +31,28 @@ class EarlyCareersController extends Controller
             ], 500);
         }
     }
+
+    /**
+ * Display the latest early career record based on created_at.
+ */
+public function latestEarlyCareer()
+{
+    try {
+        $latestEarlyCareer = EarlyCareer::orderBy('created_at', 'desc')->first();
+        
+        if (!$latestEarlyCareer) {
+            return response()->json(['message' => 'No early career record found'], 404);
+        }
+
+        return response()->json(['early_career' => $latestEarlyCareer], 200);
+    } catch (Exception $e) {
+        \Log::error('Error fetching latest early career record: ' . $e->getMessage(), ['exception' => $e]);
+        return response()->json([
+            'error' => 'Failed to fetch latest early career record.',
+            'details' => config('app.debug') ? $e->getMessage() : null
+        ], 500);
+    }
+}
 
     /**
      * Display all early careers records (alternative endpoint).

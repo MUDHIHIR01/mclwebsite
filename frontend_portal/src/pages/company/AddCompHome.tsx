@@ -96,7 +96,7 @@ const AddCompHome = () => {
       <ToastContainer position="top-right" autoClose={3000} style={{ top: '70px' }} />
       <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 w-full">
         <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-800 mb-6">
-          Create New Company Entry
+          Create  Company Entry
         </h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>

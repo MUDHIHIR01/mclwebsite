@@ -109,7 +109,7 @@ Route::get('/leadershipHomeSlider', [LeadershipHomeController::class, 'leadershi
        Route::get('/early-careers/all', [EarlyCareersController::class, 'allEarlyCareers']);
         Route::get('/stayconnected/sliders', [StayConnectedHomeController::class, 'stayConnectedHomeSlider'])->name('stay-connected-home.sliders');
       Route::get('/stay-connected/all', [StayConnectedController::class, 'allStayConnected']);
-
+      Route::get('/latestEarlyCareer', [EarlyCareersController::class, 'latestEarlyCareer']);
         
 
 // Protected Routes
@@ -502,6 +502,7 @@ Route::prefix('earycare-home')->group(function () {
     Route::put('/{earycare_id}', [EarycareHomeController::class, 'update'])->name('earycare-home.update');
     Route::delete('/{earycare_id}', [EarycareHomeController::class, 'destroy'])->name('earycare-home.destroy');
 });
+ 
 
  Route::get('/early-careers', [EarlyCareersController::class, 'index']);
 Route::get('/early-careers/{early_career_id}', [EarlyCareersController::class, 'show']);

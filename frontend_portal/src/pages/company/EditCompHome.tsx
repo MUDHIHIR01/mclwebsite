@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../../axios';
@@ -102,8 +101,6 @@ const EditCompHome = () => {
     payload.append('description', formData.description || '');
     if (formData.home_img) {
       payload.append('home_img', formData.home_img);
-    } else if (currentImage && !formData.home_img) {
-      payload.append('home_img', '');
     }
 
     try {

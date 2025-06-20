@@ -109,7 +109,7 @@ function DashboardCard({ item }: { item: CardItem }) {
 
   return (
     <div className="p-6 rounded-xl shadow-lg flex flex-col justify-between
-                   bg-gradient-to-br from-[#0A51A1] to-[#ff3333] 
+                   bg-gradient-to-br bg-[#0A51A1] 
                    text-white hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-semibold">{item.name}</h3>

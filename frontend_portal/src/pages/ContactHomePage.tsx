@@ -47,7 +47,7 @@ interface ContactInfo {
   };
 }
 
-// --- REFINED: Contact Home Slideshow ---
+// --- Contact Home Slideshow ---
 const ContactHomeSlideshow: React.FC = () => {
   const [data, setData] = useState<ContactHomeData[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -77,59 +77,102 @@ const ContactHomeSlideshow: React.FC = () => {
     return () => clearInterval(interval);
   }, [data.length]);
 
-  const cardVariants = {
-    hidden: { opacity: 0, scale: 0.95 },
-    visible: { opacity: 1, scale: 1, transition: { duration: 0.8, ease: "easeInOut" } },
-    exit: { opacity: 0, scale: 0.95, transition: { duration: 0.8, ease: "easeInOut" } },
-  };
-  const contentVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
-  };
-
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[80vh] bg-gradient-to-br from-indigo-600 to-purple-700">
-        <div className="flex items-center space-x-3 text-2xl font-semibold text-white animate-pulse">
-          <ArrowPathIcon className="w-8 h-8 animate-spin" />
-          <span>Loading...</span>
+      <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-6 bg-gray-800">
+        <div className="flex items-center gap-3 mb-6">
+          <ArrowPathIcon className="w-10 h-10 text-[#0d7680] animate-spin" />
+          <h2 className="text-3xl font-bold text-white">Loading...</h2>
         </div>
+        <p className="text-lg text-gray-200">Fetching slider content...</p>
       </div>
     );
   }
 
   if (error || data.length === 0) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-[80vh] bg-gradient-to-br from-indigo-600 to-purple-700 p-6">
-        <div className="text-rose-300 text-3xl font-bold mb-6 flex items-center space-x-3">
-          <InformationCircleIcon className="w-8 h-8" />
-          <span>{error ? "An Error Occurred" : "No Content Found"}</span>
+      <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-6 bg-gray-800">
+        <div className="flex items-center gap-3 mb-6">
+          <InformationCircleIcon className="w-10 h-10 text-[#0d7680]" />
+          <h2 className="text-3xl font-bold text-white">{error ? "An Error Occurred" : "No Content Found"}</h2>
         </div>
-        <p className="text-gray-200 mb-8 text-lg text-center">{error || "Content for this section could not be loaded."}</p>
-        {error && <button onClick={fetchContactHomes} className="inline-flex items-center px-8 py-3 text-white rounded-full transition-all duration-300 shadow-lg hover:brightness-90" style={{ backgroundColor: '#d12814' }}><ArrowPathIcon className="w-5 h-5 mr-2" />Try Again</button>}
+        <p className="text-lg text-gray-200">{error || "Content for this section could not be loaded."}</p>
+        {error && (
+          <button
+            onClick={fetchContactHomes}
+            className="mt-6 flex items-center px-6 py-3 bg-gray-800 text-white font-semibold rounded-full hover:bg-gray-700 transition"
+          >
+            <ArrowPathIcon className="w-5 h-5 mr-2" />Try Again
+          </button>
+        )}
       </div>
     );
   }
 
+  const baseURL = axiosInstance.defaults.baseURL?.replace(/\/$/, "") || "";
+  const imagePath = data[currentSlide].home_img ? `${baseURL}/${data[currentSlide].home_img.replace(/^\//, "")}` : "https://via.placeholder.com/1200x600?text=Image+Missing";
+
   return (
-    <section className="relative min-h-[80vh] w-full overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-700">
+    <section className="relative min-h-[80vh] w-full overflow-hidden bg-gray-800">
       <AnimatePresence mode="wait">
-        <motion.div key={currentSlide} variants={cardVariants} initial="hidden" animate="visible" exit="exit" className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-transparent z-10" />
-          <img src={data[currentSlide].home_img ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${data[currentSlide].home_img!.replace(/^\//, "")}`: "https://via.placeholder.com/1200x600?text=Image+Missing"} alt={data[currentSlide].heading} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = "https://via.placeholder.com/1200x600?text=Image+Error"; }} loading="lazy" />
+        <motion.div
+          key={currentSlide}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
+          className="absolute inset-0"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
+          <img
+            src={imagePath}
+            alt={data[currentSlide].heading}
+            className="w-full h-full object-cover"
+            onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/1200x600?text=Image+Error")}
+            loading="lazy"
+          />
         </motion.div>
       </AnimatePresence>
-      <div className="relative z-20 flex flex-col justify-center min-h-[80vh] px-4 sm:px-8">
-        <div className="max-w-[50%] text-left ml-12">
-          <motion.h2 key={`h2-${currentSlide}`} className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-4 tracking-tight" style={{ color: "#d12814", textShadow: "0 4px 12px rgba(0, 0, 0, 0.4)" }} variants={contentVariants} initial="hidden" animate="visible">
+      <div className="relative z-20 flex flex-col justify-center min-h-[80vh] max-w-6xl mx-auto px-4 md:px-8">
+        <div className="max-w-xl">
+          <motion.h2
+            key={`h2-${currentSlide}`}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="text-3xl md:text-5xl font-bold text-[#fff1e5] mb-4"
+          >
             {data[currentSlide].heading}
           </motion.h2>
-          <motion.p key={`p-${currentSlide}`} className="text-lg sm:text-xl text-gray-100 mb-8 leading-relaxed font-semibold" variants={contentVariants} initial="hidden" animate="visible" transition={{ delay: 0.2 }}>
+          <motion.p
+            key={`p-${currentSlide}`}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+            className="text-xl md:text-2xl font-medium text-gray-100 mb-8"
+          >
             {data[currentSlide].description || "No description available"}
           </motion.p>
-          <motion.div variants={contentVariants} initial="hidden" animate="visible" transition={{ delay: 0.4 }}>
-            <button onClick={() => setCurrentSlide((p) => (p - 1 + data.length) % data.length)} className="inline-flex items-center p-3 text-white rounded-full transition-all duration-300 shadow-lg hover:brightness-90" style={{ backgroundColor: '#d12814' }} aria-label="Previous slide"><ChevronLeftIcon className="w-6 h-6" /></button>
-            <button onClick={() => setCurrentSlide((p) => (p + 1) % data.length)} className="ml-4 inline-flex items-center p-3 text-white rounded-full transition-all duration-300 shadow-lg hover:brightness-90" style={{ backgroundColor: '#d12814' }} aria-label="Next slide"><ChevronRightIcon className="w-6 h-6" /></button>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
+            className="flex gap-4"
+          >
+            <button
+              onClick={() => setCurrentSlide((p) => (p - 1 + data.length) % data.length)}
+              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              aria-label="Previous slide"
+            >
+              <ChevronLeftIcon className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => setCurrentSlide((p) => (p + 1) % data.length)}
+              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              aria-label="Next slide"
+            >
+              <ChevronRightIcon className="w-6 h-6" />
+            </button>
           </motion.div>
         </div>
       </div>
@@ -137,53 +180,59 @@ const ContactHomeSlideshow: React.FC = () => {
   );
 };
 
-// --- REFINED: Individual Contact Card with Badge ---
+// --- Contact Card ---
 const ContactCard: React.FC<{ category: ContactCategory; onViewMore: (id: number) => void; }> = ({ category, onViewMore }) => {
-    const [hasImageError, setHasImageError] = useState(false);
-    const imageUrl = `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${category.img_file.replace(/^\//, "")}`;
+  const [hasImageError, setHasImageError] = useState(false);
+  const imageUrl = `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${category.img_file.replace(/^\//, "")}`;
 
-    return (
-        <motion.div 
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden flex flex-col transition-shadow duration-300 group"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            whileHover={{ y: -8, scale: 1.03, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+  return (
+    <motion.div
+      className="bg-[#fff1e5] shadow-lg flex flex-col"
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      whileHover={{ y: -12 }}
+    >
+      <div className="relative px-4 -mt-8 md:px-8 md:-mt-10">
+        {hasImageError ? (
+          <div className="w-full h-64 bg-gray-100 flex items-center justify-center shadow-md">
+            <InformationCircleIcon className="w-16 h-16 text-gray-300" />
+          </div>
+        ) : (
+          <img
+            className="w-full h-64 object-cover shadow-md"
+            src={imageUrl}
+            alt={category.category}
+            onError={() => setHasImageError(true)}
+          />
+        )}
+        <span className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white text-black text-xs font-bold px-3 py-1 rounded-full uppercase">
+          {category.category}
+        </span>
+      </div>
+      <div className="p-8 flex flex-col flex-grow text-black">
+        <h3 className="uppercase text-xl sm:text-2xl font-bold relative pb-4 mb-4 text-[#33302d]">
+          {category.category}
+          <span className="absolute bottom-0 left-0 h-1 w-1/4 bg-[#33302d]"></span>
+        </h3>
+        <p className="text-gray-700 text-base font-medium flex-grow line-clamp-4">{category.description}</p>
+        <button
+          onClick={() => onViewMore(category.contactus_id)}
+          className="mt-6 inline-flex items-center justify-center px-4 py-2 text-[#0d7680] font-semibold rounded-full border border-[#0d7680] hover:bg-[#0d7680] hover:text-white transition"
         >
-            <div className="relative">
-                <div className="h-48 w-full">
-                    {hasImageError ? (
-                        <div className="h-full w-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                            <InformationCircleIcon className="w-16 h-16 text-gray-300 dark:text-gray-500" />
-                        </div>
-                    ) : (
-                        <img className="h-full w-full object-cover" src={imageUrl} alt={category.category} onError={() => setHasImageError(true)} />
-                    )}
-                </div>
-                <span className="absolute top-2 right-2 text-white text-xs font-bold px-2 py-1 rounded-full" style={{ backgroundColor: '#d12814' }}>
-                    {category.category}
-                </span>
-            </div>
-            <div className="p-6 flex flex-col flex-grow">
-                <h3 className="text-lg font-bold" style={{ color: '#d12814' }}>{category.category}</h3>
-                <p className="mt-2 text-gray-600 dark:text-gray-300 text-sm flex-grow font-semibold">{category.description}</p>
-                <div className="mt-6">
-                    <button onClick={() => onViewMore(category.contactus_id)} className="w-full inline-flex items-center justify-center px-4 py-2 text-white font-semibold rounded-lg transition-all duration-300 hover:brightness-90" style={{ backgroundColor: '#d12814' }}>
-                        <span>View More</span>
-                        <ChevronRightIcon className="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
-                    </button>
-                </div>
-            </div>
-        </motion.div>
-    );
+          View More
+          <ChevronRightIcon className="w-5 h-5 ml-2" />
+        </button>
+      </div>
+    </motion.div>
+  );
 };
 
-// --- REFINED: Contact Section ---
+// --- Contact Section ---
 const ContactSection: React.FC = () => {
   const [categories, setCategories] = useState<ContactCategory[]>([]);
   const [allContactInfos, setAllContactInfos] = useState<ContactInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
   const [selectedDetails, setSelectedDetails] = useState<ContactInfo[] | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -220,61 +269,118 @@ const ContactSection: React.FC = () => {
     setSelectedDetails(details);
     setIsModalOpen(true);
     if (details.length === 0) {
-        toast.info("No specific contact information found for this category.");
+      toast.info("No specific contact information found for this category.");
     }
   };
 
   const closeModal = () => setIsModalOpen(false);
 
   return (
-    <section className="bg-gray-50 dark:bg-gray-900 py-16 sm:py-24">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-            <h2 className="text-base font-semibold text-[#0069b4] dark:text-indigo-400 tracking-wide uppercase">Get in Touch</h2>
-            <p className="mt-2 text-3xl font-extrabold sm:text-4xl" style={{ color: '#d12814' }}>
-              How Can We Help You?
-            </p>
-            <p className="mt-4 max-w-2xl mx-auto text-xl text-[#0069b4] dark:text-gray-400">
-              Select a category below to find the contact information you need.
-            </p>
+    <section className="bg-gray-100 py-16 sm:py-24">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 inline-flex items-center">
+            <ChatBubbleLeftRightIcon className="w-9 h-9 mr-3" />
+            How Can We Help You?
+          </h2>
+          <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+            Select a category below to find the contact information you need.
+          </p>
         </div>
-
         {isLoading ? (
-          <div className="text-center mt-12"><ArrowPathIcon className="w-8 h-8 mx-auto animate-spin" style={{color: '#d12814'}}/></div>
+          <div className="w-full py-20 text-center">
+            <ArrowPathIcon className="w-8 h-8 mx-auto text-[#0d7680] animate-spin" />
+          </div>
         ) : categories.length > 0 ? (
-          <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mt-12">
             {categories.map((category) => (
               <ContactCard key={category.contactus_id} category={category} onViewMore={handleViewMore} />
             ))}
           </div>
         ) : (
-             <div className="text-center py-10 text-gray-500 dark:text-gray-400">
-                <InformationCircleIcon className="w-12 h-12 mx-auto mb-4" />
-                <p className="text-xl">No contact categories found.</p>
-            </div>
+          <div className="w-full py-20 flex flex-col items-center justify-center px-4 text-center">
+            <InformationCircleIcon className="w-12 h-12 mx-auto text-gray-400" />
+            <h3 className="mt-4 text-2xl font-bold text-gray-800">No Content Available</h3>
+            <p className="mt-2 text-gray-600">No contact categories found.</p>
+          </div>
         )}
       </div>
-
       <AnimatePresence>
         {isModalOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={closeModal}>
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ type: "spring", stiffness: 300, damping: 30 }} className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+            onClick={closeModal}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="p-6 sm:p-8">
-                <div className="flex justify-between items-start">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Contact Information</h2>
-                  <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><XMarkIcon className="w-7 h-7" /></button>
+                <div className="flex justify-between items-start mb-4">
+                  <h2 className="text-2xl font-bold text-[#33302d]">Contact Information</h2>
+                  <button
+                    onClick={closeModal}
+                    className="text-gray-400 hover:text-gray-600"
+                    aria-label="Close modal"
+                  >
+                    <XMarkIcon className="w-7 h-7" />
+                  </button>
                 </div>
-                <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
+                <div className="mt-6 border-t border-gray-200 pt-6">
                   {selectedDetails && selectedDetails.length > 0 ? (
                     <div className="space-y-6">
                       {selectedDetails.map((info) => (
-                        <div key={info.contact_info_id} className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                          <h3 className="font-semibold text-lg mb-3" style={{ color: '#d12814' }}>{info.contact_us.category}</h3>
-                          <ul className="space-y-3 text-gray-700 dark:text-gray-300">
-                            <li className="flex items-start"><PhoneIcon className="w-5 h-5 mr-3 text-gray-400 mt-1 flex-shrink-0"/> <span>{info.phone_one} {info.phone_two && `/ ${info.phone_two}`}</span></li>
-                            <li className="flex items-start"><EnvelopeIcon className="w-5 h-5 mr-3 text-gray-400 mt-1 flex-shrink-0"/><a href={`mailto:${info.email_address}`} className="hover:underline break-all">{info.email_address}</a></li>
-                            <li className="flex items-start"><MapPinIcon className="w-5 h-5 mr-3 text-gray-400 mt-1 flex-shrink-0"/><span>{info.location}</span></li>
-                            {info.contact_us.url_link && <li className="flex items-start"><LinkIcon className="w-5 h-5 mr-3 text-gray-400 mt-1 flex-shrink-0"/><a href={info.contact_us.url_link} target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: '#d12814' }}>Visit Website</a></li>}
+                        <div key={info.contact_info_id} className="p-4 border border-gray-200 rounded-lg">
+                          <h3 className="font-semibold text-lg mb-3 text-[#33302d]">{info.contact_us.category}</h3>
+                          <ul className="space-y-3 text-gray-700">
+                            <li className="flex items-start">
+                              <PhoneIcon className="w-5 h-5 mr-3 text-gray-400 mt-1 flex-shrink-0" />
+                              <span>{info.phone_one}{info.phone_two && ` / ${info.phone_two}`}</span>
+                            </li>
+                            <li className="flex items-start">
+                              <EnvelopeIcon className="w-5 h-5 mr-3 text-gray-400 mt-1 flex-shrink-0" />
+                              <a
+                                href={`mailto:${info.email_address}`}
+                                className="hover:text-[#0d7680] break-all"
+                              >
+                                {info.email_address}
+                              </a>
+                            </li>
+                            {info.webmail_address && (
+                              <li className="flex items-start">
+                                <EnvelopeIcon className="w-5 h-5 mr-3 text-gray-400 mt-1 flex-shrink-0" />
+                                <a
+                                  href={`mailto:${info.webmail_address}`}
+                                  className="hover:text-[#0d7680] break-all"
+                                >
+                                  {info.webmail_address}
+                                </a>
+                              </li>
+                            )}
+                            <li className="flex items-start">
+                              <MapPinIcon className="w-5 h-5 mr-3 text-gray-400 mt-1 flex-shrink-0" />
+                              <span>{info.location}</span>
+                            </li>
+                            {info.contact_us.url_link && (
+                              <li className="flex items-start">
+                                <LinkIcon className="w-5 h-5 mr-3 text-gray-400 mt-1 flex-shrink-0" />
+                                <a
+                                  href={info.contact_us.url_link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="hover:text-[#0d7680]"
+                                >
+                                  Visit Website
+                                </a>
+                              </li>
+                            )}
                           </ul>
                         </div>
                       ))}
@@ -282,7 +388,7 @@ const ContactSection: React.FC = () => {
                   ) : (
                     <div className="text-center py-10">
                       <ChatBubbleLeftRightIcon className="w-12 h-12 mx-auto text-gray-400" />
-                      <p className="mt-4 text-gray-500 dark:text-gray-400">No detailed contact information available for this category.</p>
+                      <p className="mt-4 text-gray-500">No detailed contact information available for this category.</p>
                     </div>
                   )}
                 </div>
@@ -295,15 +401,29 @@ const ContactSection: React.FC = () => {
   );
 };
 
-
 // --- Main ContactHomePage Component ---
 const ContactHomePage: React.FC = () => {
   return (
-    <div className="w-full font-sans bg-gray-50 dark:bg-gray-900">
-      <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
-      <ContactHomeSlideshow />
-      <ContactSection />
-      <Footer />
+    <div className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        newestOnTop
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
+      <header>
+        <ContactHomeSlideshow />
+      </header>
+      <main className="flex-grow">
+        <ContactSection />
+      </main>
+      <footer>
+        <Footer />
+      </footer>
     </div>
   );
 };

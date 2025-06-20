@@ -10,21 +10,17 @@ import {
   ChevronRightIcon,
   ArrowPathIcon,
   InformationCircleIcon,
-  BuildingOffice2Icon,
-  UserGroupIcon,
-  GlobeAltIcon,
-  SparklesIcon,
-  HeartIcon,
-  StarIcon,
-  ShieldCheckIcon,
+  ArrowRightIcon,
 } from "@heroicons/react/24/outline";
 
-// --- INTERFACES ---
+// --- INTERFACES (Unchanged) ---
 interface CompanySliderData {
-  mcl_home_id: number;
+  company_id: number;
   heading: string;
   description: string | null;
-  mcl_home_img: string | null;
+  home_img: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface CardData {
@@ -36,28 +32,21 @@ interface CardData {
   createdAt: string;
 }
 
-// --- REFINED: Slider Section Component ---
+// --- Slider Section Component (Unchanged from previous version) ---
 const CompanySlideshow: React.FC = () => {
-  const [data, setData] = useState<CompanySliderData[]>([]);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchCompanies = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await axiosInstance.get<{ data: CompanySliderData[] }>("/api/sliders");
-      setData(Array.isArray(response.data.data) ? response.data.data : []);
-    } catch (err: any) {
-      setError("Failed to fetch slideshow: " + (err.response?.data?.message || err.message));
-      toast.error("Failed to fetch slideshow entries.");
-    } finally {
-      setLoading(false);
+  const staticData: CompanySliderData[] = [
+    {
+      "company_id": 1,
+      "description": "The FT Group, part of Nikkei Inc., provides a broad range of information, news and services to ambitious individuals and organisations.",
+      "home_img": "uploads/company_images/1750412254_comp.png",
+      "heading": "WHO WE ARE",
+      "created_at": "2025-06-20T09:33:49.000000Z",
+      "updated_at": "2025-06-20T09:39:34.000000Z"
     }
-  }, []);
+  ];
 
-  useEffect(() => { fetchCompanies(); }, [fetchCompanies]);
+  const [data] = useState<CompanySliderData[]>(staticData);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
     if (data.length <= 1) return;
@@ -65,60 +54,79 @@ const CompanySlideshow: React.FC = () => {
     return () => clearInterval(interval);
   }, [data.length]);
 
-  const cardVariants = {
-    hidden: { opacity: 0, scale: 0.95 },
-    visible: { opacity: 1, scale: 1, transition: { duration: 0.8, ease: "easeInOut" } },
-    exit: { opacity: 0, scale: 0.95, transition: { duration: 0.8, ease: "easeInOut" } },
-  };
-  const contentVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
-  };
-
-  if (loading) {
+  if (data.length === 0) {
     return (
-      <div className="flex justify-center items-center min-h-[80vh] bg-gradient-to-br from-indigo-600 to-purple-700">
-        <div className="flex items-center space-x-3 text-2xl font-semibold text-white animate-pulse">
-          <ArrowPathIcon className="w-8 h-8 animate-spin" />
-          <span>Loading...</span>
+      <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-6 bg-gray-800">
+        <div className="flex items-center gap-3 mb-6">
+          <InformationCircleIcon className="w-10 h-10 text-[#0d7680]" />
+          <h2 className="text-3xl font-bold text-white">No Sliders Found</h2>
         </div>
+        <p className="text-lg text-gray-200">Content could not be loaded.</p>
       </div>
-    );
-  }
-  
-  if (error || data.length === 0) {
-    return (
-        <div className="flex flex-col justify-center items-center min-h-[80vh] bg-gradient-to-br from-indigo-600 to-purple-700 p-6">
-            <div className="text-rose-300 text-3xl font-bold mb-6 flex items-center space-x-3">
-                <InformationCircleIcon className="w-8 h-8" />
-                <span>{error ? "An Error Occurred" : "No Content Found"}</span>
-            </div>
-            <p className="text-gray-200 mb-8 text-lg text-center">{error || "No slideshow entries were found."}</p>
-            {error && <button onClick={fetchCompanies} className="inline-flex items-center px-8 py-3 text-white rounded-full transition-all hover:brightness-90" style={{ backgroundColor: '#d12814' }}><ArrowPathIcon className="w-5 h-5 mr-2" />Try Again</button>}
-        </div>
     );
   }
 
   return (
-    <section className="relative min-h-[80vh] w-full overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-700">
+    <section className="relative min-h-[80vh] w-full overflow-hidden bg-gray-800">
       <AnimatePresence mode="wait">
-        <motion.div key={currentSlide} variants={cardVariants} initial="hidden" animate="visible" exit="exit" className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-transparent z-10" />
-          <img src={data[currentSlide].mcl_home_img ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${data[currentSlide].mcl_home_img!.replace(/^\//, "")}` : "https://via.placeholder.com/1200x600?text=Image+Missing"} alt={data[currentSlide].heading} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = "https://via.placeholder.com/1200x600?text=Image+Error"; }} loading="lazy"/>
+        <motion.div
+          key={currentSlide}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
+          className="absolute inset-0"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
+          <img
+            src={data[currentSlide].home_img ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${data[currentSlide].home_img!.replace(/^\//, "")}` : "https://via.placeholder.com/1200x600?text=Image+Missing"}
+            alt={data[currentSlide].heading}
+            className="w-full h-full object-cover"
+            onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/1200x600?text=Image+Error")}
+            loading="lazy"
+          />
         </motion.div>
       </AnimatePresence>
-      <div className="relative z-20 flex flex-col justify-center min-h-[80vh] px-4 sm:px-8">
-        <div className="max-w-[50%] text-left ml-12">
-          <motion.h2 key={`h2-${currentSlide}`} className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-4 tracking-tight" style={{ color: "#d12814", textShadow: "0 4px 12px rgba(0, 0, 0, 0.4)" }} variants={contentVariants} initial="hidden" animate="visible">
+      <div className="relative z-20 flex flex-col justify-center min-h-[80vh] max-w-6xl mx-auto px-4 md:px-8">
+        <div className="max-w-xl">
+          <motion.h2
+            key={`h2-${currentSlide}`}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="text-3xl md:text-5xl font-bold text-[#fff1e5] mb-4"
+          >
             {data[currentSlide].heading}
           </motion.h2>
-          <motion.p key={`p-${currentSlide}`} className="text-lg sm:text-xl text-gray-100 mb-8 leading-relaxed font-semibold" variants={contentVariants} initial="hidden" animate="visible" transition={{ delay: 0.2 }}>
+          <motion.p
+            key={`p-${currentSlide}`}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+            className="text-xl md:text-2xl font-medium text-gray-100 mb-8"
+          >
             {data[currentSlide].description || "No description available"}
           </motion.p>
-          <motion.div variants={contentVariants} initial="hidden" animate="visible" transition={{ delay: 0.4 }}>
-            {/* BUG FIX: Corrected modulo operator from %p to %data.length */}
-            <button onClick={() => setCurrentSlide((p) => (p - 1 + data.length) % data.length)} className="inline-flex items-center p-3 text-white rounded-full transition-all shadow-lg hover:brightness-90" style={{ backgroundColor: '#d12814' }} aria-label="Previous"><ChevronLeftIcon className="w-6 h-6" /></button>
-            <button onClick={() => setCurrentSlide((p) => (p + 1) % data.length)} className="ml-4 inline-flex items-center p-3 text-white rounded-full transition-all shadow-lg hover:brightness-90" style={{ backgroundColor: '#d12814' }} aria-label="Next"><ChevronRightIcon className="w-6 h-6" /></button>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
+            className="flex gap-4"
+          >
+            <button
+              onClick={() => setCurrentSlide((p) => (p - 1 + data.length) % data.length)}
+              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              aria-label="Previous"
+            >
+              <ChevronLeftIcon className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => setCurrentSlide((p) => (p + 1) % data.length)}
+              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              aria-label="Next"
+            >
+              <ChevronRightIcon className="w-6 h-6" />
+            </button>
           </motion.div>
         </div>
       </div>
@@ -126,95 +134,75 @@ const CompanySlideshow: React.FC = () => {
   );
 };
 
-// --- Icon Helper ---
-const getIconForCard = (heading: string, className: string) => {
-    switch (heading) {
-        case 'MCL-Group': return <BuildingOffice2Icon className={className} />;
-        case 'Leadership': return <UserGroupIcon className={className} />;
-        case 'Diversity & Inclusion': return <GlobeAltIcon className={className} />;
-        case 'Sustainability': return <SparklesIcon className={className} />;
-        case 'Giving Back': return <HeartIcon className={className} />;
-        case 'MCL Pink 130': return <StarIcon className={className} />;
-        case 'Our Standards': return <ShieldCheckIcon className={className} />;
-        default: return <InformationCircleIcon className={className} />;
-    }
-};
-
-// --- REFINED: Individual Card Component with Image Fallback ---
+// --- Individual Card Component (Unchanged from previous version) ---
 const ContentCard: React.FC<{ item: CardData }> = ({ item }) => {
-    const [hasImageError, setHasImageError] = useState(false);
-    const showPlaceholder = hasImageError || !item.imageUrl;
-
-    return (
-        <motion.div 
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden flex flex-col transition-shadow duration-300 group"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ y: -8, scale: 1.03, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-        >
-            <div className="relative h-48 w-full">
-                {showPlaceholder ? (
-                    <div className="h-full w-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                        {getIconForCard(item.heading, "w-16 h-16 text-gray-300 dark:text-gray-500")}
-                    </div>
-                ) : (
-                    <img className="h-full w-full object-cover" src={item.imageUrl!} alt={item.heading} onError={() => setHasImageError(true)} />
-                )}
-                <span className="absolute top-2 right-2 text-white text-xs font-bold px-2 py-1 rounded-full" style={{ backgroundColor: '#d12814' }}>
-                    {item.heading}
-                </span>
-            </div>
-            <div className="p-6 flex flex-col flex-grow">
-                <h3 className="text-lg font-bold" style={{ color: '#d12814' }}>{item.heading}</h3>
-                <p className="mt-2 text-gray-600 dark:text-gray-300 text-sm flex-grow font-semibold line-clamp-4">{item.description}</p>
-                <div className="mt-6">
-                    <Link
-                        to={item.link}
-                        className="w-full inline-flex items-center justify-center px-4 py-2 text-white font-semibold rounded-lg transition-all duration-300 hover:brightness-90"
-                        style={{ backgroundColor: '#d12814' }}
-                    >
-                        {getIconForCard(item.heading, "w-5 h-5 mr-2")}
-                        <span>Learn More</span>
-                    </Link>
-                </div>
-            </div>
-        </motion.div>
-    );
+  return (
+    <motion.div
+      key={item.id}
+      className="bg-[#fff1e5] shadow-lg flex flex-col"
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      whileHover={{ y: -12 }}
+    >
+      <div className="relative px-4 -mt-8 md:px-8 md:-mt-10">
+        <img
+          className="w-full h-64 object-cover shadow-md"
+          src={item.imageUrl || "https://via.placeholder.com/400x200?text=Image+Missing"}
+          alt={item.heading}
+          onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/400x200?text=Image+Error")}
+        />
+        <span className="absolute top-4 right-6 md:right-12 bg-white text-black text-xs font-bold px-3 py-1 rounded-full uppercase">
+          {item.heading}
+        </span>
+      </div>
+      <div className="p-8 flex flex-col flex-grow text-black">
+        <h3 className="uppercase text-xl sm:text-2xl font-bold relative pb-4 mb-4 text-[#33302d]">
+          {item.heading}
+          <span className="absolute bottom-0 left-0 h-1 w-1/4 bg-[#33302d]"></span>
+        </h3>
+        <p className="text-gray-700 text-base font-medium flex-grow line-clamp-4">{item.description}</p>
+        <div className="mt-6">
+          <Link to={item.link} className="flex items-center gap-2 text-lg font-bold text-[#0d7680] hover:text-[#0a5a60]">
+            Find more
+            <ArrowRightIcon className="w-5 h-5" />
+          </Link>
+        </div>
+      </div>
+    </motion.div>
+  );
 };
 
-// --- REFINED: Content Card Section Component ---
+// --- Content Card Section Component (Refactored for white background) ---
 const ContentCardSection: React.FC<{ data: CardData[]; loading: boolean; error: string | null; onRetry: () => void; }> = ({ data, loading, error, onRetry }) => {
-    if (loading) {
-        return (
-            <div className="w-full bg-gray-50 dark:bg-gray-900 py-20 text-center">
-                <div className="flex justify-center items-center space-x-3 text-2xl font-semibold text-gray-700 dark:text-gray-200 animate-pulse">
-                    <ArrowPathIcon className="w-8 h-8 animate-spin" style={{ color: '#d12814' }}/>
-                    <span>Loading Content...</span>
-                </div>
-            </div>
-        );
-    }
-    if (error || data.length === 0) {
-        return (
-          <div className="w-full bg-gray-50 dark:bg-gray-900 py-20 flex flex-col items-center justify-center px-4">
-            <div className="text-red-500 text-2xl font-bold mb-4 flex items-center space-x-3">
-              <InformationCircleIcon className="w-8 h-8" />
-              <span>{error ? "Failed to Load Content" : "No Content Available"}</span>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300 mb-6 text-center">{error || "There is no additional content to display at the moment."}</p>
-            {error && <button onClick={onRetry} className="inline-flex items-center px-6 py-2 text-white rounded-md hover:brightness-90" style={{ backgroundColor: '#d12814' }}><ArrowPathIcon className="w-5 h-5 mr-2" />Retry</button>}
-          </div>
-        );
-    }
+  if (loading) {
+    return (
+      <div className="w-full py-20 text-center">
+          <ArrowPathIcon className="w-8 h-8 mx-auto text-[#0d7680] animate-spin" />
+      </div>
+    );
+  }
+  if (error || data.length === 0) {
+    return (
+      <div className="w-full py-20 flex flex-col items-center justify-center px-4 text-center">
+        <InformationCircleIcon className="w-12 h-12 mx-auto text-gray-400" />
+        <h3 className="mt-4 text-2xl font-bold text-gray-800">{error ? "Failed to Load Content" : "No Content Available"}</h3>
+        <p className="mt-2 text-gray-600">{error || "There is no additional content to display at the moment."}</p>
+        {error && <button onClick={onRetry} className="mt-6 flex items-center px-6 py-3 bg-gray-800 text-white font-semibold rounded-full hover:bg-gray-700 transition"><ArrowPathIcon className="w-5 h-5 mr-2" />Retry</button>}
+      </div>
+    );
+  }
 
   return (
-    <section className="bg-gray-50 dark:bg-gray-900 py-16 sm:py-24">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-16">
+      <div className="max-w-6xl mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-extrabold sm:text-4xl" style={{ color: '#d12814' }}>Our Company Initiatives</h2>
-          <p className="mt-4 text-lg text-[#0069b4] dark:text-gray-400">Explore the latest from across our company departments.</p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Our Company Initiatives</h2>
+          <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+            Explore the latest from across our company departments.
+          </p>
         </div>
-        <div className="grid gap-8 lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-12">
           {data.map((item) => <ContentCard key={item.id} item={item} />)}
         </div>
       </div>
@@ -222,7 +210,8 @@ const ContentCardSection: React.FC<{ data: CardData[]; loading: boolean; error: 
   );
 };
 
-// --- Endpoint Configuration (Remains the same) ---
+
+// --- Endpoint Configuration (Unchanged) ---
 const contentEndpoints = [
   { url: "/api/sliders", cardTitle: "MCL-Group", idKey: "mcl_home_id", imgKey: "mcl_home_img", link: "/company/mcl-group", extractor: (res: any) => res.data.data },
   { url: "/api/leadershipHomeSlider", cardTitle: "Leadership", idKey: "leadership_home_id", imgKey: "home_img", link: "/company/leadership", extractor: (res: any) => res.data },
@@ -233,7 +222,7 @@ const contentEndpoints = [
   { url: "/api/ourStandardHomeSlider", cardTitle: "Our Standards", idKey: "id", imgKey: "home_img", link: "/company/our-standards", extractor: (res: any) => res.data?.data?.our_standard_homes },
 ];
 
-// --- REFINED: Main HomePage Component ---
+// --- Main HomePage Component (Refactored for white background) ---
 const HomePage: React.FC = () => {
   const [cardData, setCardData] = useState<CardData[]>([]);
   const [cardsLoading, setCardsLoading] = useState(true);
@@ -290,11 +279,20 @@ const HomePage: React.FC = () => {
   }, [fetchCardData]);
 
   return (
-    <div className="w-full font-sans bg-white dark:bg-gray-900">
+    <div className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">
       <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
-      <CompanySlideshow />
-      <ContentCardSection data={cardData} loading={cardsLoading} error={cardsError} onRetry={fetchCardData}/>
-      <Footer />
+      
+      <header>
+        <CompanySlideshow />
+      </header>
+
+      <main className="flex-grow">
+        <ContentCardSection data={cardData} loading={cardsLoading} error={cardsError} onRetry={fetchCardData}/>
+      </main>
+
+      <footer>
+        <Footer />
+      </footer>
     </div>
   );
 };

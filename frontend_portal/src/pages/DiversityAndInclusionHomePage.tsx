@@ -25,10 +25,10 @@ interface DiversityData {
   diversity_id: number;
   diversity_category: string;
   description: string;
-  pdf_file: string | null; // Can be null
+  pdf_file: string | null;
 }
 
-// --- REFINED: Diversity Home Slideshow ---
+// --- Diversity Home Slideshow ---
 const DiversityHomeSlideshow: React.FC = () => {
   const [data, setData] = useState<DiversityHomeData[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -58,59 +58,96 @@ const DiversityHomeSlideshow: React.FC = () => {
     return () => clearInterval(interval);
   }, [data.length]);
 
-  const cardVariants = {
-    hidden: { opacity: 0, scale: 0.95 },
-    visible: { opacity: 1, scale: 1, transition: { duration: 0.8, ease: "easeInOut" } },
-    exit: { opacity: 0, scale: 0.95, transition: { duration: 0.8, ease: "easeInOut" } },
-  };
-  const contentVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
-  };
-
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[80vh] bg-gradient-to-br from-indigo-600 to-purple-700">
-        <div className="flex items-center space-x-3 text-2xl font-semibold text-white animate-pulse">
-          <ArrowPathIcon className="w-8 h-8 animate-spin" />
-          <span>Loading...</span>
+      <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-6 bg-gray-800">
+        <div className="flex items-center gap-3 mb-6">
+          <ArrowPathIcon className="w-10 h-10 text-[#0d7680] animate-spin" />
+          <h2 className="text-3xl font-bold text-white">Loading...</h2>
         </div>
+        <p className="text-lg text-gray-200">Fetching slider content...</p>
       </div>
     );
   }
 
   if (error || data.length === 0) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-[80vh] bg-gradient-to-br from-indigo-600 to-purple-700 p-6">
-        <div className="text-rose-300 text-3xl font-bold mb-6 flex items-center space-x-3">
-          <InformationCircleIcon className="w-8 h-8" />
-          <span>{error ? "An Error Occurred" : "No Content Found"}</span>
+      <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-6 bg-gray-800">
+        <div className="flex items-center gap-3 mb-6">
+          <InformationCircleIcon className="w-10 h-10 text-[#0d7680]" />
+          <h2 className="text-3xl font-bold text-white">{error ? "An Error Occurred" : "No Sliders Found"}</h2>
         </div>
-        <p className="text-gray-200 mb-8 text-lg text-center">{error || "Diversity content could not be loaded."}</p>
-        {error && <button onClick={fetchDiversityHomes} className="inline-flex items-center px-8 py-3 text-white rounded-full hover:brightness-90 transition-all shadow-lg" style={{ backgroundColor: '#d12814' }}><ArrowPathIcon className="w-5 h-5 mr-2" /> Try Again</button>}
+        <p className="text-lg text-gray-200">{error || "No slides were found for this section."}</p>
+        {error && (
+          <button onClick={fetchDiversityHomes} className="mt-6 flex items-center px-6 py-3 bg-gray-800 text-white font-semibold rounded-full hover:bg-gray-700 transition">
+            <ArrowPathIcon className="w-5 h-5 mr-2" />Retry
+          </button>
+        )}
       </div>
     );
   }
 
   return (
-    <section className="relative min-h-[80vh] w-full overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-700">
+    <section className="relative min-h-[80vh] w-full overflow-hidden bg-gray-800">
       <AnimatePresence mode="wait">
-        <motion.div key={currentSlide} variants={cardVariants} initial="hidden" animate="visible" exit="exit" className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-transparent z-10" />
-          <img src={data[currentSlide].home_img ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${data[currentSlide].home_img!.replace(/^\//, "")}` : "https://via.placeholder.com/1200x600?text=Image+Missing"} alt={data[currentSlide].heading} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = "https://via.placeholder.com/1200x600?text=Image+Error"; }} loading="lazy" />
+        <motion.div
+          key={currentSlide}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
+          className="absolute inset-0"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
+          <img
+            src={data[currentSlide].home_img ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${data[currentSlide].home_img!.replace(/^\//, "")}` : "https://via.placeholder.com/1200x600?text=Image+Missing"}
+            alt={data[currentSlide].heading}
+            className="w-full h-full object-cover"
+            onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/1200x600?text=Image+Error")}
+            loading="lazy"
+          />
         </motion.div>
       </AnimatePresence>
-      <div className="relative z-20 flex flex-col justify-center min-h-[80vh] px-4 sm:px-8">
-        <div className="max-w-[50%] text-left ml-12">
-          <motion.h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-4 tracking-tight" style={{ color: "#d12814", textShadow: "0 4px 12px rgba(0,0,0,0.4)" }} variants={contentVariants} initial="hidden" animate="visible">
+      <div className="relative z-20 flex flex-col justify-center min-h-[80vh] max-w-6xl mx-auto px-4 md:px-8">
+        <div className="max-w-xl">
+          <motion.h2
+            key={`h2-${currentSlide}`}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="text-3xl md:text-5xl font-bold text-[#fff1e5] mb-4"
+          >
             {data[currentSlide].heading}
           </motion.h2>
-          <motion.p className="text-lg sm:text-xl text-gray-100 mb-8 leading-relaxed font-semibold" variants={contentVariants} initial="hidden" animate="visible" transition={{ delay: 0.2 }}>
+          <motion.p
+            key={`p-${currentSlide}`}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+            className="text-xl md:text-2xl font-medium text-gray-100 mb-8"
+          >
             {data[currentSlide].description || "No description available"}
           </motion.p>
-          <motion.div variants={contentVariants} initial="hidden" animate="visible" transition={{ delay: 0.4 }}>
-            <button onClick={() => setCurrentSlide((p) => (p - 1 + data.length) % data.length)} className="inline-flex items-center p-3 text-white rounded-full transition-all shadow-lg hover:brightness-90" style={{ backgroundColor: '#d12814' }} aria-label="Previous slide"><ChevronLeftIcon className="w-6 h-6" /></button>
-            <button onClick={() => setCurrentSlide((p) => (p + 1) % data.length)} className="ml-4 inline-flex items-center p-3 text-white rounded-full transition-all shadow-lg hover:brightness-90" style={{ backgroundColor: '#d12814' }} aria-label="Next slide"><ChevronRightIcon className="w-6 h-6" /></button>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
+            className="flex gap-4"
+          >
+            <button
+              onClick={() => setCurrentSlide((p) => (p - 1 + data.length) % data.length)}
+              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              aria-label="Previous slide"
+            >
+              <ChevronLeftIcon className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => setCurrentSlide((p) => (p + 1) % data.length)}
+              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              aria-label="Next slide"
+            >
+              <ChevronRightIcon className="w-6 h-6" />
+            </button>
           </motion.div>
         </div>
       </div>
@@ -118,18 +155,64 @@ const DiversityHomeSlideshow: React.FC = () => {
   );
 };
 
-// --- REFINED: Diversity Section Component ---
+// --- Individual Diversity Card Component ---
+const DiversityCard: React.FC<{ item: DiversityData }> = ({ item }) => {
+  return (
+    <motion.div
+      key={item.diversity_id}
+      className="bg-[#fff1e5] shadow-lg flex flex-col"
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      whileHover={{ y: -12 }}
+    >
+      <div className="relative px-4 -mt-8 md:px-8 md:-mt-10">
+        <div className="w-full h-64 bg-gray-100 flex items-center justify-center shadow-md">
+          <GlobeAltIcon className="w-16 h-16 text-gray-300" />
+        </div>
+        <span className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white text-black text-xs font-bold px-3 py-1 rounded-full uppercase">
+          {item.diversity_category}
+        </span>
+      </div>
+      <div className="p-8 flex flex-col flex-grow text-black">
+        <h3 className="uppercase text-xl sm:text-2xl font-bold relative pb-4 mb-4 text-[#33302d]">
+          {item.diversity_category}
+          <span className="absolute bottom-0 left-0 h-1 w-1/4 bg-[#33302d]"></span>
+        </h3>
+        <p className="text-gray-700 text-base font-medium flex-grow line-clamp-4">{item.description}</p>
+        <div className="mt-6">
+          {item.pdf_file && (
+            <a
+              href={`${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${item.pdf_file.replace(/^\//, "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-lg font-bold text-[#0d7680] hover:text-[#0a5a60]"
+            >
+              View Report
+              <NewspaperIcon className="w-5 h-5" />
+            </a>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// --- Diversity Section Component ---
 const DiversitySection: React.FC = () => {
   const [diversityData, setDiversityData] = useState<DiversityData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchDiversityData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const response = await axiosInstance.get("/api/allDiversitiesAndIclusion");
       setDiversityData(Array.isArray(response.data.diversity) ? response.data.diversity : []);
     } catch (err) {
-      toast.error("Error fetching diversity data.");
+      setError("Could not fetch diversity data.");
+      toast.error("Could not fetch diversity data.");
     } finally {
       setLoading(false);
     }
@@ -137,68 +220,46 @@ const DiversitySection: React.FC = () => {
 
   useEffect(() => { fetchDiversityData(); }, [fetchDiversityData]);
 
-  return (
-    <section className="bg-gray-50 dark:bg-gray-900 py-16 sm:py-24">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-            <h2 className="text-base font-semibold text-[#0069b4] dark:text-indigo-400 tracking-wide uppercase">Our Commitment</h2>
-            <p className="mt-2 text-3xl font-extrabold sm:text-4xl" style={{ color: '#d12814' }}>
-              Diversity & Inclusion
-            </p>
-            <p className="mt-4 max-w-2xl mx-auto text-xl text-[#0069b4] dark:text-gray-400">
-              Explore our reports and initiatives for a diverse and inclusive environment.
-            </p>
-        </div>
+  if (loading) {
+    return (
+      <div className="w-full py-20 text-center">
+        <ArrowPathIcon className="w-8 h-8 mx-auto text-[#0d7680] animate-spin" />
+      </div>
+    );
+  }
 
-        {loading ? (
-          <div className="text-center mt-12"><ArrowPathIcon className="w-8 h-8 mx-auto animate-spin" style={{ color: '#d12814' }} /></div>
-        ) : diversityData.length > 0 ? (
-          <div className="mt-12 grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {diversityData.map((item) => (
-              <motion.div 
-                  key={item.diversity_id}
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden flex flex-col transition-shadow duration-300 group"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  whileHover={{ y: -8, scale: 1.03, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-              >
-                  <div className="relative">
-                      <div className="h-48 w-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                          <GlobeAltIcon className="w-16 h-16 text-gray-300 dark:text-gray-500"/>
-                      </div>
-                      {/* THIS BADGE COMPLETES THE STANDARD DESIGN */}
-                      <span className="absolute top-2 right-2 text-white text-xs font-bold px-2 py-1 rounded-full" style={{ backgroundColor: '#d12814' }}>
-                          Diversity
-                      </span>
-                  </div>
-                  <div className="p-6 flex flex-col flex-grow">
-                      <h3 className="text-lg font-bold" style={{ color: '#d12814' }}>{item.diversity_category}</h3>
-                      <p className="mt-2 text-gray-600 dark:text-gray-300 text-sm flex-grow font-semibold">{item.description}</p>
-                      <div className="mt-6">
-                          {item.pdf_file && (
-                             <a
-                                href={`${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${item.pdf_file.replace(/^\//, "")}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-full inline-flex items-center justify-center px-4 py-2 text-white font-semibold rounded-lg transition-all duration-300 hover:brightness-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d12814]"
-                                style={{ backgroundColor: '#d12814' }}
-                              >
-                                <NewspaperIcon className="w-5 h-5 mr-2" />
-                                <span>View Report</span>
-                              </a>
-                          )}
-                      </div>
-                  </div>
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-            <div className="text-center py-10 text-gray-500 dark:text-gray-400">
-                <InformationCircleIcon className="w-12 h-12 mx-auto mb-4" />
-                <p className="text-xl">No diversity and inclusion data found.</p>
-            </div>
+  if (error || diversityData.length === 0) {
+    return (
+      <div className="w-full py-20 flex flex-col items-center justify-center px-4 text-center">
+        <InformationCircleIcon className="w-12 h-12 mx-auto text-gray-400" />
+        <h3 className="mt-4 text-2xl font-bold text-gray-800">{error ? "Failed to Load Content" : "No Content Available"}</h3>
+        <p className="mt-2 text-gray-600">{error || "There is no diversity and inclusion data to display at the moment."}</p>
+        {error && (
+          <button onClick={fetchDiversityData} className="mt-6 flex items-center px-6 py-3 bg-gray-800 text-white font-semibold rounded-full hover:bg-gray-700 transition">
+            <ArrowPathIcon className="w-5 h-5 mr-2" />Retry
+          </button>
         )}
+      </div>
+    );
+  }
+
+  return (
+    <section className="py-16">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 inline-flex items-center">
+            <GlobeAltIcon className="w-9 h-9 mr-3" />
+            Diversity & Inclusion
+          </h2>
+          <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+            Explore our reports and initiatives for a diverse and inclusive environment.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mt-12">
+          {diversityData.map((item) => (
+            <DiversityCard key={item.diversity_id} item={item} />
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -207,11 +268,17 @@ const DiversitySection: React.FC = () => {
 // --- Main DiversityHomePage Component ---
 const DiversityHomePage: React.FC = () => {
   return (
-    <div className="w-full font-sans bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">
       <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
-      <DiversityHomeSlideshow />
-      <DiversitySection />
-      <Footer />
+      <header>
+        <DiversityHomeSlideshow />
+      </header>
+      <main className="flex-grow">
+        <DiversitySection />
+      </main>
+      <footer>
+        <Footer />
+      </footer>
     </div>
   );
 };
