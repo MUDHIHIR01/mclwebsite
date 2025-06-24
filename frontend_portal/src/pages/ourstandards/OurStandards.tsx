@@ -39,7 +39,8 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ ourId, onDeletionSuccess 
 
   return (
     <div className="relative flex items-center gap-2">
-      <Link to={`/edit/our_standards/${ourId}`} className="p-1 text-blue-500 hover:text-blue-600" aria-label="Edit">
+      {/* ***FIX: Corrected the link to match the Route path "/edit/our-standard/:standardid" *** */}
+      <Link to={`/edit/our-standard/${ourId}`} className="p-1 text-blue-500 hover:text-blue-600" aria-label="Edit">
         <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
           <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
         </svg>
@@ -89,8 +90,8 @@ const DescriptionCell: React.FC<{ value: string | null }> = ({ value }) => {
 
 const FileCell: React.FC<{ value: string | null }> = ({ value }) => {
   if (!value) return <span className="text-gray-500 text-xs">No File</span>;
-  const baseUrl = axiosInstance.defaults.baseURL || window.location.origin;
-  const fileUrl = `${baseUrl.replace(/\/$/, '')}/${value}`;
+  const baseUrl = (axiosInstance.defaults.baseURL || window.location.origin).replace(/\/api\/?$/, '');
+  const fileUrl = `${baseUrl}/${value}`;
 
   return (
     <a
@@ -98,7 +99,6 @@ const FileCell: React.FC<{ value: string | null }> = ({ value }) => {
       target="_blank"
       rel="noopener noreferrer"
       className="text-blue-500 hover:text-blue-600 text-sm font-semibold"
-      onError={() => console.warn('Error accessing file:', fileUrl)}
     >
       View File
     </a>
@@ -200,7 +200,7 @@ export default function OurStandards() {
     state: { pageIndex, pageSize, globalFilter },
   } = tableInstance;
 
-  const exportToPDF = () => {
+    const exportToPDF = () => {
     const doc = new jsPDF();
     doc.text('Our Standard Records', 20, 10);
     autoTable(doc, {

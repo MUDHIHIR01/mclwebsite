@@ -126,25 +126,16 @@ const getNavItemsForRole = (roleId: number) => {
           ],
         },
 
-        
+          { name: "Giving Back", path: "/sustainability/home",
+              subItems: [
+            { name: "Home page", path: "/giving-back" },
+            { name: "Giving Back", path: "/giving/back" }
+          ],
+        },
         { name: "MCL Pink 130", path: "/company/mcl-pink-10",
               subItems: [
              { name: "Home page", path: "/mcl-pink-130-home" },
             { name: "MCL Pink 130", path: "/pink-130" }
-          ],
-        },
-
-        { name: "Diversity and Inclusion",
-           path: "/company/diversity-inclusion" ,
-             subItems: [
-            { name: "Home page", path: "/diversity-and-inclusion" },
-            { name: "Diversity and Inclusion", path: "/diversityInclusion" }
-          ],
-          },
-           { name: "Giving Back", path: "/sustainability/home",
-              subItems: [
-            { name: "Home page", path: "/giving-back" },
-            { name: "Giving Back", path: "/giving/back" }
           ],
         },
         { name: "Sustainability", 
@@ -154,6 +145,16 @@ const getNavItemsForRole = (roleId: number) => {
             { name: "Sustainability", path: "/sustainability" }
           ],
          },
+
+        { name: "Diversity and Inclusion",
+           path: "/company/diversity-inclusion" ,
+             subItems: [
+            { name: "Home page", path: "/diversity-and-inclusion" },
+            { name: "Diversity and Inclusion", path: "/diversityInclusion" }
+          ],
+          },
+         
+        
       ],
     },
     {

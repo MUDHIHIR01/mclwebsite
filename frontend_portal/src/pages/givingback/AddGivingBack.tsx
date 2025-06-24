@@ -4,7 +4,6 @@ import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Describes the data for the form submission
 interface FormData {
   givingBack_category: string;
   description: string;
@@ -16,7 +15,7 @@ interface FormErrors {
   givingBack_category?: string;
   description?: string;
   weblink?: string;
-  image_slider?: string; // This holds a single string error message.
+  image_slider?: string;
 }
 
 const AddGivingBack: React.FC = () => {
@@ -30,9 +29,7 @@ const AddGivingBack: React.FC = () => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof FormErrors]) {
@@ -41,16 +38,8 @@ const AddGivingBack: React.FC = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // FIX: Provide a fallback empty array `[]` if `e.target.files` is null.
-    // This resolves the TS2769 error by ensuring `Array.from` never receives null.
     const files = Array.from(e.target.files || []);
-    
-    setFormData((prev) => ({
-      ...prev,
-      image_slider: files,
-    }));
-    
-    // Clear any existing error for the file input when the user selects files.
+    setFormData((prev) => ({ ...prev, image_slider: files }));
     if (errors.image_slider) {
       setErrors((prev) => ({ ...prev, image_slider: undefined }));
     }
@@ -64,7 +53,7 @@ const AddGivingBack: React.FC = () => {
     } else if (formData.givingBack_category.length > 255) {
       newErrors.givingBack_category = 'Category must not exceed 255 characters';
     }
-    
+
     if (formData.weblink) {
       try {
         new URL(formData.weblink);
@@ -113,7 +102,7 @@ const AddGivingBack: React.FC = () => {
       toast.success(response.data.message || 'Giving Back entry created successfully!', {
         position: 'top-right',
       });
-      setTimeout(() => navigate('/giving-back'), 2000);
+      setTimeout(() => navigate('/giving/back'), 2000);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to create entry.';
       const backendErrors = error.response?.data?.errors || {};
@@ -164,9 +153,7 @@ const AddGivingBack: React.FC = () => {
               className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm p-2"
               placeholder="Enter description (optional)"
             />
-            {errors.description && (
-              <p className="mt-1 text-sm text-red-500">{errors.description}</p>
-            )}
+            {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
           </div>
           <div>
             <label htmlFor="weblink" className="block text-sm font-medium text-gray-700">
@@ -181,9 +168,7 @@ const AddGivingBack: React.FC = () => {
               className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm p-2"
               placeholder="https://example.com"
             />
-             {errors.weblink && (
-              <p className="mt-1 text-sm text-red-500">{errors.weblink}</p>
-            )}
+            {errors.weblink && <p className="mt-1 text-sm text-red-500">{errors.weblink}</p>}
           </div>
           <div>
             <label htmlFor="image_slider" className="block text-sm font-medium text-gray-700">
@@ -198,16 +183,12 @@ const AddGivingBack: React.FC = () => {
               onChange={handleFileChange}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
-            {errors.image_slider && (
-              <p className="mt-1 text-sm text-red-500">
-                {errors.image_slider}
-              </p>
-            )}
+            {errors.image_slider && <p className="mt-1 text-sm text-red-500">{errors.image_slider}</p>}
           </div>
           <div className="flex flex-col sm:flex-row justify-end gap-4">
             <button
               type="button"
-              onClick={() => navigate('/giving-back')}
+              onClick={() => navigate('/giving/back')}
               className="w-full sm:w-auto px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition shadow-md"
             >
               Cancel

@@ -254,7 +254,7 @@ const NewsCard: React.FC<{
 
   return (
     <motion.div
-      className="bg-[#fff1e5] shadow-lg flex flex-col"
+      className="bg-[white] shadow-lg flex flex-col"
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
@@ -338,7 +338,7 @@ const HorizontalSliderCard: React.FC<{
   const showPlaceholder = hasImageError || !imageUrl;
 
   return (
-    <div className="flex flex-col md:flex-row bg-[#fff1e5] shadow-lg rounded-lg overflow-hidden h-full w-[90vw] md:w-[768px]">
+    <div className="flex flex-col md:flex-row bg-[white] shadow-lg rounded-lg overflow-hidden h-full w-[90vw] md:w-[768px]">
       <div className="w-full md:w-2/5 flex-shrink-0">
         {showPlaceholder ? (
           <div className="w-full h-56 md:h-full bg-gray-100 flex items-center justify-center">

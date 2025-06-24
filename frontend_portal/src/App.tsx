@@ -445,11 +445,10 @@ export default function App() {
 <Route path="/edit-giving-back/:giving_backId" element={<ProtectedRoute><EditGivingHome /></ProtectedRoute>} />
 
 
- <Route path="/giving/back" element={<ProtectedRoute><GivingBack /></ProtectedRoute>} />
- <Route path="/add/giving/back" element={<ProtectedRoute><AddGivingBack /></ProtectedRoute>} />
- <Route path="/edit-giving/back/:givingId" element={<ProtectedRoute><EditGivingBack /></ProtectedRoute>} />
-
-
+// Inside your Router setup
+<Route path="/giving/back" element={<ProtectedRoute><GivingBack /></ProtectedRoute>} />
+<Route path="/add-giving-backs" element={<ProtectedRoute><AddGivingBack /></ProtectedRoute>} />
+<Route path="/edit-giving-backs/:givingId" element={<ProtectedRoute><EditGivingBack /></ProtectedRoute>} />
 
 <Route path="/pink-130" element={<ProtectedRoute><Pink130 /></ProtectedRoute>} />
 <Route path="/add/pink-130" element={<ProtectedRoute><AddPink130 /></ProtectedRoute>} />
@@ -495,7 +494,7 @@ export default function App() {
             }
             />
           <Route
-            path="/edit/our-standards/:our_standardid"
+            path="/edit/our-standard/:standardid"
             element={
               <ProtectedRoute>
                 <EditOurStandandardHome />

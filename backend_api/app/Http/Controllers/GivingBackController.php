@@ -11,12 +11,9 @@ class GivingBackController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:sanctum')->except(['index', 'show','latestGivingBack','allGivingBack']);
+        $this->middleware('auth:sanctum')->except(['index', 'show', 'latestGivingBack', 'allGivingBack']);
     }
 
-    /**
-     * Ensure the uploads directory exists and is writable.
-     */
     private function ensureUploadsDirectory(string $subdirectory = 'giving_back_images'): bool
     {
         $uploadPath = public_path('uploads/' . $subdirectory);
@@ -33,9 +30,6 @@ class GivingBackController extends Controller
         return true;
     }
 
-    /**
-     * Display a listing of giving back records.
-     */
     public function index()
     {
         try {
@@ -46,7 +40,6 @@ class GivingBackController extends Controller
             return response()->json(['error' => 'Failed to fetch giving back records.', 'details' => $e->getMessage()], 500);
         }
     }
-
 
     public function allGivingBack()
     {
@@ -59,9 +52,6 @@ class GivingBackController extends Controller
         }
     }
 
-    /**
-     * Display the latest giving back record based on created_at.
-     */
     public function latestGivingBack()
     {
         try {
@@ -76,9 +66,6 @@ class GivingBackController extends Controller
         }
     }
 
-    /**
-     * Store a newly created giving back record.
-     */
     public function store(Request $request)
     {
         \Log::info('Giving Back store request data: ', $request->all());
@@ -102,7 +89,6 @@ class GivingBackController extends Controller
         try {
             $data = $validator->validated();
 
-            // Handle image_slider upload
             if ($request->hasFile('image_slider')) {
                 $imagePaths = [];
                 foreach ($request->file('image_slider') as $image) {
@@ -124,9 +110,6 @@ class GivingBackController extends Controller
         }
     }
 
-    /**
-     * Display the specified giving back record.
-     */
     public function show($giving_id)
     {
         try {
@@ -141,9 +124,6 @@ class GivingBackController extends Controller
         }
     }
 
-    /**
-     * Update the specified giving back record using POST.
-     */
     public function update(Request $request, $giving_id)
     {
         \Log::info('Giving Back update request data for ID ' . $giving_id . ': ', $request->all());
@@ -173,9 +153,7 @@ class GivingBackController extends Controller
         try {
             $data = $validator->validated();
 
-            // Handle image_slider upload
             if ($request->hasFile('image_slider')) {
-                // Delete old images if they exist
                 if ($givingBack->image_slider) {
                     $oldImages = json_decode($givingBack->image_slider, true) ?? [];
                     foreach ($oldImages as $oldImage) {
@@ -186,7 +164,6 @@ class GivingBackController extends Controller
                         }
                     }
                 }
-                // Store new images
                 $imagePaths = [];
                 foreach ($request->file('image_slider') as $image) {
                     if ($image->isValid()) {
@@ -206,7 +183,7 @@ class GivingBackController extends Controller
             \Log::info('Giving Back record updated successfully for ID: ' . $giving_id);
             return response()->json([
                 'message' => 'Giving Back record updated successfully.',
-                'giving_back' => $givingBack->fresh()
+                'giving_back' => $givingBack->fresh(),
             ], 200);
         } catch (Exception $e) {
             \Log::error('Error updating giving back record for ID ' . $giving_id . ': ' . $e->getMessage());
@@ -214,9 +191,6 @@ class GivingBackController extends Controller
         }
     }
 
-    /**
-     * Remove the specified giving back record.
-     */
     public function destroy($giving_id)
     {
         $givingBack = GivingBack::find($giving_id);
@@ -226,7 +200,6 @@ class GivingBackController extends Controller
         }
 
         try {
-            // Delete images if they exist
             if ($givingBack->image_slider) {
                 $imagePaths = json_decode($givingBack->image_slider, true) ?? [];
                 foreach ($imagePaths as $imagePath) {

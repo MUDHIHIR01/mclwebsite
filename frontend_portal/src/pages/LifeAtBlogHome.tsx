@@ -348,7 +348,7 @@ const SubBlogModal: React.FC<SubBlogModalProps> = ({ blogId, blogTitle, onClose 
 const BlogCard: React.FC<{ item: BlogData; onReadMore: (id: number, title: string) => void }> = ({ item, onReadMore }) => {
   return (
     <motion.div
-      className="bg-[#fff1e5] shadow-lg flex flex-col"
+      className="bg-[white] shadow-lg flex flex-col"
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}

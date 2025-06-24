@@ -173,11 +173,11 @@ Route::prefix('sustainability-homes')->group(function () {
 
 
 
-Route::get('/giving-back', [GivingBackController::class, 'index']);
-Route::post('/giving-back', [GivingBackController::class, 'store']);
-Route::get('/giving-back/{giving_id}', [GivingBackController::class, 'show']);
-Route::post('/giving-back/{giving_id}/update', [GivingBackController::class, 'update']);
-Route::delete('/giving-back/{giving_id}', [GivingBackController::class, 'destroy']);
+Route::get('/giving-backs', [GivingBackController::class, 'index']);
+Route::post('/giving-backs', [GivingBackController::class, 'store']);
+Route::get('/giving-backs/{giving_id}', [GivingBackController::class, 'show']);
+Route::post('/giving-backs/{giving_id}/update', [GivingBackController::class, 'update']);
+Route::delete('/giving-backs/{giving_id}', [GivingBackController::class, 'destroy']);
 
 
 Route::prefix('giving-back-homes')->group(function () {
@@ -219,6 +219,8 @@ Route::get('/sub-standard/latest', [SubStandardController::class, 'latest']);
 Route::post('/sub-standard', [SubStandardController::class, 'store']);
 Route::get('/sub-standard/{subStandard_id}', [SubStandardController::class, 'show']);
 Route::post('/sub-standard/{subStandard_id}/update', [SubStandardController::class, 'update']);
+// This route now EXACTLY matches the URL and method from your React app.
+Route::post('/our-standard/{our_id}', [OurStandardController::class, 'update']);
 Route::delete('/sub-standard/{subStandard_id}', [SubStandardController::class, 'destroy']);
 
 

@@ -15,14 +15,6 @@ class OurStandardHomeController extends Controller
         $this->middleware('auth:sanctum')->except(['index', 'show', 'latest','ourStandardHomeSlider']);
     }
 
-    /**
-     * Return a standardized JSON response.
-     *
-     * @param mixed $data
-     * @param string $message
-     * @param int $status
-     * @return \Illuminate\Http\JsonResponse
-     */
     private function jsonResponse($data, string $message, int $status)
     {
         return response()->json([
@@ -31,53 +23,28 @@ class OurStandardHomeController extends Controller
         ], $status);
     }
 
-    /**
-     * Handle image upload and deletion.
-     *
-     * @param Request $request
-     * @param OurStandardHome|null $ourStandard
-     * @return string|null
-     */
-    private function handleImageUpload(Request $request, ?OurStandardHome $ourStandard = null): ?string
+    private function handleImageUpload(Request $request, ?OurStandardHome $ourStandardHome = null): ?string
     {
         if (!$request->hasFile('home_img') || !$request->file('home_img')->isValid()) {
-            return $ourStandard?->home_img;
+            return $ourStandardHome?->home_img;
         }
 
-        // Delete old image if it exists
-        if ($ourStandard && $ourStandard->home_img && file_exists(public_path($ourStandard->home_img))) {
-            unlink(public_path($ourStandard->home_img));
-            Log::info('Deleted image file', ['path' => $ourStandard->home_img]);
+        // Delete old image if updating and one exists
+        if ($ourStandardHome && $ourStandardHome->home_img && file_exists(public_path($ourStandardHome->home_img))) {
+            unlink(public_path($ourStandardHome->home_img));
+            Log::info('Deleted old image file', ['path' => $ourStandardHome->home_img]);
         }
 
         $image = $request->file('home_img');
         $imageName = time() . '_' . preg_replace('/\s+/', '_', $image->getClientOriginalName());
-        $uploadPath = public_path('Uploads/our_standard_home_images');
+        $uploadPath = 'Uploads/our_standard_home_images';
+        $image->move(public_path($uploadPath), $imageName);
+        $imagePath = $uploadPath . '/' . $imageName;
 
-        if (!file_exists($uploadPath)) {
-            mkdir($uploadPath, 0755, true);
-        }
-
-        $image->move($uploadPath, $imageName);
-        $imagePath = 'Uploads/our_standard_home_images/' . $imageName;
-        Log::info('Uploaded image file', ['path' => $imagePath]);
-
+        Log::info('Uploaded new image file', ['path' => $imagePath]);
         return $imagePath;
     }
 
-    /**
-     * Display a listing of our_standard_home records.
-     */
-    public function index()
-    {
-        try {
-            $ourStandards = OurStandardHome::orderBy('id', 'desc')->get();
-            return $this->jsonResponse(['our_standard_homes' => $ourStandards], 'OurStandardHome records retrieved successfully', 200);
-        } catch (Exception $e) {
-            Log::error('Error fetching OurStandardHome records', ['error' => $e->getMessage()]);
-            return $this->jsonResponse(null, 'Failed to fetch OurStandardHome records', 500);
-        }
-    }
 
     public function ourStandardHomeSlider()
     {
@@ -90,133 +57,112 @@ class OurStandardHomeController extends Controller
         }
     }
 
-    /**
-     * Display the latest our_standard_home record based on created_at.
-     */
-    public function latest()
+    public function index()
     {
         try {
-            $latestOurStandard = OurStandardHome::orderBy('created_at', 'desc')->first();
-
-            if (!$latestOurStandard) {
-                return $this->jsonResponse(null, 'No OurStandardHome record found', 404);
-            }
-
-            return $this->jsonResponse(['our_standard_home' => $latestOurStandard], 'Latest OurStandardHome record retrieved successfully', 200);
+            $ourStandards = OurStandardHome::orderBy('created_at', 'desc')->get();
+            return $this->jsonResponse(['our_standard_homes' => $ourStandards], 'Records retrieved successfully', 200);
         } catch (Exception $e) {
-            Log::error('Error fetching latest OurStandardHome record', ['error' => $e->getMessage()]);
-            return $this->jsonResponse(null, 'Failed to fetch latest OurStandardHome record', 500);
+            Log::error('Error fetching OurStandardHome records', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to fetch records', 'error' => $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Store a newly created our_standard_home record.
-     */
+    public function latest()
+    {
+        try {
+            $latest = OurStandardHome::latest('created_at')->first();
+            if (!$latest) {
+                return $this->jsonResponse(null, 'No record found', 404);
+            }
+            return $this->jsonResponse(['our_standard_home' => $latest], 'Latest record retrieved successfully', 200);
+        } catch (Exception $e) {
+            Log::error('Error fetching latest OurStandardHome record', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to fetch latest record', 'error' => $e->getMessage()], 500);
+        }
+    }
+
     public function store(Request $request)
     {
-        Log::info('Processing store request for OurStandardHome', ['data' => $request->all()]);
-
         $validator = Validator::make($request->all(), [
             'heading' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
+            'description' => 'nullable|string',
             'home_img' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:2048',
-        ], [
-            'heading.required' => 'The heading field is required.',
-            'home_img.mimes' => 'The image must be a JPEG, PNG, JPG, or GIF file.',
-            'home_img.max' => 'The image size must not exceed 2MB.',
         ]);
 
         if ($validator->fails()) {
-            Log::warning('Validation failed for OurStandardHome store', ['errors' => $validator->errors()->toArray()]);
-            return $this->jsonResponse(['errors' => $validator->errors()], 'Validation failed', 422);
+            return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 422);
         }
 
         try {
             $data = $validator->validated();
             $data['home_img'] = $this->handleImageUpload($request);
-
-            $ourStandard = OurStandardHome::create($data);
-            return $this->jsonResponse(['our_standard_home' => $ourStandard], 'OurStandardHome record created successfully', 201);
+            $record = OurStandardHome::create($data);
+            return $this->jsonResponse(['our_standard_home' => $record], 'Record created successfully', 201);
         } catch (Exception $e) {
             Log::error('Error creating OurStandardHome record', ['error' => $e->getMessage()]);
-            return $this->jsonResponse(null, 'Failed to create OurStandardHome record', 500);
+            return response()->json(['message' => 'Failed to create record', 'error' => $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Display the specified our_standard_home record.
-     */
     public function show($id)
     {
-        $ourStandard = OurStandardHome::find($id);
-
-        if (!$ourStandard) {
-            return $this->jsonResponse(null, 'OurStandardHome record not found', 404);
+        try {
+            $record = OurStandardHome::find($id);
+            if (!$record) {
+                return $this->jsonResponse(null, 'Record not found', 404);
+            }
+            return $this->jsonResponse(['our_standard_home' => $record], 'Record retrieved successfully', 200);
+        } catch (Exception $e) {
+            Log::error('Error showing OurStandardHome record', ['id' => $id, 'error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to retrieve record', 'error' => $e->getMessage()], 500);
         }
-
-        return $this->jsonResponse(['our_standard_home' => $ourStandard], 'OurStandardHome record retrieved successfully', 200);
     }
 
-    /**
-     * Update the specified our_standard_home record.
-     */
     public function update(Request $request, $id)
     {
-        Log::info('Processing update request for OurStandardHome', ['id' => $id, 'data' => $request->all()]);
-
-        $ourStandard = OurStandardHome::find($id);
-        if (!$ourStandard) {
-            return $this->jsonResponse(null, 'OurStandardHome record not found', 404);
+        $record = OurStandardHome::find($id);
+        if (!$record) {
+            return $this->jsonResponse(null, 'Record not found', 404);
         }
 
         $validator = Validator::make($request->all(), [
-            'heading' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
+            'heading' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
             'home_img' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:2048',
-        ], [
-            'heading.required' => 'The heading field is required.',
-            'home_img.mimes' => 'The image must be a JPEG, PNG, JPG, or GIF file.',
-            'home_img.max' => 'The image size must not exceed 2MB.',
         ]);
 
         if ($validator->fails()) {
-            Log::warning('Validation failed for OurStandardHome update', ['id' => $id, 'errors' => $validator->errors()->toArray()]);
-            return $this->jsonResponse(['errors' => $validator->errors()], 'Validation failed', 422);
+            return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 422);
         }
 
         try {
             $data = $validator->validated();
-            $data['home_img'] = $this->handleImageUpload($request, $ourStandard);
-
-            $ourStandard->update($data);
-            return $this->jsonResponse(['our_standard_home' => $ourStandard->fresh()], 'OurStandardHome record updated successfully', 200);
+            $data['home_img'] = $this->handleImageUpload($request, $record);
+            $record->update($data);
+            return $this->jsonResponse(['our_standard_home' => $record->fresh()], 'Record updated successfully', 200);
         } catch (Exception $e) {
             Log::error('Error updating OurStandardHome record', ['id' => $id, 'error' => $e->getMessage()]);
-            return $this->jsonResponse(null, 'Failed to update OurStandardHome record', 500);
+            return response()->json(['message' => 'Failed to update record', 'error' => $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Remove the specified our_standard_home record.
-     */
     public function destroy($id)
     {
-        $ourStandard = OurStandardHome::find($id);
-        if (!$ourStandard) {
-            return $this->jsonResponse(null, 'OurStandardHome record not found', 404);
-        }
-
         try {
-            if ($ourStandard->home_img && file_exists(public_path($ourStandard->home_img))) {
-                unlink(public_path($ourStandard->home_img));
-                Log::info('Deleted image file', ['path' => $ourStandard->home_img]);
+            $record = OurStandardHome::find($id);
+            if (!$record) {
+                return $this->jsonResponse(null, 'Record not found', 404);
             }
-
-            $ourStandard->delete();
-            return $this->jsonResponse(null, 'OurStandardHome record deleted successfully', 200);
+            // Delete associated image file
+            if ($record->home_img && file_exists(public_path($record->home_img))) {
+                unlink(public_path($record->home_img));
+            }
+            $record->delete();
+            return $this->jsonResponse(null, 'Record deleted successfully', 200);
         } catch (Exception $e) {
             Log::error('Error deleting OurStandardHome record', ['id' => $id, 'error' => $e->getMessage()]);
-            return $this->jsonResponse(null, 'Failed to delete OurStandardHome record', 500);
+            return response()->json(['message' => 'Failed to delete record', 'error' => $e->getMessage()], 500);
         }
     }
 }

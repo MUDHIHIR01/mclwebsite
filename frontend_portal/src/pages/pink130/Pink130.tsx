@@ -135,13 +135,33 @@ export default function Pink130() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axiosInstance.get<Pink130Data[]>('/api/pink-130');
-      // REFINED LINE: The response data is the array itself, as defined by the generic type.
-      setData(response.data);
+      const response = await axiosInstance.get<{ pink130s: unknown }>('/api/pink-130');
+      // Validate that response.data.pink130s is an array
+      if (!('pink130s' in response.data) || !Array.isArray(response.data.pink130s)) {
+        throw new Error('API response does not contain a valid pink130s array');
+      }
+      // Validate each item matches Pink130Data interface
+      const validatedData = response.data.pink130s.filter((item): item is Pink130Data => {
+        return (
+          typeof item === 'object' &&
+          item !== null &&
+          'pink_id' in item &&
+          typeof item.pink_id === 'number' &&
+          'category' in item &&
+          typeof item.category === 'string' &&
+          'created_at' in item &&
+          typeof item.created_at === 'string'
+        );
+      });
+      setData(validatedData);
+      if (response.data.pink130s.length !== validatedData.length) {
+        toast.warn('Some records were filtered out due to invalid data format.');
+      }
     } catch (err: any) {
       const errorMessage = 'Failed to fetch pink-130 records: ' + (err.response?.data?.error || err.message || 'Unknown error');
       setError(errorMessage);
-      toast.error('Failed to fetch pink-130 records.');
+      setData([]); // Ensure data is an empty array on error
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -237,10 +257,10 @@ export default function Pink130() {
     const worksheet = XLSX.utils.json_to_sheet(
       data.map((row, index) => ({
         '#': index + 1,
-        'Category': row.category,
-        'Description': row.description || 'None',
-        'Video': row.video || 'None',
-        'PDF': row.pdf_file || 'None',
+        Category: row.category,
+        Description: row.description || 'None',
+        Video: row.video || 'None',
+        PDF: row.pdf_file || 'None',
         'Created At': new Date(row.created_at).toLocaleDateString(),
       }))
     );
@@ -281,12 +301,13 @@ export default function Pink130() {
           </Link>
         </div>
 
-        {error && !loading && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md border border-red-300">{error}</div>}
+        {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md border border-red-300">{error}</div>}
 
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <input
+            type="text"
             value={globalFilter || ''}
-            onChange={(e) => setGlobalFilter(e.target.value)}
+            onChange={(e) => setGlobalFilter(e.target.value || '')}
             placeholder="Search entries..."
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
           />
@@ -333,8 +354,8 @@ export default function Pink130() {
         {data.length > 0 && page.length > 0 && (
           <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
             <div className="flex gap-2">
-              <button onClick={() => previousPage()} disabled={!canPreviousPage} className="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition">Previous</button>
-              <button onClick={() => nextPage()} disabled={!canNextPage} className="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition">Next</button>
+              <button onClick={previousPage} disabled={!canPreviousPage} className="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition">Previous</button>
+              <button onClick={nextPage} disabled={!canNextPage} className="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition">Next</button>
             </div>
             <div className="text-sm text-gray-700">
               Page <span className="font-medium">{pageIndex + 1}</span> of <span className="font-medium">{pageOptions.length}</span>
@@ -344,7 +365,9 @@ export default function Pink130() {
               onChange={(e) => setPageSize(Number(e.target.value))}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {[5, 10, 20, 30, 50].map((size) => (<option key={size} value={size}>Show {size}</option>))}
+              {[5, 10, 20, 30, 50].map((size) => (
+                <option key={size} value={size}>Show {size}</option>
+              ))}
             </select>
           </div>
         )}
