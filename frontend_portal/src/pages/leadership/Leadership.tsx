@@ -19,6 +19,11 @@ interface LeadershipData {
   updated_at?: string;
 }
 
+// API response interface
+interface LeadershipApiResponse {
+  leadership: LeadershipData[];
+}
+
 // Props for ActionButtons
 interface ActionButtonsProps {
   leadershipId: number;
@@ -37,8 +42,9 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ leadershipId, onDeletionS
     } catch (err) {
       toast.error('Failed to delete leadership record.', { position: 'top-right' });
       console.error("Delete error:", err);
+    } finally {
+      setShowConfirm(false);
     }
-    setShowConfirm(false);
   };
 
   return (
@@ -116,6 +122,40 @@ const ImageModal: React.FC<{ imageUrl: string; onClose: () => void }> = ({ image
   );
 };
 
+// Error Boundary Component
+class LeadershipErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("Error caught in LeadershipErrorBoundary:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col justify-center items-center min-h-screen p-4">
+          <div className="text-red-500 text-xl font-semibold mb-4">Something went wrong</div>
+          <p className="text-gray-700 mb-2">{this.state.error?.message || 'An unexpected error occurred.'}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+          >
+            Refresh Page
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function Leadership() {
   const [data, setData] = useState<LeadershipData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,12 +166,17 @@ export default function Leadership() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axiosInstance.get<LeadershipData[]>('/api/leadership');
-      setData(response.data);
+      const response = await axiosInstance.get<LeadershipApiResponse>('/api/leadership');
+      const leadershipData = response.data.leadership;
+      if (!Array.isArray(leadershipData)) {
+        throw new Error('API response "leadership" field is not an array');
+      }
+      setData(leadershipData);
     } catch (err: any) {
       const errorMessage = 'Failed to fetch leadership records: ' + (err.response?.data?.error || err.message || 'Unknown error');
       setError(errorMessage);
-      toast.error('Failed to fetch leadership records.');
+      toast.error(errorMessage);
+      setData([]);
     } finally {
       setLoading(false);
     }
@@ -248,106 +293,135 @@ export default function Leadership() {
     toast.success('Excel exported successfully!');
   };
 
-  if (loading) return <div className="flex justify-center items-center min-h-screen"><div className="text-lg font-semibold">Loading...</div></div>;
-
-  if (error && data.length === 0) {
+  if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen p-4">
-        <div className="text-red-500 text-xl font-semibold mb-4">Error</div>
-        <p className="text-gray-700 mb-2">{error}</p>
-        <button
-          onClick={fetchLeadership}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
-        >
-          Try Again
-        </button>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-lg font-semibold">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4 sm:p-6">
-      <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
-      {selectedImage && <ImageModal imageUrl={selectedImage} onClose={() => setSelectedImage(null)} />}
-      <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">Leadership Management</h2>
-          <Link to="/add/leadership" className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition shadow-md">
-            <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Create Leadership Record
-          </Link>
-        </div>
-
-        {error && !loading && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md border border-red-300">{error}</div>}
-
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-          <input
-            value={globalFilter || ''}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            placeholder="Search entries..."
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
-          />
-          <div className="flex gap-2">
-            <button onClick={exportToPDF} className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">Export PDF</button>
-            <button onClick={exportToExcel} className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">Export Excel</button>
+    <LeadershipErrorBoundary>
+      <div className="container mx-auto p-4 sm:p-6">
+        <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
+        {selectedImage && <ImageModal imageUrl={selectedImage} onClose={() => setSelectedImage(null)} />}
+        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Leadership Management</h2>
+            <Link to="/add-leadership" className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+              <svg className="h-5 w-5 mr-2 text-center" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Create Leadership
+            </Link>
           </div>
-        </div>
 
-        <div className="overflow-x-auto">
-          <table {...getTableProps()} className="w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
-            <thead className="bg-gray-50">
-              {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map((column) => (
-                    <th {...column.getHeaderProps()} className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {column.render('Header')}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody {...getTableBodyProps()} className="divide-y divide-gray-200">
-              {page.length > 0 ? (
-                page.map((row) => {
-                  prepareRow(row);
-                  return (
-                    <tr {...row.getRowProps()} className="hover:bg-gray-50 transition-colors">
-                      {row.cells.map((cell) => (
-                        <td {...cell.getCellProps()} className="px-2 sm:px-4 py-4 text-sm text-gray-700">
-                          {cell.render('Cell')}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr><td colSpan={columns.length} className="text-center py-10 text-gray-500">No leadership records found matching your criteria.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg border border-red-200">
+              {error}
+              <button
+                onClick={fetchLeadership}
+                className="ml-4 px-4 py-1 text-sm bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition"
+              >
+                Retry
+              </button>
+            </div>
+          )}
 
-        {data.length > 0 && page.length > 0 && (
-          <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <input
+              value={globalFilter || ''}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              placeholder="Search by name or position..."
+              className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+            />
             <div className="flex gap-2">
-              <button onClick={() => previousPage()} disabled={!canPreviousPage} className="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition">Previous</button>
-              <button onClick={() => nextPage()} disabled={!canNextPage} className="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition">Next</button>
+              <button onClick={exportToPDF} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Export PDF</button>
+              <button onClick={exportToExcel} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">Export Excel</button>
             </div>
-            <div className="text-sm text-gray-700">
-              Page <span className="font-medium">{pageIndex + 1}</span> of <span className="font-medium">{pageOptions.length}</span>
-            </div>
-            <select
-              value={pageSize}
-              onChange={(e) => setPageSize(Number(e.target.value))}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {[5, 10, 20, 30, 50].map((size) => (<option key={size} value={size}>Show {size}</option>))}
-            </select>
           </div>
-        )}
+
+          <div className="overflow-x-auto">
+            <table {...getTableProps()} className="min-w-full divide-y divide-gray-200 bg-white border border-gray-200 rounded-lg">
+              <thead className="bg-gray-50">
+                {headerGroups.map((headerGroup) => (
+                  <tr {...headerGroup.getHeaderGroupProps()}>
+                    {headerGroup.headers.map((column) => (
+                      <th
+                        {...column.getHeaderProps()}
+                        className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                      >
+                        {column.render('Header')}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody {...getTableBodyProps()} className="divide-y divide-gray-200">
+                {page.length > 0 ? (
+                  page.map((row) => {
+                    prepareRow(row);
+                    return (
+                      <tr {...row.getRowProps()} className="hover:bg-gray-50 transition-colors">
+                        {row.cells.map((cell) => (
+                          <td
+                            {...cell.getCellProps()}
+                            className="px-4 py-3 text-sm text-gray-900"
+                          >
+                            {cell.render('Cell')}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={columns.length} className="px-4 py-6 text-center text-gray-500">
+                      No leadership records found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {data.length > 0 && (
+            <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => previousPage()}
+                  disabled={ !canPreviousPage}
+                  className="px-4 py-2 bg-blue-600 text-white disabled:bg-gray-300 disabled:cursor-not-allowed rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => nextPage()}
+                  disabled={ !canNextPage}
+                  className="px-4 py-2 bg-blue-600 text-white disabled:bg-gray-300 disabled:cursor-not-allowed rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+              <span className="text-sm text-gray-600">
+                Page <span className="font-semibold">{pageIndex + 1}</span> of <span className="font-semibold">{pageOptions.length}</span>
+              </span>
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
+              >
+                {[5, 10, 20, 50].map((size) => (
+                  <option key={size} value={size}>
+                    Show {size} rows
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </LeadershipErrorBoundary>
   );
 }

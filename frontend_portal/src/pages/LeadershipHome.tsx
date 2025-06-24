@@ -186,7 +186,7 @@ const LeadershipCard: React.FC<{ leader: LeadershipData }> = ({ leader }) => {
 
   return (
     <motion.div
-      className="bg-[#fff1e5] shadow-lg flex flex-col"
+      className="bg-[white] shadow-lg flex flex-col"
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}

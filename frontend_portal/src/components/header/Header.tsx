@@ -2,6 +2,11 @@ import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
+// --- REFINEMENT: Import the logo as a module ---
+// Place your logo.png inside your `src/assets` folder.
+// Adjust the path '../../assets/logo.png' if your file structure is different.
+import mclLogo from '../../assets/logo.png';
+
 // --- Interfaces ---
 interface NavItem {
   label: string;
@@ -21,7 +26,7 @@ interface MobileMenuProps {
   onClose: () => void;
 }
 
-// --- Constant Data (Performance Refinement) ---
+// --- Constant Data ---
 const companyMenuItems: NavItem[] = [
   { label: "NMG-Group", path: "/company/mcl-group" },
   { label: "Leadership", path: "/company/leadership" },
@@ -55,7 +60,6 @@ const navLinkClass = "relative no-underline font-semibold text-base uppercase te
 
 
 // --- Sub-Components ---
-
 const DropdownMenu: React.FC<DropdownMenuProps> = ({ isOpen, items, onClose }) => (
   <motion.div
     className={`absolute left-0 mt-2 w-56 bg-[#0A51A1] rounded-lg z-50 ${isOpen ? "block" : "hidden"}`}
@@ -86,7 +90,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, navItems, onClose }) =>
   <AnimatePresence>
     {isOpen && (
       <motion.nav
-        className="absolute top-full left-012 w-full bg-[#0A51A1] lg:hidden p-6  max-h-[calc(100vh-5.5rem)] overflow-y-auto"
+        className="absolute top-full left-0 w-full bg-[#0A51A1] lg:hidden p-6 max-h-[calc(100vh-5.5rem)] overflow-y-auto"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
@@ -140,14 +144,11 @@ const Header: React.FC = () => {
       transition={{ duration: 0.5 }}
     >
       <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-16 lg:px-15 py-4">
-        {/* --- REFINEMENT ---
-          * Changed `justify-between` to `justify-start` to align both logo and nav to the left.
-          * Added `gap-x-12` to create a visible space between the logo and the navigation links.
-        */}
         <div className=" flex items-center justify-start gap-x-12">
           {/* Logo container */}
           <Link to="/" className="flex-shrink-0 lg:px-9">
-            <img src="/logo.png" alt="MCL" className="h-16 md:h-20 w-auto object-contain" />
+            {/* --- REFINEMENT: Use the imported logo variable --- */}
+            <img src={mclLogo} alt="MCL Logo" className="h-16 md:h-20 w-auto object-contain" />
           </Link>
 
           {/* Navigation links container */}
@@ -179,7 +180,7 @@ const Header: React.FC = () => {
           </nav>
         </div>
 
-        {/* The mobile menu button stays on the far right, which is correct */}
+        {/* Mobile menu button */}
         <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2">
           <button
             className="lg:hidden text-white z-50"
