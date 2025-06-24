@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTable, useGlobalFilter, usePagination } from 'react-table';
+// *** FIX 1: Import the necessary types from react-table ***
+import { useTable, useGlobalFilter, usePagination, Column, CellProps, Row } from 'react-table';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -24,6 +25,7 @@ interface ApiResponse {
   error?: string;
 }
 
+// ... (ActionButtons, DescriptionCell, and ImageModal components remain the same)
 interface ActionButtonsProps {
   id: number;
   onDeletionSuccess: () => void;
@@ -46,8 +48,9 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ id, onDeletionSuccess }) 
 
   return (
     <div className="flex items-center gap-2">
+      {/* Edit link points to a more specific path */}
       <Link
-        to={`/edit/our-standards/${id}`}
+        to={`/edit/our-standards/home/${id}`}
         className="p-2 text-blue-600 hover:text-blue-700"
         aria-label="Edit entry"
       >
@@ -148,6 +151,7 @@ const ImageModal: React.FC<{ imageUrl: string; onClose: () => void }> = ({ image
   );
 };
 
+
 const ViewOurStandardHome: React.FC = () => {
   const [data, setData] = useState<OurStandardHomeData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -156,6 +160,7 @@ const ViewOurStandardHome: React.FC = () => {
   const [globalFilter, setGlobalFilter] = useState('');
 
   const fetchData = useCallback(async () => {
+    // ... fetchData logic ...
     setLoading(true);
     setError(null);
     try {
@@ -176,37 +181,40 @@ const ViewOurStandardHome: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  const columns = useMemo(
+  // *** FIX 2: Explicitly type the columns array ***
+  // This tells TypeScript exactly what shape to expect, resolving the error.
+  const columns = useMemo<Column<OurStandardHomeData>[]>(
     () => [
       {
         Header: '#',
         id: 'rowIndex',
-        Cell: ({ row, flatRows }: any) => flatRows.indexOf(row) + 1,
+        // Type the cell props for better safety
+        Cell: ({ row, flatRows }: { row: Row<OurStandardHomeData>; flatRows: Row<OurStandardHomeData>[] }) => 
+            flatRows.findIndex(flatRow => flatRow.id === row.id) + 1,
       },
-      { Header: 'Heading', accessor: 'heading' },
+      {
+        Header: 'Heading',
+        accessor: 'heading', // This is now correctly typed as a keyof OurStandardHomeData
+      },
       {
         Header: 'Description',
         accessor: 'description',
-        Cell: ({ value }: { value: string | null }) => <DescriptionCell value={value} />,
+        Cell: ({ value }: CellProps<OurStandardHomeData, string | null>) => <DescriptionCell value={value} />,
       },
       {
         Header: 'Image',
         accessor: 'home_img',
-        Cell: ({ value }: { value: string | null }) => {
+        Cell: ({ value }: CellProps<OurStandardHomeData, string | null>) => {
           if (!value) return <span className="text-gray-500 text-sm">No Image</span>;
           const imageUrl = `${axiosInstance.defaults.baseURL?.replace(/\/$/, '')}/${value}`;
           return (
-            <button
-              onClick={() => setSelectedImage(imageUrl)}
-              aria-label="View image"
-            >
+            <button onClick={() => setSelectedImage(imageUrl)} aria-label="View image">
               <img
                 src={imageUrl}
                 alt="Entry image"
                 className="h-16 w-16 object-cover rounded hover:opacity-80"
                 onError={(e) => {
-                  e.currentTarget.src = 'https://via.placeholder.com/64x64?text=Image+Not+Found';
-                  e.currentTarget.alt = 'Image load error';
+                  e.currentTarget.src = 'https://via.placeholder.com/64x64?text=Not+Found';
                 }}
               />
             </button>
@@ -216,13 +224,14 @@ const ViewOurStandardHome: React.FC = () => {
       {
         Header: 'Created At',
         accessor: 'created_at',
-        Cell: ({ value }: { value: string }) =>
+        Cell: ({ value }: CellProps<OurStandardHomeData, string>) =>
           new Date(value).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
       },
       {
         Header: 'Actions',
-        accessor: 'id',
-        Cell: ({ row }: any) => (
+        id: 'actions', // It's better practice to give custom columns an 'id'
+        // Use the 'row' prop which is typed
+        Cell: ({ row }: CellProps<OurStandardHomeData>) => (
           <ActionButtons id={row.original.id} onDeletionSuccess={fetchData} />
         ),
       },
@@ -245,11 +254,13 @@ const ViewOurStandardHome: React.FC = () => {
     state: { pageIndex, pageSize },
     setGlobalFilter: setTableGlobalFilter,
   } = useTable(
+    // The columns prop now perfectly matches the expected type
     { columns, data, initialState: { pageIndex: 0, pageSize: 10 } },
     useGlobalFilter,
     usePagination
   );
 
+  // ... (rest of the component JSX and export logic remains the same)
   const exportToPDF = useCallback(() => {
     const doc = new jsPDF();
     doc.text('Our Standard Home Entries', 20, 10);

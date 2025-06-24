@@ -24,6 +24,15 @@ interface AboutCardData {
   createdAt: string;
 }
 
+interface BrandData {
+  brand_id: number;
+  brand_img: string;
+  category: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
+
 const AboutHeroSection: React.FC = () => {
   const [data, setData] = useState<AboutSliderData[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -156,7 +165,7 @@ const AboutContentSection: React.FC = () => {
     try {
       const [companyRes, serviceRes, careersRes, newsRes] = await Promise.allSettled([
         axiosInstance.get("/api/latest/mcl-groups"),
-        axiosInstance.get("/api/latest/service"),
+        axiosInstance.get("/api/latestService"), // Updated endpoint
         axiosInstance.get("/api/latestEarlyCareer"),
         axiosInstance.get("/api/latestnew"),
       ]);
@@ -164,19 +173,51 @@ const AboutContentSection: React.FC = () => {
       const orderedCards: AboutCardData[] = [];
       if (companyRes.status === "fulfilled" && companyRes.value.data.data) {
         const company = companyRes.value.data.data;
-        orderedCards.push({ id: company.mcl_id, type: "Company", title: "Our Company", description: company.description, imageUrl: company.image_file, linkUrl: "/company/home", createdAt: company.created_at });
+        orderedCards.push({
+          id: company.mcl_id,
+          type: "Company",
+          title: "Our Company",
+          description: company.description,
+          imageUrl: company.image_file,
+          linkUrl: "/company/home",
+          createdAt: company.created_at,
+        });
       }
-      if (serviceRes.status === "fulfilled" && serviceRes.value.data.service) {
-        const service = serviceRes.value.data.service;
-        orderedCards.push({ id: service.service_id, type: "Service", title: "Our Services", description: service.description, imageUrl: service.service_img, linkUrl: "/company/services", createdAt: service.created_at });
+      if (serviceRes.status === "fulfilled" && serviceRes.value.data) {
+        const service = serviceRes.value.data; // Adjusted to match response structure
+        orderedCards.push({
+          id: service.services_home_id,
+          type: "Service",
+          title: service.heading || "Our Services", // Map heading to title
+          description: service.description,
+          imageUrl: service.home_img,
+          linkUrl: "/company/services",
+          createdAt: service.created_at,
+        });
       }
       if (careersRes.status === "fulfilled" && careersRes.value.data.early_career) {
         const career = careersRes.value.data.early_career;
-        orderedCards.push({ id: career.early_career_id, type: "Careers", title: "Careers", description: career.description, imageUrl: career.img_file, linkUrl: "/careers/what-we-do", createdAt: career.created_at });
+        orderedCards.push({
+          id: career.early_career_id,
+          type: "Careers",
+          title: "Careers",
+          description: career.description,
+          imageUrl: career.img_file,
+          linkUrl: "/careers/what-we-do",
+          createdAt: career.created_at,
+        });
       }
       if (newsRes.status === "fulfilled" && newsRes.value.data.news) {
         const news = newsRes.value.data.news;
-        orderedCards.push({ id: news.news_id, type: "News", title: "Latest News", description: news.description, imageUrl: news.news_img, linkUrl: "/company/news", createdAt: news.created_at });
+        orderedCards.push({
+          id: news.news_id,
+          type: "News",
+          title: "Latest News",
+          description: news.description,
+          imageUrl: news.news_img,
+          linkUrl: "/company/news",
+          createdAt: news.created_at,
+        });
       }
       setCards(orderedCards);
     } catch {
@@ -194,7 +235,7 @@ const AboutContentSection: React.FC = () => {
     <section className="py-16">
       <div className="max-w-6xl mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">Our Company at a Glance</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold text-[#ed1c24]">Our Company at a Glance</h2>
           <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto py-4"></p>
         </div>
         {loading ? (
@@ -202,7 +243,7 @@ const AboutContentSection: React.FC = () => {
             <ArrowPathIcon className="w-8 h-8 mx-auto text-white animate-spin" />
           </div>
         ) : cards.length ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16 mt-12">
             {cards.map((card) => (
               <motion.div
                 key={`${card.type}-${card.id}`}
@@ -250,10 +291,91 @@ const AboutContentSection: React.FC = () => {
   );
 };
 
+const BrandsSection: React.FC = () => {
+  const [brands, setBrands] = useState<BrandData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchBrands = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await axiosInstance.get<BrandData[]>("/api/allBrands");
+      setBrands(Array.isArray(response.data) ? response.data : []);
+    } catch {
+      toast.error("Failed to fetch brands.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchBrands();
+  }, [fetchBrands]);
+
+  if (loading) {
+    return (
+      <div className="py-8 text-center">
+        <ArrowPathIcon className="w-8 h-8 mx-auto text-white animate-spin" />
+      </div>
+    );
+  }
+
+  if (!brands.length) {
+    return (
+      <div className="py-8 text-center text-white">
+        <InformationCircleIcon className="w-12 h-12 mx-auto text-gray-400" />
+        <p className="mt-4 text-lg">No brands found at this time.</p>
+      </div>
+    );
+  }
+
+  // Duplicate brands array for seamless looping
+  const extendedBrands = [...brands, ...brands];
+
+  return (
+    <section className="py-12 bg-[#fff1e5]">
+      <div className="max-w-6xl mx-auto px-4">
+        <h2 className="text-3xl font-bold text-center text-[#ed1c24] mb-8">Our Brands</h2>
+        <div className="overflow-hidden">
+          <motion.div
+            className="flex"
+            animate={{
+              x: ["0%", "-100%"],
+              transition: {
+                x: {
+                  repeat: Infinity,
+                  repeatType: "loop",
+                  duration: brands.length * 4, // Adjust speed based on number of brands
+                  ease: "linear",
+                },
+              },
+            }}
+          >
+            {extendedBrands.map((brand, index) => (
+              <div
+                key={`${brand.brand_id}-${index}`}
+                className="flex-shrink-0 w-40 mx-4"
+              >
+                <img
+                  src={`${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${brand.brand_img.replace(/^\//, "")}`}
+                  alt={brand.category}
+                  className="w-full h-20 object-contain"
+                  onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/150x50?text=Image+Error")}
+                  loading="lazy"
+                />
+                <p className="text-center text-sm font-medium text-gray-800 mt-2">{brand.category}</p>
+              </div>
+            ))}
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const AboutPage: React.FC = () => (
   <div
     className="min-h-screen text-white font-sans flex flex-col"
-    style={{ backgroundColor: '#262a33' }}
+    style={{ backgroundColor: '#003459' }}
   >
     <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
     
@@ -263,6 +385,7 @@ const AboutPage: React.FC = () => (
     
     <main className="flex-grow">
       <AboutContentSection />
+      <BrandsSection />
     </main>
 
     <footer>

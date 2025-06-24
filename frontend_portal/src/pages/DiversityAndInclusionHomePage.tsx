@@ -13,7 +13,7 @@ import {
   NewspaperIcon,
 } from "@heroicons/react/24/outline";
 
-// --- INTERFACES ---
+// Interfaces
 interface DiversityHomeData {
   dhome_id: number;
   heading: string;
@@ -28,7 +28,7 @@ interface DiversityData {
   pdf_file: string | null;
 }
 
-// --- Diversity Home Slideshow ---
+// Diversity Home Slideshow Component
 const DiversityHomeSlideshow: React.FC = () => {
   const [data, setData] = useState<DiversityHomeData[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -50,7 +50,9 @@ const DiversityHomeSlideshow: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => { fetchDiversityHomes(); }, [fetchDiversityHomes]);
+  useEffect(() => {
+    fetchDiversityHomes();
+  }, [fetchDiversityHomes]);
 
   useEffect(() => {
     if (data.length <= 1) return;
@@ -79,7 +81,10 @@ const DiversityHomeSlideshow: React.FC = () => {
         </div>
         <p className="text-lg text-gray-200">{error || "No slides were found for this section."}</p>
         {error && (
-          <button onClick={fetchDiversityHomes} className="mt-6 flex items-center px-6 py-3 bg-gray-800 text-white font-semibold rounded-full hover:bg-gray-700 transition">
+          <button
+            onClick={fetchDiversityHomes}
+            className="mt-6 flex items-center px-6 py-3 bg-gray-800 text-white font-semibold rounded-full hover:bg-gray-700 transition"
+          >
             <ArrowPathIcon className="w-5 h-5 mr-2" />Retry
           </button>
         )}
@@ -100,7 +105,11 @@ const DiversityHomeSlideshow: React.FC = () => {
         >
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
           <img
-            src={data[currentSlide].home_img ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${data[currentSlide].home_img!.replace(/^\//, "")}` : "https://via.placeholder.com/1200x600?text=Image+Missing"}
+            src={
+              data[currentSlide].home_img
+                ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${data[currentSlide].home_img!.replace(/^\//, "")}`
+                : "https://via.placeholder.com/1200x600?text=Image+Missing"
+            }
             alt={data[currentSlide].heading}
             className="w-full h-full object-cover"
             onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/1200x600?text=Image+Error")}
@@ -155,7 +164,7 @@ const DiversityHomeSlideshow: React.FC = () => {
   );
 };
 
-// --- Individual Diversity Card Component ---
+// Diversity Card Component
 const DiversityCard: React.FC<{ item: DiversityData }> = ({ item }) => {
   return (
     <motion.div
@@ -198,7 +207,7 @@ const DiversityCard: React.FC<{ item: DiversityData }> = ({ item }) => {
   );
 };
 
-// --- Diversity Section Component ---
+// Diversity Section Component
 const DiversitySection: React.FC = () => {
   const [diversityData, setDiversityData] = useState<DiversityData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -218,7 +227,9 @@ const DiversitySection: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => { fetchDiversityData(); }, [fetchDiversityData]);
+  useEffect(() => {
+    fetchDiversityData();
+  }, [fetchDiversityData]);
 
   if (loading) {
     return (
@@ -235,7 +246,10 @@ const DiversitySection: React.FC = () => {
         <h3 className="mt-4 text-2xl font-bold text-gray-800">{error ? "Failed to Load Content" : "No Content Available"}</h3>
         <p className="mt-2 text-gray-600">{error || "There is no diversity and inclusion data to display at the moment."}</p>
         {error && (
-          <button onClick={fetchDiversityData} className="mt-6 flex items-center px-6 py-3 bg-gray-800 text-white font-semibold rounded-full hover:bg-gray-700 transition">
+          <button
+            onClick={fetchDiversityData}
+            className="mt-6 flex items-center px-6 py-3 bg-gray-800 text-white font-semibold rounded-full hover:bg-gray-700 transition"
+          >
             <ArrowPathIcon className="w-5 h-5 mr-2" />Retry
           </button>
         )}
@@ -247,7 +261,7 @@ const DiversitySection: React.FC = () => {
     <section className="py-16">
       <div className="max-w-6xl mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 inline-flex items-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-[#ed1c24] inline-flex items-center">
             <GlobeAltIcon className="w-9 h-9 mr-3" />
             Diversity & Inclusion
           </h2>
@@ -265,7 +279,7 @@ const DiversitySection: React.FC = () => {
   );
 };
 
-// --- Main DiversityHomePage Component ---
+// Main DiversityHomePage Component
 const DiversityHomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">

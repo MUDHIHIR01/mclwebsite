@@ -10,6 +10,13 @@ interface FormData {
   home_img: File | null;
 }
 
+// **FIX 1: Create a dedicated interface for form error messages.**
+interface FormErrors {
+  heading?: string;
+  description?: string;
+  home_img?: string;
+}
+
 const AddDiversityHome: React.FC = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
@@ -17,11 +24,8 @@ const AddDiversityHome: React.FC = () => {
     description: '',
     home_img: null,
   });
-  const [errors, setErrors] = useState<Partial<FormData>>({
-    heading: '',
-    description: '',
-    home_img: '',
-  });
+  // **FIX 2: Use the new FormErrors interface and initialize with an empty object.**
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
 
   const handleChange = (
@@ -29,17 +33,24 @@ const AddDiversityHome: React.FC = () => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    // Clear the error for the field that is being changed
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, home_img: file }));
-    setErrors((prev) => ({ ...prev, home_img: '' }));
+    // Clear the error for the file input
+    if (errors.home_img) {
+      setErrors((prev) => ({ ...prev, home_img: undefined }));
+    }
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    // **FIX 3: Type the newErrors object with FormErrors.**
+    const newErrors: FormErrors = {};
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -51,10 +62,12 @@ const AddDiversityHome: React.FC = () => {
       newErrors.description = 'Description must not exceed 1000 characters';
     }
 
-    if (formData.home_img && !['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.home_img.type)) {
-      newErrors.home_img = 'Only JPEG, PNG, JPG, or GIF files are allowed';
-    } else if (formData.home_img && formData.home_img.size > 2 * 1024 * 1024) {
-      newErrors.home_img = 'Image size must not exceed 2MB';
+    if (formData.home_img) {
+        if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.home_img.type)) {
+            newErrors.home_img = 'Only JPEG, PNG, JPG, or GIF files are allowed'; // This is now valid
+        } else if (formData.home_img.size > 2 * 1024 * 1024) {
+            newErrors.home_img = 'Image size must not exceed 2MB'; // This is now valid
+        }
     }
 
     setErrors(newErrors);
@@ -154,6 +167,7 @@ const AddDiversityHome: React.FC = () => {
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
             {errors.home_img && (
+              // This is now valid, as errors.home_img is a string (a valid ReactNode)
               <p id="home_img-error" className="mt-1 text-sm text-red-500">
                 {errors.home_img}
               </p>

@@ -25,6 +25,14 @@ interface FormData {
   home_img: File | null;
 }
 
+// **FIX 1: Added a dedicated interface for form error messages.**
+// This ensures that error states hold strings, not File objects.
+interface FormErrors {
+  heading?: string;
+  description?: string;
+  home_img?: string;
+}
+
 // Props for ActionButtons
 interface ActionButtonsProps {
   contHomeId: number;
@@ -168,7 +176,8 @@ const FormModal: React.FC<FormModalProps> = ({ isOpen, onClose, onSuccess, initi
     home_img: null,
   });
   const [currentImage, setCurrentImage] = useState<string | null>(initialData?.home_img || null);
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+  // **FIX 2: Changed the type of the errors state to use the new FormErrors interface.**
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
 
   const isEditMode = !!initialData;
@@ -191,17 +200,22 @@ const FormModal: React.FC<FormModalProps> = ({ isOpen, onClose, onSuccess, initi
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, home_img: file }));
-    setErrors((prev) => ({ ...prev, home_img: '' }));
+    if (errors.home_img) {
+      setErrors((prev) => ({ ...prev, home_img: undefined }));
+    }
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    // **FIX 3: Changed the type of the newErrors object to FormErrors.**
+    const newErrors: FormErrors = {};
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -236,12 +250,15 @@ const FormModal: React.FC<FormModalProps> = ({ isOpen, onClose, onSuccess, initi
     if (formData.home_img) {
       payload.append('home_img', formData.home_img);
     } else if (isEditMode && currentImage && !formData.home_img) {
+      // This logic might need review depending on backend API. 
+      // Sending an empty string might be interpreted as "remove the image".
       payload.append('home_img', '');
     }
 
     try {
       const url = isEditMode ? `/api/contact-homes/${initialData?.cont_home_id}/update` : '/api/contact-homes';
-      const method = isEditMode ? 'post' : 'post';
+      // Laravel often requires POST for updates with form-data, so 'post' is likely correct.
+      const method = 'post'; 
       const response = await axiosInstance({
         method,
         url,
@@ -359,6 +376,7 @@ const FormModal: React.FC<FormModalProps> = ({ isOpen, onClose, onSuccess, initi
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100"
             />
             {errors.home_img && (
+              // This now correctly receives a string, which is a valid ReactNode.
               <p id="home_img-error" className="mt-1 text-sm text-red-600">{errors.home_img}</p>
             )}
             <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed types: jpg, png, gif.</p>
@@ -577,19 +595,18 @@ export default function ContactHomeManagement() {
       <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">Contact Home Management</h2>
-          <Link
-            to="/add/contact/home"
-            className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition shadow-md"
+          <button
             onClick={() => {
               setEditingRecord(undefined);
               setIsFormModalOpen(true);
             }}
+            className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition shadow-md"
           >
             <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Create Contact Home Slider
-          </Link>
+          </button>
         </div>
 
         {error && !loading && (

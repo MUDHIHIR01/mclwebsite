@@ -48,6 +48,7 @@ use App\Http\Controllers\StayConnectedHomeController;
 use App\Http\Controllers\StayConnectedController;
 use App\Http\Controllers\EarycareHomeController;
 use App\Http\Controllers\EarlyCareersController;
+use App\Http\Controllers\BrandController;
 
 // Public Routes
 Route::get('/login', function () {
@@ -110,6 +111,8 @@ Route::get('/leadershipHomeSlider', [LeadershipHomeController::class, 'leadershi
         Route::get('/stayconnected/sliders', [StayConnectedHomeController::class, 'stayConnectedHomeSlider'])->name('stay-connected-home.sliders');
       Route::get('/stay-connected/all', [StayConnectedController::class, 'allStayConnected']);
       Route::get('/latestEarlyCareer', [EarlyCareersController::class, 'latestEarlyCareer']);
+      Route::get('/allBrands', [BrandController::class, 'allBrands']);
+      Route::get('/latestService', [ServicesHomeController::class, 'latestService']);
         
 
 // Protected Routes
@@ -509,5 +512,11 @@ Route::get('/early-careers/{early_career_id}', [EarlyCareersController::class, '
 Route::post('/early-careers', [EarlyCareersController::class, 'store']);
 Route::post('/early-careers/{early_career_id}', [EarlyCareersController::class, 'update']);
 Route::delete('/early-careers/{early_career_id}', [EarlyCareersController::class, 'destroy']);
+
+
+
+//brands
+Route::resource('brands', BrandController::class);
+Route::post('/edit/brand/{brand_id}', [BrandController::class, 'update']);
 });
 

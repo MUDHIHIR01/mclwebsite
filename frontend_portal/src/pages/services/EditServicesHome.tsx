@@ -4,10 +4,19 @@ import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// This interface is correct for the form's data
 interface FormData {
   heading: string;
   description: string;
   home_img: File | null;
+}
+
+// REFINEMENT 1: Create a dedicated interface for form error messages.
+// Each property is a string, which is the correct type for an error message.
+interface FormErrors {
+  heading?: string;
+  description?: string;
+  home_img?: string;
 }
 
 interface ServicesHomeData {
@@ -33,7 +42,8 @@ const EditServicesHome: React.FC = () => {
     home_img: null,
   });
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+  // REFINEMENT 2: Use the new FormErrors interface for the errors state.
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
@@ -85,11 +95,13 @@ const EditServicesHome: React.FC = () => {
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, home_img: file }));
+    // This was the source of the first error. It's now valid.
     setErrors((prev) => ({ ...prev, home_img: '' }));
   }, []);
 
   const validateForm = useCallback((): boolean => {
-    const newErrors: Partial<FormData> = {};
+    // REFINEMENT 3: Use FormErrors for the local newErrors object.
+    const newErrors: FormErrors = {};
     if (!formData.heading.trim()) newErrors.heading = 'Heading is required';
     if (formData.heading.length > 255)
       newErrors.heading = 'Heading must not exceed 255 characters';
@@ -97,8 +109,10 @@ const EditServicesHome: React.FC = () => {
       newErrors.description = 'Description must not exceed 1000 characters';
     if (formData.home_img) {
       if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.home_img.type)) {
+        // This was the source of the second error. It's now valid.
         newErrors.home_img = 'Only JPEG, PNG, JPG, or GIF files allowed';
       } else if (formData.home_img.size > 2 * 1024 * 1024) {
+        // This was the source of the third error. It's now valid.
         newErrors.home_img = 'Image must not exceed 2MB';
       }
     }
@@ -110,13 +124,17 @@ const EditServicesHome: React.FC = () => {
     if (!validateForm() || !services_homeId) return;
 
     setLoading(true);
-    const payload = new FormData();
+    const payload = new window.FormData(); // Use window.FormData to avoid name collision
     payload.append('heading', formData.heading);
     payload.append('description', formData.description);
     if (formData.home_img) payload.append('home_img', formData.home_img);
+    
+    // For PUT requests with FormData, Laravel needs a method spoof.
+    payload.append('_method', 'PUT');
 
     try {
-      const response = await axiosInstance.put<ApiResponse>(
+      // Use POST to send multipart/form-data with a spoofed method.
+      const response = await axiosInstance.post<ApiResponse>(
         `/api/services-homes/${services_homeId}`,
         payload,
         { headers: { 'Content-Type': 'multipart/form-data' } }
@@ -131,16 +149,19 @@ const EditServicesHome: React.FC = () => {
       const errorResponse = err.response?.data || {};
       const errorMessage = errorResponse.error || 'Failed to update entry';
       const backendErrors = errorResponse.errors || {};
-      const formattedErrors: Partial<FormData> = {};
+      // REFINEMENT 4: Use FormErrors for mapping backend validation errors.
+      const formattedErrors: FormErrors = {};
       for (const key in backendErrors) {
-        if (key in formData) formattedErrors[key as keyof FormData] = backendErrors[key][0];
+        if (key in formData) {
+          formattedErrors[key as keyof FormErrors] = backendErrors[key][0];
+        }
       }
       setErrors(formattedErrors);
       toast.error(errorMessage, { position: 'top-right' });
     } finally {
       setLoading(false);
     }
-  }, [formData, services_homeId, navigate]);
+  }, [formData, services_homeId, navigate, validateForm]);
 
   const getImageUrl = useCallback(
     (path: string | null): string | undefined =>
@@ -222,11 +243,12 @@ const EditServicesHome: React.FC = () => {
                 <p className="text-sm text-gray-600">Current Image:</p>
                 <img
                   src={getImageUrl(currentImage)}
-                  alt="Current image"
+                  alt="Current"
                   className="h-32 w-auto rounded border"
                   onError={(e) => {
                     e.currentTarget.src =
                       'https://via.placeholder.com/128x128?text=Image+Not+Found';
+                    e.currentTarget.alt = 'Current image not found';
                   }}
                 />
               </div>
@@ -240,12 +262,14 @@ const EditServicesHome: React.FC = () => {
               className="mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
             {errors.home_img && (
+              // This was the source of the fourth error. It's now valid.
               <p className="mt-1 text-sm text-red-500">{errors.home_img}</p>
             )}
-            <p className="mt-1 text-xs text-gray-500">Max 2MB. JPG, PNG, GIF.</p>
+            <p className="mt-1 text-xs text-gray-500">Max 2MB. JPG, PNG, GIF. Leave blank to keep current image.</p>
           </div>
           <div className="flex justify-end gap-4">
             <button
+              type="button"
               onClick={() => navigate('/services/home')}
               className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400"
             >

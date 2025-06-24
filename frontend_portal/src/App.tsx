@@ -13,7 +13,6 @@ import Buttons from "./pages/UiElements/Buttons";
 import LineChart from "./pages/Charts/LineChart";
 import BarChart from "./pages/Charts/BarChart";
 import Calendar from "./pages/Calendar";
-import BasicTables from "./pages/Tables/BasicTables";
 import FormElements from "./pages/Forms/FormElements";
 import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
@@ -159,7 +158,9 @@ import BenefitiesLayout  from './pages/BenefitiesLayout'
 import  ValuesLayout from  './pages/ValuesLayout'
 import  EaryCareerLayout from './pages/EaryCareerLayout'
 import  StayCoonnectedLayout  from './pages/StayCoonnectedLayout'
-
+import  Brands  from  './pages/brands/Brands'
+import  AddBrand  from './pages/brands/AddBrand.tsx'
+import  EditBrand from './pages/brands/EditBrand.tsx'
 
 // Define props for ProtectedRoute
 interface ProtectedRouteProps {
@@ -1120,6 +1121,32 @@ export default function App() {
     </ProtectedRoute>
   }
 />
+
+
+<Route
+  path="/brands"
+  element={
+    <ProtectedRoute>
+      <Brands />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/add/brand"
+  element={
+    <ProtectedRoute>
+      <AddBrand />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/edit/brand/:brand_id"
+  element={
+    <ProtectedRoute>
+      <EditBrand />
+    </ProtectedRoute>
+  }
+/>
             <Route
               path="/calendar"
               element={
@@ -1147,15 +1174,7 @@ export default function App() {
               }
             />
 
-            {/* Tables */}
-            <Route
-              path="/basic-tables"
-              element={
-                <ProtectedRoute>
-                  <BasicTables />
-                </ProtectedRoute>
-              }
-            />
+          
 
             {/* Ui Elements */}
             <Route

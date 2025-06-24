@@ -1,5 +1,5 @@
 import MainDashboard from "../../components/main/MainDashboard";
-import MonthlySalesChart from "../../components/main/MonthlySalesChart";
+// **FIX: Removed the unused import of MonthlySalesChart.**
 import PageMeta from "../../components/common/PageMeta";
 
 export default function Home() {
@@ -15,6 +15,13 @@ export default function Home() {
         <div className="grid grid-cols-1 gap-4">
           <MainDashboard />
         </div>
+
+        {/* If you intended to use the MonthlySalesChart, you would add it here like this: */}
+        {/*
+          <div className="grid grid-cols-1 gap-4">
+            <MonthlySalesChart />
+          </div>
+        */}
 
       </div>
     </>

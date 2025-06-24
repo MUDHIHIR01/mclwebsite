@@ -10,6 +10,12 @@ interface FormDataState {
   img_file: File | null;
 }
 
+interface FormErrors {
+  category: string;
+  description: string;
+  img_file: string | undefined;
+}
+
 const Editwedo: React.FC = () => {
   const navigate = useNavigate();
   const { we_do_id } = useParams<{ we_do_id: string }>();
@@ -19,7 +25,7 @@ const Editwedo: React.FC = () => {
     img_file: null,
   });
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Partial<FormDataState>>({
+  const [errors, setErrors] = useState<FormErrors>({
     category: '',
     description: '',
     img_file: undefined,
@@ -66,7 +72,7 @@ const Editwedo: React.FC = () => {
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormDataState> = {};
+    const newErrors: Partial<FormErrors> = {};
 
     if (!formData.category.trim()) {
       newErrors.category = 'Category is required';
@@ -86,7 +92,7 @@ const Editwedo: React.FC = () => {
       }
     }
 
-    setErrors(newErrors);
+    setErrors(newErrors as FormErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -117,10 +123,10 @@ const Editwedo: React.FC = () => {
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to update What We Do record';
       const backendErrors = error.response?.data?.errors || {};
-      const formattedErrors: Partial<FormDataState> = {};
+      const formattedErrors: Partial<FormErrors> = {};
       for (const key in backendErrors) {
         if (key in formData) {
-          formattedErrors[key as keyof FormDataState] = backendErrors[key][0];
+          formattedErrors[key as keyof FormErrors] = backendErrors[key][0];
         }
       }
       setErrors((prev) => ({ ...prev, ...formattedErrors }));
@@ -225,7 +231,7 @@ const Editwedo: React.FC = () => {
             />
             {errors.img_file && (
               <p id="img_file-error" className="mt-1 text-sm text-red-500">
-                {errors.img_file as string}
+                {errors.img_file}
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed types: JPG, PNG, GIF.</p>
@@ -251,7 +257,7 @@ const Editwedo: React.FC = () => {
                     className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
-                    viewBox="0 24 24"
+                    viewBox="0 0 24 24"
                   >
                     <circle
                       className="opacity-25"

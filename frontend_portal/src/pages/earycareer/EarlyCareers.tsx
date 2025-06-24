@@ -1,421 +1,349 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useTable, useGlobalFilter, usePagination } from 'react-table';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Data from form submission
+interface FormData {
+  category: string;
+  description: string;
+  img_file: File | null;
+  video_file: File | null;
+}
+
+// **FIX 1: Create a dedicated interface for form error messages.**
+interface FormErrors {
+    category?: string;
+    description?: string;
+    img_file?: string;
+    video_file?: string;
+}
+
+// Data from API
 interface EarlyCareerData {
   early_career_id: number;
   category: string;
   description: string | null;
   img_file: string | null;
   video_file: string | null;
-  created_at: string;
-  updated_at?: string;
 }
 
-interface ActionButtonsProps {
-  early_career_id: number;
-  onDeletionSuccess: () => void;
+// API response might be nested
+interface ApiGetResponse {
+    early_career: EarlyCareerData;
 }
 
-const ActionButtons: React.FC<ActionButtonsProps> = ({ early_career_id, onDeletionSuccess }) => {
-  const [showConfirm, setShowConfirm] = useState(false);
+const EditEarlyCareer = () => {
+  const navigate = useNavigate();
+  const { early_career_id } = useParams<{ early_career_id: string }>();
+  const [formData, setFormData] = useState<FormData>({
+    category: '',
+    description: '',
+    img_file: null,
+    video_file: null,
+  });
+  const [currentImage, setCurrentImage] = useState<string | null>(null);
+  const [currentVideo, setCurrentVideo] = useState<string | null>(null);
+  // **FIX 2: Use the new FormErrors interface and initialize with an empty object.**
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const handleDelete = async () => {
-    try {
-      await axiosInstance.delete(`/api/early-careers/${early_career_id}`);
-      toast.success('Early career entry deleted successfully!', { position: 'top-right' });
-      onDeletionSuccess();
-    } catch (err) {
-      toast.error('Failed to delete early career entry.', { position: 'top-right' });
-      console.error("Delete error:", err);
+  useEffect(() => {
+    const fetchEarlyCareer = async () => {
+      if (!early_career_id) {
+        toast.error('Early career ID is missing.');
+        navigate('/early-careers');
+        return;
+      }
+      try {
+        const response = await axiosInstance.get<ApiGetResponse>(`/api/early-careers/${early_career_id}`);
+        const earlyCareer = response.data.early_career;
+        setFormData({
+          category: earlyCareer.category || '',
+          description: earlyCareer.description || '',
+          img_file: null,
+          video_file: null,
+        });
+        setCurrentImage(earlyCareer.img_file);
+        setCurrentVideo(earlyCareer.video_file);
+      } catch (error: any) {
+        toast.error('Failed to fetch early career entry');
+        console.error("Fetch error:", error);
+        navigate('/early-careers');
+      }
+    };
+
+    fetchEarlyCareer();
+  }, [early_career_id, navigate]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
-    setShowConfirm(false);
   };
 
-  return (
-    <div className="relative flex items-center gap-2">
-      <Link to={`/edit/early-career/${early_career_id}`} className="p-1 text-blue-500 hover:text-blue-600" aria-label="Edit">
-        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-        </svg>
-      </Link>
-      <button onClick={() => setShowConfirm(true)} className="p-1 text-red-500 hover:text-red-600" aria-label="Delete">
-        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-        </svg>
-      </button>
-      {showConfirm && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Confirm Deletion</h3>
-            <p className="text-sm text-gray-600 mb-6">Are you sure you want to delete this early career entry?</p>
-            <div className="flex justify-end gap-4">
-              <button onClick={() => setShowConfirm(false)} className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition">No</button>
-              <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Yes, Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name } = e.target;
+    const file = e.target.files?.[0] || null;
+    setFormData((prev) => ({ ...prev, [name]: file }));
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+  };
 
-const DescriptionCell: React.FC<{ value: string | null }> = ({ value }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const maxLength = 100;
+  const validateForm = (): boolean => {
+    // **FIX 3: Type the newErrors object with FormErrors.**
+    const newErrors: FormErrors = {};
 
-  if (!value) {
-    return <span className="text-gray-500 text-xs">No Description</span>;
-  }
+    if (!formData.category.trim()) {
+      newErrors.category = 'Category is required';
+    } else if (formData.category.length > 255) {
+      newErrors.category = 'Category must not exceed 255 characters';
+    }
 
-  const truncatedText = value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
+    if (formData.img_file) {
+      if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.img_file.type)) {
+        newErrors.img_file = 'Only JPEG, PNG, JPG, or GIF files are allowed';
+      } else if (formData.img_file.size > 2 * 1024 * 1024) {
+        newErrors.img_file = 'Image size must not exceed 2MB';
+      }
+    }
 
-  return (
-    <div className="text-sm text-gray-700">
-      {isExpanded ? value : truncatedText}
-      {value.length > maxLength && (
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="ml-2 text-blue-500 hover:text-blue-600 text-xs font-medium"
-        >
-          {isExpanded ? 'Read Less' : 'Read More'}
-        </button>
-      )}
-    </div>
-  );
-};
+    if (formData.video_file) {
+      if (!['video/mp4', 'video/x-msvideo', 'video/quicktime', 'video/x-ms-wmv'].includes(formData.video_file.type)) {
+        newErrors.video_file = 'Only MP4, AVI, MOV, or WMV files are allowed';
+      } else if (formData.video_file.size > 10 * 1024 * 1024) {
+        newErrors.video_file = 'Video size must not exceed 10MB';
+      }
+    }
 
-const MediaModal: React.FC<{ mediaUrl: string; isVideo: boolean; onClose: () => void }> = ({ mediaUrl, isVideo, onClose }) => {
-  return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50" role="dialog" aria-modal="true" onClick={onClose}>
-      <div className="relative bg-white rounded-lg p-4 w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute top-2 right-2 text-gray-600 hover:text-gray-800" aria-label="Close modal">
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-        {isVideo ? (
-          <video
-            src={mediaUrl}
-            controls
-            className="w-full h-auto max-h-[80vh] rounded"
-            onError={(e) => {
-              (e.currentTarget as HTMLVideoElement).poster = 'https://via.placeholder.com/300x300?text=Video+Error';
-            }}
-          />
-        ) : (
-          <img
-            src={mediaUrl}
-            alt="Full-size image"
-            className="w-full h-auto max-h-[80vh] object-contain rounded"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = 'https://via.placeholder.com/300x300?text=Image+Error';
-              (e.currentTarget as HTMLImageElement).alt = 'Image load error';
-            }}
-          />
-        )}
-      </div>
-    </div>
-  );
-};
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-export default function EarlyCareers() {
-  const [data, setData] = useState<EarlyCareerData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [errorDetails, setErrorDetails] = useState<string | null>(null);
-  const [selectedMedia, setSelectedMedia] = useState<{ url: string; isVideo: boolean } | null>(null);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
 
-  const fetchEarlyCareers = useCallback(async () => {
     setLoading(true);
-    setError(null);
-    setErrorDetails(null);
+    const payload = new FormData();
+    payload.append('category', formData.category);
+    payload.append('description', formData.description || '');
+    if (formData.img_file) {
+      payload.append('img_file', formData.img_file);
+    }
+    if (formData.video_file) {
+      payload.append('video_file', formData.video_file);
+    }
+
     try {
-      const response = await axiosInstance.get('/api/early-careers');
-      setData(response.data.early_careers || []);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'Failed to fetch early career entries';
-      const errorDetails = err.response?.data?.details || null;
-      setError(errorMessage);
-      setErrorDetails(errorDetails);
+      // NOTE: For updates with FormData, you must use POST and may need a _method field
+      // payload.append('_method', 'PUT'); // If Laravel backend expects it
+      const response = await axiosInstance.post(`/api/early-careers/${early_career_id}`, payload, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      toast.success(response.data.message || 'Early career entry updated successfully');
+      setFormData((prev) => ({ ...prev, img_file: null, video_file: null }));
+      setCurrentImage(response.data.early_career?.img_file || null);
+      setCurrentVideo(response.data.early_career?.video_file || null);
+      setTimeout(() => navigate('/early-careers'), 2000);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Failed to update early career entry';
+      const backendErrors = error.response?.data?.errors || {};
+      setErrors(backendErrors);
       toast.error(errorMessage);
+      console.error("Submit error:", error);
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  useEffect(() => {
-    fetchEarlyCareers();
-  }, [fetchEarlyCareers]);
-
-  const columns = useMemo(
-    () => [
-      {
-        Header: '#',
-        id: 'rowIndex',
-        Cell: ({ row, flatRows }: any) => {
-          const originalIndex = flatRows.findIndex((flatRow: any) => flatRow.original === row.original);
-          return <span>{originalIndex + 1}</span>;
-        },
-      },
-      { Header: 'Category', accessor: 'category' },
-      {
-        Header: 'Description',
-        accessor: 'description',
-        Cell: ({ value }: { value: string | null }) => <DescriptionCell value={value} />,
-      },
-      {
-        Header: 'Image',
-        accessor: 'img_file',
-        Cell: ({ value }: { value: string | null }) => {
-          if (!value) return <span className="text-gray-500 text-xs">No Image</span>;
-          const baseUrl = axiosInstance.defaults.baseURL || window.location.origin;
-          const imageUrl = `${baseUrl.replace(/\/$/, '')}/${value.replace(/^\//, '')}`;
-          return (
-            <button onClick={() => setSelectedMedia({ url: imageUrl, isVideo: false })} className="focus:outline-none" aria-label="View full-size image">
-              <img
-                src={imageUrl}
-                alt="Early career item"
-                className="h-16 w-16 object-cover rounded cursor-pointer hover:opacity-80 transition"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = 'https://via.placeholder.com/64x64?text=Image+Error';
-                  (e.currentTarget as HTMLImageElement).alt = 'Image load error';
-                }}
-              />
-            </button>
-          );
-        },
-      },
-      {
-        Header: 'Video',
-        accessor: 'video_file',
-        Cell: ({ value }: { value: string | null }) => {
-          if (!value) return <span className="text-gray-500 text-xs">No Video</span>;
-          const baseUrl = axiosInstance.defaults.baseURL || window.location.origin;
-          const videoUrl = `${baseUrl.replace(/\/$/, '')}/${value.replace(/^\//, '')}`;
-          return (
-            <button onClick={() => setSelectedMedia({ url: videoUrl, isVideo: true })} className="focus:outline-none" aria-label="View video">
-              <video
-                src={videoUrl}
-                className="h-16 w-16 object-cover rounded cursor-pointer hover:opacity-80 transition"
-                onError={(e) => {
-                  (e.currentTarget as HTMLVideoElement).poster = 'https://via.placeholder.com/64x64?text=Video+Error';
-                }}
-              />
-            </button>
-          );
-        },
-      },
-      {
-        Header: 'Created At',
-        accessor: 'created_at',
-        Cell: ({ value }: { value: string }) => new Date(value).toLocaleDateString(),
-      },
-      {
-        Header: 'Actions',
-        accessor: 'early_career_id',
-        Cell: ({ row }: any) => (
-          <ActionButtons early_career_id={row.original.early_career_id} onDeletionSuccess={fetchEarlyCareers} />
-        ),
-      },
-    ],
-    [fetchEarlyCareers]
-  );
-
-  const tableInstance = useTable(
-    { columns, data, initialState: { pageIndex: 0, pageSize: 10 } },
-    useGlobalFilter,
-    usePagination
-  );
-
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    page,
-    prepareRow,
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
-    nextPage,
-    previousPage,
-    setPageSize,
-    setGlobalFilter,
-    state: { pageIndex, pageSize, globalFilter },
-  } = tableInstance;
-
-  const exportToPDF = () => {
-    const doc = new jsPDF();
-    doc.text('Early Careers Entries', 20, 10);
-    autoTable(doc, {
-      head: [['#', 'Category', 'Description', 'Created At']],
-      body: data.map((row, index) => [
-        index + 1,
-        row.category,
-        row.description || 'No Description',
-        new Date(row.created_at).toLocaleDateString(),
-      ]),
-    });
-    doc.save('early_careers.pdf');
-    toast.success('PDF exported successfully!');
   };
 
-  const exportToExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(
-      data.map((row, index) => ({
-        '#': index + 1,
-        Category: row.category,
-        Description: row.description || 'No Description',
-        'Created At': new Date(row.created_at).toLocaleDateString(),
-      }))
-    );
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'EarlyCareers');
-    XLSX.writeFile(workbook, 'early_careers.xlsx');
-    toast.success('Excel exported successfully!');
+  const getMediaUrl = (mediaPath: string | null): string | undefined => {
+    if (!mediaPath) return undefined;
+    const baseUrl = (axiosInstance.defaults.baseURL || window.location.origin).replace(/\/$/, '');
+    const path = mediaPath.replace(/^\//, '');
+    return `${baseUrl}/${path}`;
   };
 
-  if (loading) return <div className="flex justify-center items-center min-h-screen"><div className="text-lg font-semibold">Loading...</div></div>;
-
-  if (error && data.length === 0) {
-    return (
-      <div className="flex flex-col justify-center items-center min-h-screen p-4">
-        <div className="text-red-500 text-xl font-semibold mb-4">Error</div>
-        <p className="text-gray-700 mb-2">{error}</p>
-        {errorDetails && (
-          <p className="text-gray-500 text-sm mb-4">{errorDetails}</p>
-        )}
-        <button
-          onClick={fetchEarlyCareers}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
-        >
-          Try Again
-        </button>
-      </div>
-    );
-  }
+  const displayImageUrl = getMediaUrl(currentImage);
+  const displayVideoUrl = getMediaUrl(currentVideo);
 
   return (
-    <div className="container mx-auto p-4 sm:p-6">
-      <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
-      {selectedMedia && (
-        <MediaModal
-          mediaUrl={selectedMedia.url}
-          isVideo={selectedMedia.isVideo}
-          onClose={() => setSelectedMedia(null)}
-        />
-      )}
-      <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">Early Careers Management</h2>
-          <Link to="/add/early-career" className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition shadow-md">
-            <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Create Early Career
-          </Link>
-        </div>
-
-        {error && !loading && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md border border-red-300">{error}</div>}
-
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-          <input
-            value={globalFilter || ''}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            placeholder="Search early career entries..."
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
-          />
-          <div className="flex gap-2">
-            <button onClick={exportToPDF} className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">Export PDF</button>
-            <button onClick={exportToExcel} className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">Export Excel</button>
+    <div className="p-4 sm:p-6 lg:p-8 w-full min-h-screen">
+      <ToastContainer position="top-right" autoClose={3000} style={{ top: '70px', zIndex: 9999 }} />
+      <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 w-full">
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-800 mb-6">
+          Edit Early Career Entry
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Form fields remain the same */}
+          <div>
+            <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+              Category <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="category"
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              className={`mt-1 block w-full rounded-md border shadow-sm p-2 sm:p-3 text-sm sm:text-base ${
+                errors.category ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+              }`}
+              placeholder="Enter category"
+              maxLength={255}
+              aria-invalid={!!errors.category}
+              aria-describedby={errors.category ? 'category-error' : undefined}
+            />
+            {errors.category && (
+              <p id="category-error" className="mt-1 text-sm text-red-500">
+                {errors.category}
+              </p>
+            )}
           </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table {...getTableProps()} className="w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
-            <thead className="bg-gray-50">
-              {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map((column) => (
-                    <th
-                      {...column.getHeaderProps()}
-                      className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      {column.render('Header')}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody {...getTableBodyProps()} className="divide-y divide-gray-200">
-              {page.length > 0 ? (
-                page.map((row) => {
-                  prepareRow(row);
-                  return (
-                    <tr {...row.getRowProps()} className="hover:bg-gray-50 transition-colors">
-                      {row.cells.map((cell) => (
-                        <td
-                          {...cell.getCellProps()}
-                          className="px-2 sm:px-6 py-4 text-sm text-gray-700"
-                        >
-                          {cell.render('Cell')}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={columns.length} className="text-center py-10 text-gray-500">
-                    No early career entries found matching your criteria.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {data.length > 0 && page.length > 0 && (
-          <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
-            <div className="flex gap-2">
-              <button
-                onClick={() => previousPage()}
-                disabled={!canPreviousPage}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => nextPage()}
-                disabled={!canNextPage}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition"
-              >
-                Next
-              </button>
-            </div>
-            <div className="text-sm text-gray-700">
-              Page <span className="font-medium">{pageIndex + 1}</span> of <span className="font-medium">{pageOptions.length}</span>
-            </div>
-            <select
-              value={pageSize}
-              onChange={(e) => setPageSize(Number(e.target.value))}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+              Description
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows={4}
+              className={`mt-1 block w-full rounded-md border shadow-sm p-2 sm:p-3 text-sm sm:text-base ${
+                errors.description ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+              }`}
+              placeholder="Enter description (optional)"
+              aria-invalid={!!errors.description}
+              aria-describedby={errors.description ? 'description-error' : undefined}
+            />
+            {errors.description && (
+              <p id="description-error" className="mt-1 text-sm text-red-500">
+                {errors.description}
+              </p>
+            )}
+          </div>
+          <div>
+            <label htmlFor="img_file" className="block text-sm font-medium text-gray-700">
+              Image (optional)
+            </label>
+            {displayImageUrl && (
+              <div className="my-2">
+                <p className="text-sm text-gray-600 mb-1">Current Image:</p>
+                <img
+                  src={displayImageUrl}
+                  alt="Current Early Career"
+                  className="h-32 w-auto max-w-xs object-contain rounded border border-gray-200"
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://via.placeholder.com/128x128?text=Image+Error';
+                    e.currentTarget.alt = 'Error loading current image';
+                    console.warn("Error loading current image from URL:", displayImageUrl);
+                  }}
+                />
+              </div>
+            )}
+            <input
+              type="file"
+              id="img_file"
+              name="img_file"
+              accept="image/jpeg,image/png,image/jpg,image/gif"
+              onChange={handleFileChange}
+              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {errors.img_file && (
+              <p id="img_file-error" className="mt-1 text-sm text-red-500">
+                {errors.img_file}
+              </p>
+            )}
+            <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed types: JPG, PNG, GIF.</p>
+          </div>
+          <div>
+            <label htmlFor="video_file" className="block text-sm font-medium text-gray-700">
+              Video (optional)
+            </label>
+            {displayVideoUrl && (
+              <div className="my-2">
+                <p className="text-sm text-gray-600 mb-1">Current Video:</p>
+                <video
+                  src={displayVideoUrl}
+                  controls
+                  className="h-32 w-auto max-w-xs rounded border border-gray-200"
+                  onError={(e) => {
+                    (e.currentTarget.poster) = 'https://via.placeholder.com/128x128?text=Video+Error';
+                    console.warn("Error loading current video from URL:", displayVideoUrl);
+                  }}
+                />
+              </div>
+            )}
+            <input
+              type="file"
+              id="video_file"
+              name="video_file"
+              accept="video/mp4,video/avi,video/quicktime,video/wmv"
+              onChange={handleFileChange}
+              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {errors.video_file && (
+              <p id="video_file-error" className="mt-1 text-sm text-red-500">
+                {errors.video_file}
+              </p>
+            )}
+            <p className="mt-1 text-xs text-gray-500">Max file size: 10MB. Allowed types: MP4, AVI, MOV, WMV.</p>
+          </div>
+          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+            <button
+              type="button"
+              onClick={() => navigate('/early-careers')}
+              className="w-full sm:w-auto px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition shadow-sm text-sm sm:text-base"
             >
-              {[5, 10, 20, 30, 50].map((size) => (
-                <option key={size} value={size}>
-                  Show {size}
-                </option>
-              ))}
-            </select>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm text-sm sm:text-base ${
+                loading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  Updating...
+                </div>
+              ) : (
+                'Update Early Career'
+              )}
+            </button>
           </div>
-        )}
+        </form>
       </div>
     </div>
   );
-}
+};
+
+export default EditEarlyCareer;

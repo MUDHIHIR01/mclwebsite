@@ -136,7 +136,8 @@ export default function Pink130() {
     setError(null);
     try {
       const response = await axiosInstance.get<Pink130Data[]>('/api/pink-130');
-      setData(response.data.pink130s || response.data);
+      // REFINED LINE: The response data is the array itself, as defined by the generic type.
+      setData(response.data);
     } catch (err: any) {
       const errorMessage = 'Failed to fetch pink-130 records: ' + (err.response?.data?.error || err.message || 'Unknown error');
       setError(errorMessage);
@@ -351,7 +352,3 @@ export default function Pink130() {
     </div>
   );
 }
-
-
-
-

@@ -1,14 +1,21 @@
-// src/components/AddWhatWeDo.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Define the FormData interface
 interface FormData {
   heading: string;
   description: string;
   home_img: File | null;
+}
+
+// Define a separate interface for form errors
+interface FormErrors {
+  heading?: string;
+  description?: string;
+  home_img?: string;
 }
 
 const AddWhatWeDo: React.FC = () => {
@@ -18,11 +25,7 @@ const AddWhatWeDo: React.FC = () => {
     description: '',
     home_img: null,
   });
-  const [errors, setErrors] = useState<Partial<FormData>>({
-    heading: '',
-    description: '',
-    home_img: '',
-  });
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -31,17 +34,17 @@ const AddWhatWeDo: React.FC = () => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, home_img: file }));
-    setErrors((prev) => ({ ...prev, home_img: '' }));
+    setErrors((prev) => ({ ...prev, home_img: undefined }));
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    const newErrors: FormErrors = {};
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -53,7 +56,12 @@ const AddWhatWeDo: React.FC = () => {
       newErrors.description = 'Description must not exceed 1000 characters';
     }
 
-    if (formData.home_img && !['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.home_img.type)) {
+    if (
+      formData.home_img &&
+      !['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(
+        formData.home_img.type
+      )
+    ) {
       newErrors.home_img = 'Only JPEG, PNG, JPG, or GIF files are allowed';
     } else if (formData.home_img && formData.home_img.size > 2 * 1024 * 1024) {
       newErrors.home_img = 'Image size must not exceed 2MB';
@@ -81,13 +89,17 @@ const AddWhatWeDo: React.FC = () => {
       const response = await axiosInstance.post('/api/what-we-do-homes', payload, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      toast.success(response.data.message || 'What we do entry created successfully', {
-        position: 'top-right',
-      });
+      toast.success(
+        response.data.message || 'What we do entry created successfully',
+        {
+          position: 'top-right',
+        }
+      );
       setTimeout(() => navigate('/what-we-do'), 2000);
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Failed to create what we do entry';
-      const backendErrors = error.response?.data?.errors || {};
+      const errorMessage =
+        error.response?.data?.error || 'Failed to create what we do entry';
+      const backendErrors: FormErrors = error.response?.data?.errors || {};
       setErrors(backendErrors);
       toast.error(errorMessage, { position: 'top-right' });
     } finally {
@@ -98,14 +110,21 @@ const AddWhatWeDo: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 w-full mx-auto">
-      <ToastContainer position="top-right" autoClose={3000} style={{ top: '70px' }} />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        style={{ top: '70px' }}
+      />
       <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 w-full">
         <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-800 mb-6">
           Create What We Do Entry
         </h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="heading" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="heading"
+              className="block text-sm font-medium text-gray-700"
+            >
               Heading *
             </label>
             <input
@@ -127,7 +146,10 @@ const AddWhatWeDo: React.FC = () => {
             )}
           </div>
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-gray-700"
+            >
               Description
             </label>
             <textarea
@@ -147,7 +169,10 @@ const AddWhatWeDo: React.FC = () => {
             )}
           </div>
           <div>
-            <label htmlFor="home_img" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="home_img"
+              className="block text-sm font-medium text-gray-700"
+            >
               Image (optional)
             </label>
             <input
@@ -168,14 +193,18 @@ const AddWhatWeDo: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate('/what-we-do')}
-              className={`w-full sm:w-40 px-4 ${isSubmitting ? 'py-0.5' : 'py-1'} bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition shadow-md text-sm sm:text-base`}
+              className={`w-full sm:w-40 px-4 ${
+                isSubmitting ? 'py-0.5' : 'py-1'
+              } bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition shadow-md text-sm sm:text-base`}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className={`w-full sm:w-40 px-4 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md text-sm sm:text-base ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full sm:w-40 px-4 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md text-sm sm:text-base ${
+                loading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
               {loading ? (
                 <div className="flex items-center justify-center">

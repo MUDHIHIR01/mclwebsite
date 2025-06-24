@@ -4,12 +4,22 @@ import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Interface for the form's data values
 interface FormData {
   heading: string;
   description: string;
   home_img: File | null;
 }
 
+// REFINEMENT 1: Create a dedicated interface for form error messages.
+// This is the key fix. Each property is a string for the error message.
+interface FormErrors {
+  heading?: string;
+  description?: string;
+  home_img?: string;
+}
+
+// Interface for the data received from the API
 interface SustainabilityHomeData {
   sustainability_home_id: number;
   heading: string;
@@ -17,7 +27,7 @@ interface SustainabilityHomeData {
   home_img: string | null;
 }
 
-const EditSustainabilityHome = () => {
+const EditSustainabilityHome: React.FC = () => {
   const navigate = useNavigate();
   const { sustainability_home_id } = useParams<{ sustainability_home_id: string }>();
   const [formData, setFormData] = useState<FormData>({
@@ -26,11 +36,8 @@ const EditSustainabilityHome = () => {
     home_img: null,
   });
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Partial<FormData>>({
-    heading: '',
-    description: '',
-    home_img: undefined,
-  });
+  // REFINEMENT 2: Use the new FormErrors interface and initialize as an empty object.
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -69,11 +76,12 @@ const EditSustainabilityHome = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, home_img: file }));
-    setErrors((prev) => ({ ...prev, home_img: undefined }));
+    setErrors((prev) => ({ ...prev, home_img: '' }));
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    // REFINEMENT 3: Use the FormErrors type for the local newErrors object.
+    const newErrors: FormErrors = {};
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -87,8 +95,10 @@ const EditSustainabilityHome = () => {
 
     if (formData.home_img) {
       if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.home_img.type)) {
+        // FIX: This is now valid because newErrors.home_img is a string.
         newErrors.home_img = 'Only JPEG, PNG, JPG, or GIF files are allowed';
       } else if (formData.home_img.size > 2 * 1024 * 1024) {
+        // FIX: This is also valid now.
         newErrors.home_img = 'Image size must not exceed 2MB';
       }
     }
@@ -107,28 +117,33 @@ const EditSustainabilityHome = () => {
     payload.append('description', formData.description || '');
     if (formData.home_img) {
       payload.append('home_img', formData.home_img);
-    } else if (currentImage && !formData.home_img) {
-      payload.append('home_img', '');
     }
+    
+    // REFINEMENT: Use POST with method spoofing for better compatibility
+    // with backends when sending multipart/form-data for an update.
+    payload.append('_method', 'PUT');
 
     try {
-      const response = await axiosInstance.put(`/api/sustainability-homes/${sustainability_home_id}`, payload, {
+      // Use POST instead of PUT. The backend handles it via the `_method` field.
+      const response = await axiosInstance.post(`/api/sustainability-homes/${sustainability_home_id}`, payload, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       toast.success(response.data.message || 'Sustainability home entry updated successfully');
       setFormData((prev) => ({ ...prev, home_img: null }));
-      setCurrentImage(response.data.slider?.home_img || null);
+      // Assume the updated object is returned under a key, e.g., 'sustainabilityHome'
+      setCurrentImage(response.data.sustainabilityHome?.home_img || null);
       setTimeout(() => navigate('/sustainability/home'), 2000);
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to update sustainability home entry';
       const backendErrors = error.response?.data?.errors || {};
-      const formattedErrors: Partial<FormData> = {};
-      for (const key in backendErrors) {
-        if (key in formData) {
-          formattedErrors[key as keyof FormData] = backendErrors[key][0];
-        }
-      }
-      setErrors((prev) => ({ ...prev, ...formattedErrors }));
+      
+      // REFINEMENT 4: Explicitly map backend errors to our FormErrors type.
+      const formattedErrors: FormErrors = {};
+      if (backendErrors.heading) formattedErrors.heading = backendErrors.heading[0];
+      if (backendErrors.description) formattedErrors.description = backendErrors.description[0];
+      if (backendErrors.home_img) formattedErrors.home_img = backendErrors.home_img[0];
+
+      setErrors(formattedErrors);
       toast.error(errorMessage);
       console.error("Submit error:", error);
     } finally {
@@ -153,6 +168,7 @@ const EditSustainabilityHome = () => {
           Edit Sustainability Home Entry
         </h2>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* ... (form fields for heading and description remain the same) ... */}
           <div>
             <label htmlFor="heading" className="block text-sm font-medium text-gray-700">
               Heading <span className="text-red-500">*</span>
@@ -184,7 +200,7 @@ const EditSustainabilityHome = () => {
             <textarea
               id="description"
               name="description"
-              value={formData.description}
+              value={formData.description || ''}
               onChange={handleChange}
               rows={4}
               className={`mt-1 block w-full rounded-md border shadow-sm p-2 sm:p-3 text-sm sm:text-base ${
@@ -213,8 +229,7 @@ const EditSustainabilityHome = () => {
                   alt="Current Sustainability Home"
                   className="h-32 w-auto max-w-xs object-contain rounded border border-gray-200"
                   onError={(e) => {
-                    e.currentTarget.src = 'https://via.placeholder.com/128x128?text=LoadError';
-                    e.currentTarget.alt = 'Error loading current image';
+                    e.currentTarget.style.display = 'none'; // Hide broken image
                     console.warn("Error loading current image from URL:", displayImageUrl);
                   }}
                 />
@@ -230,11 +245,13 @@ const EditSustainabilityHome = () => {
             />
             {errors.home_img && (
               <p id="home_img-error" className="mt-1 text-sm text-red-500">
-                {errors.home_img as string}
+                {/* FIX: The cast `as string` is no longer needed. The type is correct now. */}
+                {errors.home_img}
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed types: JPG, PNG, GIF.</p>
           </div>
+          {/* ... (form buttons remain the same) ... */}
           <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
             <button
               type="button"

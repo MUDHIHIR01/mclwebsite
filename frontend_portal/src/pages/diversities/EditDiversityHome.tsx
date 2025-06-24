@@ -10,6 +10,13 @@ interface FormDataState {
   home_img: File | null;
 }
 
+// **FIX 1: Create a dedicated interface for form error messages.**
+interface FormErrors {
+  heading?: string;
+  description?: string;
+  home_img?: string;
+}
+
 const EditDiversityHome: React.FC = () => {
   const navigate = useNavigate();
   const { dhomeId } = useParams<{ dhomeId: string }>();
@@ -19,11 +26,8 @@ const EditDiversityHome: React.FC = () => {
     home_img: null,
   });
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Partial<FormDataState>>({
-    heading: '',
-    description: '',
-    home_img: undefined,
-  });
+  // **FIX 2: Use the new FormErrors interface for the errors state.**
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -56,17 +60,22 @@ const EditDiversityHome: React.FC = () => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    if (errors[name as keyof FormErrors]) {
+        setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, home_img: file }));
-    setErrors((prev) => ({ ...prev, home_img: undefined }));
+    if (errors.home_img) {
+        setErrors((prev) => ({ ...prev, home_img: undefined }));
+    }
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormDataState> = {};
+    // **FIX 3: Type the newErrors object with FormErrors.**
+    const newErrors: FormErrors = {};
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -79,10 +88,11 @@ const EditDiversityHome: React.FC = () => {
     }
 
     if (formData.home_img) {
+      // **FIX 4: Remove the `(as any)` cast, as it's no longer needed.**
       if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.home_img.type)) {
-        (newErrors.home_img as any) = 'Only JPEG, PNG, JPG, or GIF files are allowed';
+        newErrors.home_img = 'Only JPEG, PNG, JPG, or GIF files are allowed';
       } else if (formData.home_img.size > 2 * 1024 * 1024) {
-        (newErrors.home_img as any) = 'Image size must not exceed 2MB';
+        newErrors.home_img = 'Image size must not exceed 2MB';
       }
     }
 
@@ -118,13 +128,7 @@ const EditDiversityHome: React.FC = () => {
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to update diversity home entry';
       const backendErrors = error.response?.data?.errors || {};
-      const formattedErrors: Partial<FormDataState> = {};
-      for (const key in backendErrors) {
-        if (key in formData) {
-          (formattedErrors as any)[key] = backendErrors[key][0];
-        }
-      }
-      setErrors(prev => ({ ...prev, ...formattedErrors }));
+      setErrors(backendErrors); // Assuming backend returns errors in the correct { field: message } format
       toast.error(errorMessage);
       console.error("Submit error:", error);
     } finally {
@@ -225,8 +229,10 @@ const EditDiversityHome: React.FC = () => {
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {errors.home_img && (
+              // **FIX 5: Remove the `as string` cast.**
+              // This is now type-safe because errors.home_img is a string.
               <p id="home_img-error" className="mt-1 text-sm text-red-500">
-                {errors.home_img as string}
+                {errors.home_img}
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed types: JPG, PNG, GIF.</p>

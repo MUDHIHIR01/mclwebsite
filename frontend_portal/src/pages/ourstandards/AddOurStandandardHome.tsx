@@ -4,11 +4,17 @@ import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// The data structure for the form itself
 interface FormData {
   heading: string;
   description: string;
   home_img: File | null;
 }
+
+// A dedicated type for form errors for better type-safety
+type FormErrors = {
+  [K in keyof FormData]?: string;
+};
 
 interface ApiResponse {
   message: string;
@@ -26,12 +32,15 @@ interface ApiResponse {
 
 const AddOurStandardHome: React.FC = () => {
   const navigate = useNavigate();
+  // This line is correct with a single equals sign
   const [formData, setFormData] = useState<FormData>({
     heading: '',
     description: '',
     home_img: null,
   });
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+
+  // Using the correct type for the errors state
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
 
   const handleChange = (
@@ -39,20 +48,23 @@ const AddOurStandardHome: React.FC = () => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    // Clear the specific error message when the user types
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, home_img: file }));
-    setErrors((prev) => ({ ...prev, home_img: '' }));
+    // Clear the image-related error when a new file is selected
+    setErrors((prev) => ({ ...prev, home_img: undefined }));
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    const newErrors: FormErrors = {};
     if (!formData.heading.trim()) newErrors.heading = 'Heading is required';
     if (formData.heading.length > 255) newErrors.heading = 'Heading must not exceed 255 characters';
     if (formData.description.length > 1000) newErrors.description = 'Description must not exceed 1000 characters';
+    
     if (formData.home_img) {
       if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.home_img.type)) {
         newErrors.home_img = 'Only JPEG, PNG, JPG, or GIF files allowed';
@@ -86,9 +98,12 @@ const AddOurStandardHome: React.FC = () => {
       const errorResponse = err.response?.data || {};
       const errorMessage = errorResponse.error || 'Failed to create entry';
       const backendErrors = errorResponse.errors || {};
-      const formattedErrors: Partial<FormData> = {};
+
+      const formattedErrors: FormErrors = {};
       for (const key in backendErrors) {
-        if (key in formData) formattedErrors[key as keyof FormData] = backendErrors[key][0];
+        if (Object.prototype.hasOwnProperty.call(formData, key)) {
+          formattedErrors[key as keyof FormData] = backendErrors[key][0];
+        }
       }
       setErrors(formattedErrors);
       toast.error(errorMessage, { position: 'top-right' });

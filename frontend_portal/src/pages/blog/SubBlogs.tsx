@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useTable, useGlobalFilter, usePagination } from 'react-table';
+import { useTable, useGlobalFilter, usePagination, Column, Row, CellProps } from 'react-table';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -38,8 +38,8 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ sublog_id, onDeletionSucc
       toast.success('Sub-blog entry deleted successfully!', { position: 'top-right' });
       onDeletionSuccess();
     } catch (err) {
-      toast.error('Failed to delete sub-blog entry.', { position: 'top-right' });
-      console.error("Delete error:", err);
+      toast.error('Failed to delete sub-blog entry.', { position: 'top-center' });
+      console.error('Delete error:', err);
     }
     setShowConfirm(false);
   };
@@ -146,7 +146,7 @@ export default function SubBlogs() {
     } catch (err: any) {
       const errorMessage = 'Failed to fetch sub-blog entries: ' + (err.response?.data?.error || err.message || 'Unknown error');
       setError(errorMessage);
-      toast.error('Failed to fetch sub-blog entries.');
+      toast.error('Failed to fetch sub-blog entries.', { position: 'top-center' });
     } finally {
       setLoading(false);
     }
@@ -156,24 +156,27 @@ export default function SubBlogs() {
     fetchSubBlogs();
   }, [fetchSubBlogs]);
 
-  const columns = useMemo(
+  const columns: Column<SubBlogData>[] = useMemo(
     () => [
       {
         Header: '#',
         id: 'rowIndex',
-        Cell: ({ row, flatRows }: any) => {
-          const originalIndex = flatRows.findIndex((flatRow: any) => flatRow.original === row.original);
+        Cell: ({ row, flatRows }: CellProps<SubBlogData>) => {
+          const originalIndex = flatRows.findIndex((flatRow: Row<SubBlogData>) => flatRow.original === row.original);
           return <span>{originalIndex + 1}</span>;
         },
       },
       {
         Header: 'Blog',
-        accessor: 'blog.heading',
-        Cell: ({ value }: { value: string | null }) => (
-          <span>{value || 'No Blog'}</span>
-        ),
+        accessor: (row: SubBlogData) => row.blog?.heading,
+        id: 'blog_heading',
+        Cell: ({ value }: { value: string | undefined }) => <span>{value || 'No Blog'}</span>,
       },
-      { Header: 'Heading', accessor: 'heading' },
+      {
+        Header: 'Heading',
+        accessor: 'heading',
+        Cell: ({ value }: { value: string }) => <span>{value}</span>,
+      },
       {
         Header: 'Description',
         accessor: 'description',
@@ -240,8 +243,8 @@ export default function SubBlogs() {
       },
       {
         Header: 'Actions',
-        accessor: 'sublog_id',
-        Cell: ({ row }: any) => (
+        id: 'actions',
+        Cell: ({ row }: CellProps<SubBlogData>) => (
           <ActionButtons sublog_id={row.original.sublog_id} onDeletionSuccess={fetchSubBlogs} />
         ),
       },
@@ -249,7 +252,7 @@ export default function SubBlogs() {
     [fetchSubBlogs]
   );
 
-  const tableInstance = useTable(
+  const tableInstance = useTable<SubBlogData>(
     { columns, data, initialState: { pageIndex: 0, pageSize: 10 } },
     useGlobalFilter,
     usePagination
@@ -286,7 +289,7 @@ export default function SubBlogs() {
       ]),
     });
     doc.save('sub_blog_entries.pdf');
-    toast.success('PDF exported successfully!');
+    toast.success('PDF exported successfully!', { position: 'top-center' });
   };
 
   const exportToExcel = () => {
@@ -303,7 +306,7 @@ export default function SubBlogs() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'SubBlogs');
     XLSX.writeFile(workbook, 'sub_blog_entries.xlsx');
-    toast.success('Excel exported successfully!');
+    toast.success('Excel exported successfully!', { position: 'top-center' });
   };
 
   if (loading) return <div className="flex justify-center items-center min-h-screen"><div className="text-lg font-semibold">Loading...</div></div>;

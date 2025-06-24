@@ -4,6 +4,7 @@ import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// This interface remains the same, representing the form's data.
 interface FormData {
   sustain_category: string;
   description: string;
@@ -12,9 +13,19 @@ interface FormData {
   sustain_image_file: File | null;
 }
 
-// Shared validation logic
-export const validateForm = (formData: FormData): Partial<FormData> => {
-  const errors: Partial<FormData> = {};
+// *** FIX 1: Create a dedicated interface for form errors. ***
+// All properties are optional strings, which is what your error messages are.
+interface FormErrors {
+  sustain_category?: string;
+  description?: string;
+  weblink?: string;
+  sustain_pdf_file?: string;
+  sustain_image_file?: string;
+}
+
+// *** FIX 2: Update the validation function to use the new FormErrors type. ***
+export const validateForm = (formData: FormData): FormErrors => {
+  const errors: FormErrors = {};
 
   if (!formData.sustain_category.trim()) {
     errors.sustain_category = 'Category is required';
@@ -34,6 +45,7 @@ export const validateForm = (formData: FormData): Partial<FormData> => {
 
   if (formData.sustain_pdf_file) {
     if (formData.sustain_pdf_file.type !== 'application/pdf') {
+      // Now this assignment is valid because errors.sustain_pdf_file is a string.
       errors.sustain_pdf_file = 'Only PDF files are allowed';
     } else if (formData.sustain_pdf_file.size > 2 * 1024 * 1024) {
       errors.sustain_pdf_file = 'PDF size must not exceed 2MB';
@@ -42,6 +54,7 @@ export const validateForm = (formData: FormData): Partial<FormData> => {
 
   if (formData.sustain_image_file) {
     if (!['image/png', 'image/jpeg', 'image/jpg'].includes(formData.sustain_image_file.type)) {
+      // This assignment is also valid now.
       errors.sustain_image_file = 'Only PNG, JPEG, or JPG files are allowed';
     } else if (formData.sustain_image_file.size > 2 * 1024 * 1024) {
       errors.sustain_image_file = 'Image size must not exceed 2MB';
@@ -60,7 +73,9 @@ const AddSustainability: React.FC = () => {
     sustain_pdf_file: null,
     sustain_image_file: null,
   });
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+  
+  // *** FIX 3: Update the errors state to use the FormErrors type. ***
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
 
   const handleChange = (
@@ -68,13 +83,13 @@ const AddSustainability: React.FC = () => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    setErrors((prev) => ({ ...prev, [name]: undefined })); // Use undefined to clear error
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'sustain_pdf_file' | 'sustain_image_file') => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, [field]: file }));
-    setErrors((prev) => ({ ...prev, [field]: '' }));
+    setErrors((prev) => ({ ...prev, [field]: undefined })); // Use undefined to clear error
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,6 +138,7 @@ const AddSustainability: React.FC = () => {
           Create New Sustainability Record
         </h2>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* ... (no changes needed in the form inputs) ... */}
           <div>
             <label htmlFor="sustain_category" className="block text-sm font-medium text-gray-700">
               Category *
@@ -202,6 +218,7 @@ const AddSustainability: React.FC = () => {
             {formData.sustain_pdf_file && (
               <p className="mt-1 text-sm text-gray-600">Selected: {formData.sustain_pdf_file.name}</p>
             )}
+            {/* This JSX is now valid because errors.sustain_pdf_file is a string. */}
             {errors.sustain_pdf_file && (
               <p id="sustain_pdf_file-error" className="mt-1 text-sm text-red-500">
                 {errors.sustain_pdf_file}
@@ -224,6 +241,7 @@ const AddSustainability: React.FC = () => {
             {formData.sustain_image_file && (
               <p className="mt-1 text-sm text-gray-600">Selected: {formData.sustain_image_file.name}</p>
             )}
+            {/* This JSX is also valid now. */}
             {errors.sustain_image_file && (
               <p id="sustain_image_file-error" className="mt-1 text-sm text-red-500">
                 {errors.sustain_image_file}
@@ -231,6 +249,7 @@ const AddSustainability: React.FC = () => {
             )}
             <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed types: PNG, JPEG, JPG.</p>
           </div>
+          {/* ... (no changes needed in the form buttons) ... */}
           <div className="flex flex-col sm:flex-row justify-end gap-4">
             <button
               type="button"

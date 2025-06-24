@@ -58,7 +58,7 @@ const navLinkClass = "relative no-underline font-semibold text-base uppercase te
 
 const DropdownMenu: React.FC<DropdownMenuProps> = ({ isOpen, items, onClose }) => (
   <motion.div
-    className={`absolute left-0 mt-2 w-56 bg-[#262a33] rounded-lg z-50 ${isOpen ? "block" : "hidden"}`}
+    className={`absolute left-0 mt-2 w-56 bg-[#0A51A1] rounded-lg z-50 ${isOpen ? "block" : "hidden"}`}
     initial={{ opacity: 0, y: -10 }}
     animate={{ opacity: isOpen ? 1 : 0, y: isOpen ? 0 : -10 }}
     transition={{ duration: 0.3 }}
@@ -86,7 +86,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, navItems, onClose }) =>
   <AnimatePresence>
     {isOpen && (
       <motion.nav
-        className="absolute top-full left-012 w-full bg-[#262a33] lg:hidden p-6  max-h-[calc(100vh-5.5rem)] overflow-y-auto"
+        className="absolute top-full left-012 w-full bg-[#0A51A1] lg:hidden p-6  max-h-[calc(100vh-5.5rem)] overflow-y-auto"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
@@ -134,7 +134,7 @@ const Header: React.FC = () => {
 
   return (
     <motion.header
-      className="sticky top-0 z-50 w-full bg-[#262a33]"
+      className="sticky top-0 z-50 w-full bg-[#0A51A1]"
       initial={{ opacity: 0, y: -50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}

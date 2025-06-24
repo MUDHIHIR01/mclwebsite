@@ -3,14 +3,12 @@ import { useState, useEffect, useCallback } from "react";
 import axiosInstance from "../axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { Link } from "react-router-dom";
 import Footer from "../components/Footer";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ArrowPathIcon,
   InformationCircleIcon,
-  ArrowRightIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 
@@ -33,7 +31,25 @@ interface LeadershipData {
   created_at: string;
 }
 
+// --- HELPER FUNCTION ---
+/**
+ * Constructs a full image URL from a relative path.
+ * @param imagePath The relative path to the image from the API.
+ * @returns The full, absolute URL to the image.
+ */
+const constructImageUrl = (imagePath: string | null): string => {
+  if (!imagePath) {
+    return "https://via.placeholder.com/1200x600?text=Image+Missing";
+  }
+  const baseUrl = axiosInstance.defaults.baseURL?.replace(/\/$/, "") || "";
+  const cleanedImagePath = imagePath.replace(/^\//, "");
+  return `${baseUrl}/${cleanedImagePath}`;
+};
+
 // --- Slider Section ---
+/**
+ * A component that displays a full-screen, auto-playing slideshow for the leadership page header.
+ */
 const LeadershipHomeSlideshow: React.FC = () => {
   const [data, setData] = useState<LeadershipHomeData[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -106,11 +122,7 @@ const LeadershipHomeSlideshow: React.FC = () => {
         >
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
           <img
-            src={
-              data[currentSlide].home_img
-                ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${data[currentSlide].home_img!.replace(/^\//, "")}`
-                : "https://via.placeholder.com/1200x600?text=Image+Missing"
-            }
+            src={constructImageUrl(data[currentSlide].home_img)}
             alt={data[currentSlide].heading}
             className="w-full h-full object-cover"
             onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/1200x600?text=Image+Error")}
@@ -166,14 +178,14 @@ const LeadershipHomeSlideshow: React.FC = () => {
 };
 
 // --- Individual Leader Card Component ---
+/**
+ * A card component to display information about a single leader.
+ */
 const LeadershipCard: React.FC<{ leader: LeadershipData }> = ({ leader }) => {
-  const imageUrl = leader.leader_image
-    ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${leader.leader_image.replace(/^\//, "")}`
-    : null;
+  const imageUrl = leader.leader_image ? constructImageUrl(leader.leader_image) : null;
 
   return (
     <motion.div
-      key={leader.leadership_id}
       className="bg-[#fff1e5] shadow-lg flex flex-col"
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
@@ -203,21 +215,15 @@ const LeadershipCard: React.FC<{ leader: LeadershipData }> = ({ leader }) => {
           <span className="absolute bottom-0 left-0 h-1 w-1/4 bg-[#33302d]"></span>
         </h3>
         <p className="text-gray-700 text-base font-medium flex-grow line-clamp-4">{leader.description}</p>
-        <div className="mt-6">
-          <Link
-            to={`/leadership/${leader.leadership_id}`}
-            className="flex items-center gap-2 text-lg font-bold text-[#0d7680] hover:text-[#0a5a60]"
-          >
-            Find more
-            <ArrowRightIcon className="w-5 h-5" />
-          </Link>
-        </div>
       </div>
     </motion.div>
   );
 };
 
 // --- Leadership Card Section Component ---
+/**
+ * A section that fetches and displays a grid of LeadershipCard components.
+ */
 const LeadershipCardSection: React.FC = () => {
   const [leaders, setLeaders] = useState<LeadershipData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -227,11 +233,8 @@ const LeadershipCardSection: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      // Fetch all leaders from the backend without any limit
       const response = await axiosInstance.get<{ leadership: LeadershipData[] }>("/api/allLeadership");
-      setLeaders(
-        response.data?.leadership && Array.isArray(response.data.leadership) ? response.data.leadership : []
-      );
+      setLeaders(response.data?.leadership && Array.isArray(response.data.leadership) ? response.data.leadership : []);
     } catch (err) {
       setError("Could not fetch leadership team.");
       toast.error("Could not fetch leadership team.");
@@ -275,7 +278,7 @@ const LeadershipCardSection: React.FC = () => {
     <section className="py-16">
       <div className="max-w-6xl mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Our Leadership</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold text-[#ed1c24]">Our Leadership</h2>
           <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
             Meet the dedicated team guiding our company forward.
           </p>
@@ -291,6 +294,9 @@ const LeadershipCardSection: React.FC = () => {
 };
 
 // --- Main LeadershipHomePage Component ---
+/**
+ * The main page component that assembles the leadership page.
+ */
 const LeadershipHomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">

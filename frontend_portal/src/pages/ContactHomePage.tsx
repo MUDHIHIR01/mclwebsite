@@ -279,7 +279,7 @@ const ContactSection: React.FC = () => {
     <section className="bg-gray-100 py-16 sm:py-24">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 inline-flex items-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-[#ed1c24] inline-flex items-center">
             <ChatBubbleLeftRightIcon className="w-9 h-9 mr-3" />
             How Can We Help You?
           </h2>

@@ -4,7 +4,7 @@ import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn } from "react-icons/f
 const Footer: React.FC = () => {
   return (
     // Replaced gradient with a single color and removed sticky positioning/shadow.
-    <footer className="w-full bg-[#000] text-white">
+    <footer className="w-full bg-[#0A51A1] text-white">
       {/* The top, constrained-width section of the footer */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

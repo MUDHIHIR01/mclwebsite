@@ -1,11 +1,11 @@
-
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useTable, useGlobalFilter, usePagination, Column, Row } from 'react-table';
+// The libraries are now used, so these imports are correct.
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Link } from 'react-router-dom';
-import axiosInstance from '../../../axios'; // Make sure this path is correct
+import axiosInstance from '../../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -25,7 +25,6 @@ interface ActionButtonsProps {
 }
 
 // --- Sub-Components for Cleanliness ---
-
 const ActionButtons: React.FC<ActionButtonsProps> = ({ mclId, onDeletionSuccess }) => {
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -42,7 +41,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ mclId, onDeletionSuccess 
 
   return (
     <div className="relative flex items-center gap-2">
-      <Link to={`/edit-mcl-group/${mclId}`} className="p-1 text-blue-500 hover:text-blue-600" aria-label="Edit">
+      <Link to={`/edit/mcl-group/${mclId}`} className="p-1 text-blue-500 hover:text-blue-600" aria-label="Edit">
         <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
       </Link>
       <button onClick={() => setShowConfirm(true)} className="p-1 text-red-500 hover:text-red-600" aria-label="Delete">
@@ -68,7 +67,7 @@ const ImageModal: React.FC<{ imageUrl: string; onClose: () => void }> = ({ image
   <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50" onClick={onClose}>
     <div className="relative bg-white rounded-lg p-2" onClick={(e) => e.stopPropagation()}>
       <img src={imageUrl} alt="Full-size view" className="w-full h-auto max-h-[80vh] object-contain rounded" />
-      <button onClick={onClose} className="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-1">×</button>
+      <button onClick={onClose} className="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-1 leading-none">×</button>
     </div>
   </div>
 );
@@ -85,18 +84,12 @@ export default function MclGroupList() {
     setError(null);
     try {
       const response = await axiosInstance.get('/api/mcl-groups');
-      
-      // *** THE FIX IS HERE ***
-      // Your API returns { "data": [...] }, so we access `response.data.data`.
-      // The `|| []` ensures that if `response.data.data` is null or undefined,
-      // we pass an empty array to `setData`, preventing the "forEach" error.
       setData(response.data.data || []);
-      
     } catch (err: any) {
       const errorMessage = 'Failed to fetch MCL Groups. Please try again later.';
       setError(errorMessage);
       toast.error(errorMessage);
-      setData([]); // Reset to empty array on error
+      setData([]);
     } finally {
       setLoading(false);
     }
@@ -108,10 +101,10 @@ export default function MclGroupList() {
 
   const columns: readonly Column<MclGroupData>[] = useMemo(
     () => [
-      { Header: '#', Cell: ({ row }: { row: Row<MclGroupData> }) => <span>{row.index + 1}</span> },
+      { Header: '#', id: 'index', Cell: ({ row }: { row: Row<MclGroupData> }) => <span>{row.index + 1}</span> },
       { Header: 'Category', accessor: 'mcl_category' },
       { Header: 'Description', accessor: 'description', Cell: ({ value }) => value ? <span className="text-sm">{value.substring(0, 50)}{value.length > 50 ? '...' : ''}</span> : <span className="text-gray-400">N/A</span> },
-      { Header: 'Weblink', accessor: 'weblink', Cell: ({ value }) => value ? <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Link</a> : <span className="text-gray-400">N/A</span> },
+      { Header: 'Weblink', accessor: 'weblink', Cell: ({ value }) => value ? <a href={value.startsWith('http') ? value : `//${value}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Link</a> : <span className="text-gray-400">N/A</span> },
       {
         Header: 'Image',
         accessor: 'image_file',
@@ -119,24 +112,56 @@ export default function MclGroupList() {
           if (!value) return <span className="text-gray-400">No Image</span>;
           const baseUrl = (axiosInstance.defaults.baseURL || '').replace(/\/$/, '');
           const imageUrl = `${baseUrl}/${value.replace(/^\//, '')}`;
-          return <img src={imageUrl} alt="MCL Group" className="h-12 w-12 object-cover rounded cursor-pointer" onClick={() => setSelectedImage(imageUrl)} onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/50' }} />;
+          return <img src={imageUrl} alt="MCL Group" className="h-12 w-12 object-cover rounded cursor-pointer" onClick={() => setSelectedImage(imageUrl)} onError={(e) => { (e.currentTarget as HTMLImageElement).src = 'https://via.placeholder.com/50' }} />;
         },
       },
       { Header: 'Created At', accessor: 'created_at', Cell: ({ value }) => new Date(value).toLocaleDateString() },
       {
         Header: 'Actions',
-        accessor: 'mcl_id',
+        accessor: 'mcl_id', // Accessor must be a key of MclGroupData
         Cell: ({ row }) => <ActionButtons mclId={row.original.mcl_id} onDeletionSuccess={fetchMclGroups} />,
       },
     ],
     [fetchMclGroups]
   );
 
-  const tableInstance = useTable({ columns, data }, useGlobalFilter, usePagination);
+  const tableInstance = useTable({ columns, data, initialState: { pageIndex: 0, pageSize: 10 } }, useGlobalFilter, usePagination);
   const { getTableProps, getTableBodyProps, headerGroups, page, prepareRow, setGlobalFilter, state: { globalFilter } } = tableInstance;
 
-  const exportToPDF = () => { /* PDF logic here... */ };
-  const exportToExcel = () => { /* Excel logic here... */ };
+  // --- **FIXED**: Implemented export functions ---
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text('MCL Group List', 14, 15);
+    autoTable(doc, {
+      head: [['#', 'Category', 'Description', 'Weblink', 'Created At']],
+      body: data.map((row, index) => [
+        index + 1,
+        row.mcl_category,
+        row.description || 'N/A',
+        row.weblink || 'N/A',
+        new Date(row.created_at).toLocaleDateString(),
+      ]),
+      startY: 20,
+    });
+    doc.save('mcl-groups.pdf');
+    toast.success('PDF exported successfully!');
+  };
+
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      data.map((row, index) => ({
+        '#': index + 1,
+        Category: row.mcl_category,
+        Description: row.description || 'N/A',
+        Weblink: row.weblink || 'N/A',
+        'Created At': new Date(row.created_at).toLocaleDateString(),
+      }))
+    );
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'MCL Groups');
+    XLSX.writeFile(workbook, 'mcl-groups.xlsx');
+    toast.success('Excel exported successfully!');
+  };
 
   if (loading) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
@@ -206,7 +231,7 @@ export default function MclGroupList() {
             </tbody>
           </table>
         </div>
-        {/* Pagination controls can be added here if needed */}
+        {/* You can add pagination controls from your other components here if you need them */}
       </div>
     </div>
   );

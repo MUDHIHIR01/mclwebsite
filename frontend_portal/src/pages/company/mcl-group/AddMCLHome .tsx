@@ -4,10 +4,18 @@ import axiosInstance from '../../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Interface for the form's data state
 interface FormData {
   heading: string;
   description: string;
   mcl_home_img: File | null;
+}
+
+// 1. Create a dedicated interface for form validation errors
+interface FormErrors {
+  heading?: string;
+  description?: string;
+  mcl_home_img?: string;
 }
 
 const AddMCLHome: React.FC = () => {
@@ -18,22 +26,28 @@ const AddMCLHome: React.FC = () => {
     mcl_home_img: null,
   });
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+
+  // 2. Use the new FormErrors interface for the errors state
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
       setFormData((prev) => ({ ...prev, [name]: value }));
-      setErrors((prev) => ({ ...prev, [name]: '' }));
+      if (errors[name as keyof FormErrors]) {
+        setErrors((prev) => ({ ...prev, [name]: undefined }));
+      }
     },
-    []
+    [errors]
   );
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, mcl_home_img: file }));
-    setErrors((prev) => ({ ...prev, mcl_home_img: '' }));
+    if (errors.mcl_home_img) {
+      setErrors((prev) => ({ ...prev, mcl_home_img: undefined }));
+    }
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => setPreviewImage(reader.result as string);
@@ -41,10 +55,11 @@ const AddMCLHome: React.FC = () => {
     } else {
       setPreviewImage(null);
     }
-  }, []);
+  }, [errors.mcl_home_img]);
 
   const validateForm = useCallback((): boolean => {
-    const newErrors: Partial<FormData> = {};
+    // 3. Use the FormErrors type for the newErrors object
+    const newErrors: FormErrors = {};
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -57,6 +72,7 @@ const AddMCLHome: React.FC = () => {
     }
 
     if (formData.mcl_home_img) {
+      // These assignments are now correct and type-safe
       if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.mcl_home_img.type)) {
         newErrors.mcl_home_img = 'Only JPEG, PNG, JPG, or GIF files are allowed';
       } else if (formData.mcl_home_img.size > 2 * 1024 * 1024) {
@@ -92,12 +108,8 @@ const AddMCLHome: React.FC = () => {
       } catch (error: any) {
         const errorMessage = error.response?.data?.error || 'Failed to create home slider';
         const backendErrors = error.response?.data?.errors || {};
-        setErrors((prev) => ({
-          ...prev,
-          heading: backendErrors.heading?.[0] || '',
-          description: backendErrors.description?.[0] || '',
-          mcl_home_img: backendErrors.mcl_home_img?.[0] || '',
-        }));
+        // The backend errors can now be safely set to our FormErrors state
+        setErrors(backendErrors);
         toast.error(errorMessage, { position: 'top-right' });
       } finally {
         setLoading(false);
@@ -190,6 +202,7 @@ const AddMCLHome: React.FC = () => {
               aria-invalid={!!errors.mcl_home_img}
               aria-describedby={errors.mcl_home_img ? 'mcl_home_img-error' : undefined}
             />
+            {/* 4. This is now safe to render as errors.mcl_home_img is a string. */}
             {errors.mcl_home_img && (
               <p id="mcl_home_img-error" className="mt-1 text-sm text-red-500">
                 {errors.mcl_home_img}

@@ -4,10 +4,18 @@ import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Interface for form data
 interface FormData {
   category: string;
   description: string;
   img_file: File | null;
+}
+
+// Interface for error messages
+interface FormErrors {
+  category?: string;
+  description?: string;
+  img_file?: string;
 }
 
 const AddValue = () => {
@@ -17,7 +25,7 @@ const AddValue = () => {
     description: '',
     img_file: null,
   });
-  const [errors, setErrors] = useState<Partial<FormData>>({
+  const [errors, setErrors] = useState<FormErrors>({
     category: '',
     description: '',
     img_file: '',
@@ -40,7 +48,7 @@ const AddValue = () => {
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    const newErrors: FormErrors = {};
 
     if (!formData.category.trim()) {
       newErrors.category = 'Category is required';

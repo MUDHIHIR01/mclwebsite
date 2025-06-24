@@ -4,7 +4,7 @@ import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// ContactHome data interface
+// ContactHome data interface from API
 interface ContactHomeData {
   cont_home_id: number;
   heading: string;
@@ -21,6 +21,14 @@ interface FormData {
   home_img: File | null;
 }
 
+// **FIX 1: Added a dedicated interface for form error messages.**
+// This correctly types errors as strings.
+interface FormErrors {
+  heading?: string;
+  description?: string;
+  home_img?: string;
+}
+
 export default function EditContactHome() {
   const navigate = useNavigate();
   const { cont_home_id } = useParams<{ cont_home_id: string }>();
@@ -29,9 +37,10 @@ export default function EditContactHome() {
     description: '',
     home_img: null,
   });
-  const [initialData, setInitialData] = useState<FormData | null>(null); // Store initial data for comparison
+  const [initialData, setInitialData] = useState<FormData | null>(null);
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+  // **FIX 2: Changed the type of the errors state to use the new FormErrors interface.**
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -49,7 +58,7 @@ export default function EditContactHome() {
           home_img: null,
         };
         setFormData(fetchedData);
-        setInitialData(fetchedData); // Save initial data
+        setInitialData(fetchedData);
         setCurrentImage(response.data.home_img);
         console.log('Fetched contact home slider: ', response.data);
       } catch (error: any) {
@@ -65,17 +74,22 @@ export default function EditContactHome() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, home_img: file }));
-    setErrors((prev) => ({ ...prev, home_img: '' }));
+    if (errors.home_img) {
+      setErrors((prev) => ({ ...prev, home_img: undefined }));
+    }
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    // **FIX 3: Changed the type of the newErrors object to FormErrors.**
+    const newErrors: FormErrors = {};
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -89,9 +103,9 @@ export default function EditContactHome() {
 
     if (formData.home_img) {
       if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.home_img.type)) {
-        newErrors.home_img = 'Only JPEG, PNG, JPG, or GIF files are allowed';
+        newErrors.home_img = 'Only JPEG, PNG, JPG, or GIF files are allowed'; // This is now valid
       } else if (formData.home_img.size > 2 * 1024 * 1024) {
-        newErrors.home_img = 'Image size must not exceed 2MB';
+        newErrors.home_img = 'Image size must not exceed 2MB'; // This is now valid
       }
     }
 
@@ -106,43 +120,53 @@ export default function EditContactHome() {
     setLoading(true);
     const payload = new FormData();
 
-    // Only append fields that have changed
+    let hasChanges = false;
     if (initialData) {
       if (formData.heading !== initialData.heading) {
         payload.append('heading', formData.heading);
+        hasChanges = true;
       }
       if (formData.description !== initialData.description) {
         payload.append('description', formData.description || '');
+        hasChanges = true;
       }
       if (formData.home_img) {
-        // New image uploaded
         payload.append('home_img', formData.home_img);
+        hasChanges = true;
       }
-      // Do NOT append home_img if no new image is uploaded, to preserve existing image
     }
 
-    // If no fields have changed, notify user and skip update
-    if (payload.entries().next().done) {
+    if (!hasChanges) {
       toast.info('No changes detected.', { position: 'top-right' });
       setLoading(false);
       return;
     }
 
     try {
+      // For multipart/form-data with file uploads, Laravel requires a POST request even for updates.
+      // You must also include a _method field if your route is defined as PUT/PATCH.
+      // payload.append('_method', 'PUT'); // Uncomment if your route is `Route::put(...)`
       const response = await axiosInstance.post(`/api/contact-homes/${cont_home_id}/update`, payload, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
+
       toast.success(response.data.message || 'Contact home slider updated successfully', {
         position: 'top-right',
       });
-      setFormData((prev) => ({ ...prev, home_img: null }));
-      setInitialData((prev) => ({
-        ...prev!,
+      
+      // Update local state to reflect the successful update
+      const updatedData = {
         heading: formData.heading,
         description: formData.description,
-        home_img: null,
-      }));
-      setCurrentImage(response.data.slider?.home_img || null);
+        home_img: null, // Reset file input
+      };
+      setFormData(updatedData);
+      setInitialData(updatedData);
+      // The API response should ideally return the new image path
+      if (response.data.slider?.home_img) {
+        setCurrentImage(response.data.slider.home_img);
+      }
+      
       setTimeout(() => navigate('/contact/home'), 2000);
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to update contact home slider';
@@ -243,6 +267,7 @@ export default function EditContactHome() {
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100"
             />
             {errors.home_img && (
+              // This is now valid, because errors.home_img is a string, which is a valid ReactNode.
               <p id="home_img-error" className="mt-1 text-sm text-red-600">{errors.home_img}</p>
             )}
             <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed types: jpg, png, gif.</p>

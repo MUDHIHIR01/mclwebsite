@@ -13,6 +13,14 @@ interface FormData {
   sustain_image_file: File | null;
 }
 
+interface FormErrors {
+  sustain_category?: string;
+  description?: string;
+  weblink?: string;
+  sustain_pdf_file?: string;
+  sustain_image_file?: string;
+}
+
 const EditSustainability: React.FC = () => {
   const navigate = useNavigate();
   const { sustainabilityId } = useParams<{ sustainabilityId: string }>();
@@ -27,7 +35,7 @@ const EditSustainability: React.FC = () => {
     pdf: null,
     image: null,
   });
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -65,13 +73,20 @@ const EditSustainability: React.FC = () => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'sustain_pdf_file' | 'sustain_image_file') => {
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: 'sustain_pdf_file' | 'sustain_image_file'
+  ) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, [field]: file }));
-    setErrors((prev) => ({ ...prev, [field]: '' }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -131,7 +146,7 @@ const EditSustainability: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="sustain_category" className="block text-sm font-medium text-gray-700">
-              Category <span className="text-red-500">*</span>
+              Category
             </label>
             <input
               type="text"
@@ -139,13 +154,8 @@ const EditSustainability: React.FC = () => {
               name="sustain_category"
               value={formData.sustain_category}
               onChange={handleChange}
-              className={`mt-1 block w-full rounded-md border shadow-sm p-2 sm:p-3 text-sm sm:text-base ${
-                errors.sustain_category ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
-              }`}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               placeholder="Enter category"
-              maxLength={255}
-              aria-invalid={!!errors.sustain_category}
-              aria-describedby={errors.sustain_category ? 'sustain_category-error' : undefined}
             />
             {errors.sustain_category && (
               <p id="sustain_category-error" className="mt-1 text-sm text-red-500">
@@ -153,9 +163,10 @@ const EditSustainability: React.FC = () => {
               </p>
             )}
           </div>
+
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-              Description (optional)
+              Description
             </label>
             <textarea
               id="description"
@@ -163,13 +174,8 @@ const EditSustainability: React.FC = () => {
               value={formData.description}
               onChange={handleChange}
               rows={4}
-              className={`mt-1 block w-full rounded-md border shadow-sm p-2 sm:p-3 text-sm sm:text-base ${
-                errors.description ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
-              }`}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               placeholder="Enter description"
-              maxLength={1000}
-              aria-invalid={!!errors.description}
-              aria-describedby={errors.description ? 'description-error' : undefined}
             />
             {errors.description && (
               <p id="description-error" className="mt-1 text-sm text-red-500">
@@ -177,6 +183,7 @@ const EditSustainability: React.FC = () => {
               </p>
             )}
           </div>
+
           <div>
             <label htmlFor="weblink" className="block text-sm font-medium text-gray-700">
               Web Link (optional)
@@ -187,13 +194,8 @@ const EditSustainability: React.FC = () => {
               name="weblink"
               value={formData.weblink}
               onChange={handleChange}
-              className={`mt-1 block w-full rounded-md border shadow-sm p-2 sm:p-3 text-sm sm:text-base ${
-                errors.weblink ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
-              }`}
-              placeholder="Enter web link (e.g., https://example.com)"
-              maxLength={255}
-              aria-invalid={!!errors.weblink}
-              aria-describedby={errors.weblink ? 'weblink-error' : undefined}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              placeholder="Enter web link"
             />
             {errors.weblink && (
               <p id="weblink-error" className="mt-1 text-sm text-red-500">
@@ -201,6 +203,7 @@ const EditSustainability: React.FC = () => {
               </p>
             )}
           </div>
+
           <div>
             <label htmlFor="sustain_pdf_file" className="block text-sm font-medium text-gray-700">
               PDF File (optional)
@@ -236,6 +239,7 @@ const EditSustainability: React.FC = () => {
             )}
             <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed type: PDF.</p>
           </div>
+
           <div>
             <label htmlFor="sustain_image_file" className="block text-sm font-medium text-gray-700">
               Image File (optional)
@@ -271,48 +275,16 @@ const EditSustainability: React.FC = () => {
             )}
             <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed types: PNG, JPEG, JPG.</p>
           </div>
-          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => navigate('/sustainability')}
-              className="w-full sm:w-auto px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition shadow-sm text-sm sm:text-base"
-            >
-              Cancel
-            </button>
+
+          <div className="flex justify-end">
             <button
               type="submit"
               disabled={loading}
-              className={`w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm text-sm sm:text-base ${
-                loading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              className={`px-6 py-2 rounded-md text-white font-semibold ${
+                loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
+              } transition`}
             >
-              {loading ? (
-                <div className="flex items-center justify-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  Updating...
-                </div>
-              ) : (
-                'Update Sustainability'
-              )}
+              {loading ? 'Updating...' : 'Update Sustainability'}
             </button>
           </div>
         </form>

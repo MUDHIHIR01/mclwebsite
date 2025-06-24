@@ -4,6 +4,7 @@ import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Describes the data for the form submission
 interface FormData {
   category: string;
   description: string;
@@ -11,6 +12,15 @@ interface FormData {
   video_file: File | null;
 }
 
+// **FIX 1: Create a dedicated interface for form error messages.**
+interface FormErrors {
+    category?: string;
+    description?: string;
+    img_file?: string;
+    video_file?: string;
+}
+
+// Describes the data shape from the API
 interface EarlyCareerData {
   early_career_id: number;
   category: string;
@@ -18,6 +28,13 @@ interface EarlyCareerData {
   img_file: string | null;
   video_file: string | null;
 }
+
+// **FIX 2: Create an interface for the nested API response.**
+// This will make the EarlyCareerData interface useful.
+interface ApiGetResponse {
+    early_career: EarlyCareerData;
+}
+
 
 const EditEarlyCareer = () => {
   const navigate = useNavigate();
@@ -30,12 +47,8 @@ const EditEarlyCareer = () => {
   });
   const [currentImage, setCurrentImage] = useState<string | null>(null);
   const [currentVideo, setCurrentVideo] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Partial<FormData>>({
-    category: '',
-    description: '',
-    img_file: '',
-    video_file: '',
-  });
+  // **FIX 3: Use the new FormErrors interface and initialize as an empty object.**
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -46,7 +59,8 @@ const EditEarlyCareer = () => {
         return;
       }
       try {
-        const response = await axiosInstance.get(`/api/early-careers/${early_career_id}`);
+        // **FIX 4: Apply the ApiGetResponse type to the axios call.**
+        const response = await axiosInstance.get<ApiGetResponse>(`/api/early-careers/${early_career_id}`);
         const earlyCareer = response.data.early_career;
         setFormData({
           category: earlyCareer.category || '',
@@ -71,18 +85,23 @@ const EditEarlyCareer = () => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    if (errors[name as keyof FormErrors]) {
+        setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name } = e.target;
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, [name]: file }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    if (errors[name as keyof FormErrors]) {
+        setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    // **FIX 5: Type the newErrors object with FormErrors.**
+    const newErrors: FormErrors = {};
 
     if (!formData.category.trim()) {
       newErrors.category = 'Category is required';
@@ -90,16 +109,20 @@ const EditEarlyCareer = () => {
       newErrors.category = 'Category must not exceed 255 characters';
     }
 
-    if (formData.img_file && !['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.img_file.type)) {
-      newErrors.img_file = 'Only JPEG, PNG, JPG, or GIF files are allowed';
-    } else if (formData.img_file && formData.img_file.size > 2 * 1024 * 1024) {
-      newErrors.img_file = 'Image size must not exceed 2MB';
+    if (formData.img_file) {
+        if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.img_file.type)) {
+            newErrors.img_file = 'Only JPEG, PNG, JPG, or GIF files are allowed';
+        } else if (formData.img_file.size > 2 * 1024 * 1024) {
+            newErrors.img_file = 'Image size must not exceed 2MB';
+        }
     }
 
-    if (formData.video_file && !['video/mp4', 'video/avi', 'video/mov', 'video/wmv'].includes(formData.video_file.type)) {
-      newErrors.video_file = 'Only MP4, AVI, MOV, or WMV files are allowed';
-    } else if (formData.video_file && formData.video_file.size > 10 * 1024 * 1024) {
-      newErrors.video_file = 'Video size must not exceed 10MB';
+    if (formData.video_file) {
+        if (!['video/mp4', 'video/x-msvideo', 'video/quicktime', 'video/x-ms-wmv'].includes(formData.video_file.type)) {
+            newErrors.video_file = 'Only MP4, AVI, MOV, or WMV files are allowed';
+        } else if (formData.video_file.size > 10 * 1024 * 1024) {
+            newErrors.video_file = 'Video size must not exceed 10MB';
+        }
     }
 
     setErrors(newErrors);
@@ -122,6 +145,8 @@ const EditEarlyCareer = () => {
     }
 
     try {
+      // NOTE: For updates with FormData, you must use POST and may need a _method field
+      // payload.append('_method', 'PUT'); // If Laravel backend expects it
       const response = await axiosInstance.post(`/api/early-careers/${early_career_id}`, payload, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -133,12 +158,7 @@ const EditEarlyCareer = () => {
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to update early career entry';
       const backendErrors = error.response?.data?.errors || {};
-      setErrors({
-        category: backendErrors.category?.[0] || '',
-        description: backendErrors.description?.[0] || '',
-        img_file: backendErrors.img_file?.[0] || '',
-        video_file: backendErrors.video_file?.[0] || '',
-      });
+      setErrors(backendErrors); // This now correctly matches the FormErrors type
       toast.error(errorMessage);
       console.error("Submit error:", error);
     } finally {
@@ -164,6 +184,7 @@ const EditEarlyCareer = () => {
           Edit Early Career Entry
         </h2>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Category Input */}
           <div>
             <label htmlFor="category" className="block text-sm font-medium text-gray-700">
               Category <span className="text-red-500">*</span>
@@ -188,6 +209,7 @@ const EditEarlyCareer = () => {
               </p>
             )}
           </div>
+          {/* Description Input */}
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-gray-700">
               Description
@@ -211,6 +233,7 @@ const EditEarlyCareer = () => {
               </p>
             )}
           </div>
+          {/* Image Input */}
           <div>
             <label htmlFor="img_file" className="block text-sm font-medium text-gray-700">
               Image (optional)
@@ -245,6 +268,7 @@ const EditEarlyCareer = () => {
             )}
             <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed types: JPG, PNG, GIF.</p>
           </div>
+          {/* Video Input */}
           <div>
             <label htmlFor="video_file" className="block text-sm font-medium text-gray-700">
               Video (optional)
@@ -257,7 +281,7 @@ const EditEarlyCareer = () => {
                   controls
                   className="h-32 w-auto max-w-xs rounded border border-gray-200"
                   onError={(e) => {
-                    e.currentTarget.poster = 'https://via.placeholder.com/128x128?text=Video+Error';
+                    (e.currentTarget.poster) = 'https://via.placeholder.com/128x128?text=Video+Error';
                     console.warn("Error loading current video from URL:", displayVideoUrl);
                   }}
                 />
@@ -267,7 +291,7 @@ const EditEarlyCareer = () => {
               type="file"
               id="video_file"
               name="video_file"
-              accept="video/mp4,video/avi,video/mov,video/wmv"
+              accept="video/mp4,video/avi,video/quicktime,video/wmv"
               onChange={handleFileChange}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -278,6 +302,7 @@ const EditEarlyCareer = () => {
             )}
             <p className="mt-1 text-xs text-gray-500">Max file size: 10MB. Allowed types: MP4, AVI, MOV, WMV.</p>
           </div>
+          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
             <button
               type="button"

@@ -4,12 +4,20 @@ import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// The data structure for the form itself
 interface FormData {
   standard_category: string;
   standard_file: File | null;
   weblink: string;
   description: string;
 }
+
+// ***FIX 1: Define a dedicated type for form errors***
+// This type maps the keys of FormData to optional string values,
+// which is the correct type for storing validation messages.
+type FormErrors = {
+  [K in keyof FormData]?: string;
+};
 
 const AddOurStandards: React.FC = () => {
   const navigate = useNavigate();
@@ -19,7 +27,9 @@ const AddOurStandards: React.FC = () => {
     weblink: '',
     description: '',
   });
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+
+  // ***FIX 2: Use the new FormErrors type for the errors state***
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
 
   const handleChange = (
@@ -27,17 +37,20 @@ const AddOurStandards: React.FC = () => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    // Clear the specific error message for the field being changed
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, standard_file: file }));
-    setErrors((prev) => ({ ...prev, standard_file: '' }));
+    // This is now type-safe. We are clearing the string-based error for standard_file.
+    setErrors((prev) => ({ ...prev, standard_file: undefined }));
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    // ***FIX 3: Use the FormErrors type for the local newErrors object***
+    const newErrors: FormErrors = {};
 
     if (!formData.standard_category.trim()) {
       newErrors.standard_category = 'Standard category is required';
@@ -53,8 +66,10 @@ const AddOurStandards: React.FC = () => {
 
     if (formData.standard_file) {
       if (!['application/pdf', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'].includes(formData.standard_file.type)) {
+        // This is now valid: assigning a string to a property that expects a string.
         newErrors.standard_file = 'Only PDF, XLS, or XLSX files are allowed';
       } else if (formData.standard_file.size > 2 * 1024 * 1024) {
+        // This is also now valid.
         newErrors.standard_file = 'File size must not exceed 2MB';
       }
     }
@@ -87,6 +102,8 @@ const AddOurStandards: React.FC = () => {
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to create our standard record';
       const backendErrors = error.response?.data?.errors || {};
+      // This assignment is now type-safe, assuming the backend returns
+      // an object with keys matching FormErrors.
       setErrors(backendErrors);
       toast.error(errorMessage, { position: 'top-right' });
     } finally {
@@ -177,6 +194,8 @@ const AddOurStandards: React.FC = () => {
               onChange={handleFileChange}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
+            {/* ***FIX 4: This JSX is now valid***
+                errors.standard_file is now a string, which is a valid ReactNode. */}
             {errors.standard_file && (
               <p id="standard_file-error" className="mt-1 text-sm text-red-500">
                 {errors.standard_file}

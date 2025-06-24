@@ -4,17 +4,28 @@ import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Interface for the form's data values.
 interface FormData {
   category: string;
   description: string;
-  img_file: File | null;
+  img_file: File | null; // A new image file to be uploaded.
 }
 
+// REFINEMENT 1: Use this interface to type the data fetched from the API.
+// This resolves the "unused interface" error.
 interface StayConnectedData {
   stay_connected_id: number;
   category: string;
   description: string | null;
-  img_file: string | null;
+  img_file: string | null; // The path to the existing image on the server.
+}
+
+// REFINEMENT 2: Create a dedicated interface for form error messages.
+// This is the core fix for most of the type errors.
+interface FormErrors {
+  category?: string;
+  description?: string;
+  img_file?: string;
 }
 
 const EditStayConnected = () => {
@@ -26,11 +37,9 @@ const EditStayConnected = () => {
     img_file: null,
   });
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Partial<FormData>>({
-    category: '',
-    description: '',
-    img_file: '',
-  });
+  // REFINEMENT 3: Use the new FormErrors interface for the errors state.
+  // Initialize to an empty object. This fixes the initial state type mismatch.
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -42,11 +51,12 @@ const EditStayConnected = () => {
       }
       try {
         const response = await axiosInstance.get(`/api/stay-connected/${stay_connected_id}`);
-        const stayConnected = response.data.stay_connected;
+        // Apply the StayConnectedData type to the fetched object.
+        const stayConnected: StayConnectedData = response.data.stay_connected;
         setFormData({
           category: stayConnected.category || '',
           description: stayConnected.description || '',
-          img_file: null,
+          img_file: null, // Always null on initial load.
         });
         setCurrentImage(stayConnected.img_file);
       } catch (error: any) {
@@ -64,17 +74,20 @@ const EditStayConnected = () => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    // Clear the specific error for the field being changed.
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, img_file: file }));
-    setErrors((prev) => ({ ...prev, img_file: '' }));
+    // REFINEMENT 4: This is now type-correct because errors.img_file expects a string.
+    setErrors((prev) => ({ ...prev, img_file: undefined }));
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    // REFINEMENT 5: Use FormErrors for the local newErrors object.
+    const newErrors: FormErrors = {};
 
     if (!formData.category.trim()) {
       newErrors.category = 'Category is required';
@@ -83,6 +96,7 @@ const EditStayConnected = () => {
     }
 
     if (formData.img_file) {
+      // REFINEMENT 6: Assigning a string error message is now valid.
       if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.img_file.type)) {
         newErrors.img_file = 'Only JPEG, PNG, JPG, or GIF files are allowed';
       } else if (formData.img_file.size > 2 * 1024 * 1024) {
@@ -105,23 +119,30 @@ const EditStayConnected = () => {
     if (formData.img_file) {
       payload.append('img_file', formData.img_file);
     }
+    // Add _method for Laravel to handle POST as PUT/PATCH for form-data
+    payload.append('_method', 'POST');
 
     try {
+      // Use POST for form-data with method spoofing
       const response = await axiosInstance.post(`/api/stay-connected/${stay_connected_id}`, payload, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       toast.success(response.data.message || 'Stay connected entry updated successfully');
-      setFormData((prev) => ({ ...prev, img_file: null }));
-      setCurrentImage(response.data.stay_connected?.img_file || null);
+      setFormData((prev) => ({ ...prev, img_file: null })); // Clear the file input
+      setCurrentImage(response.data.stay_connected?.img_file || currentImage);
+      setErrors({}); // Clear errors on success
       setTimeout(() => navigate('/stay-connected'), 2000);
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to update stay connected entry';
       const backendErrors = error.response?.data?.errors || {};
-      setErrors({
-        category: backendErrors.category?.[0] || '',
-        description: backendErrors.description?.[0] || '',
-        img_file: backendErrors.img_file?.[0] || '',
-      });
+      
+      // REFINEMENT 7: Map backend errors to our FormErrors type. This is now type-correct.
+      const formattedErrors: FormErrors = {};
+      if (backendErrors.category) formattedErrors.category = backendErrors.category[0];
+      if (backendErrors.description) formattedErrors.description = backendErrors.description[0];
+      if (backendErrors.img_file) formattedErrors.img_file = backendErrors.img_file[0];
+
+      setErrors(formattedErrors);
       toast.error(errorMessage);
       console.error("Submit error:", error);
     } finally {
@@ -131,7 +152,9 @@ const EditStayConnected = () => {
 
   const getImageUrl = (imagePath: string | null): string | undefined => {
     if (!imagePath) return undefined;
+    // Ensure the base URL does not have a trailing slash
     const baseUrl = (axiosInstance.defaults.baseURL || window.location.origin).replace(/\/$/, '');
+    // Ensure the image path does not have a leading slash
     const path = imagePath.replace(/^\//, '');
     return `${baseUrl}/${path}`;
   };
@@ -195,7 +218,7 @@ const EditStayConnected = () => {
           </div>
           <div>
             <label htmlFor="img_file" className="block text-sm font-medium text-gray-700">
-              Image (optional)
+              Replace Image (optional)
             </label>
             {displayImageUrl && (
               <div className="my-2">
@@ -220,6 +243,7 @@ const EditStayConnected = () => {
               onChange={handleFileChange}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            {/* REFINEMENT 8: This is now valid. errors.img_file is a string, which is a valid ReactNode. */}
             {errors.img_file && (
               <p id="img_file-error" className="mt-1 text-sm text-red-500">
                 {errors.img_file}
@@ -242,33 +266,7 @@ const EditStayConnected = () => {
                 loading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
-              {loading ? (
-                <div className="flex items-center justify-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  Updating...
-                </div>
-              ) : (
-                'Update Stay Connected'
-              )}
+              {loading ? 'Updating...' : 'Update Stay Connected'}
             </button>
           </div>
         </form>

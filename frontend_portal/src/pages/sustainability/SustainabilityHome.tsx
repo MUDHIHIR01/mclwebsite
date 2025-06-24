@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useTable, useGlobalFilter, usePagination } from 'react-table';
+import { useTable, useGlobalFilter, usePagination, Column, CellProps } from 'react-table';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -113,7 +113,7 @@ const ImageModal: React.FC<{ imageUrl: string; onClose: () => void }> = ({ image
   );
 };
 
-export default function SustainabilityHome() {
+const SustainabilityHome: React.FC = () => {
   const [data, setData] = useState<SustainabilityHomeData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -138,17 +138,20 @@ export default function SustainabilityHome() {
     fetchSustainabilityHomes();
   }, [fetchSustainabilityHomes]);
 
-  const columns = useMemo(
+  const columns: Column<SustainabilityHomeData>[] = useMemo(
     () => [
       {
         Header: '#',
         id: 'rowIndex',
-        Cell: ({ row, flatRows }: any) => {
-          const originalIndex = flatRows.findIndex((flatRow: any) => flatRow.original === row.original);
+        Cell: ({ row, rows }: CellProps<SustainabilityHomeData> & { rows: Array<{ original: SustainabilityHomeData }> }) => {
+          const originalIndex = rows.findIndex((r) => r.original === row.original);
           return <span>{originalIndex + 1}</span>;
         },
       },
-      { Header: 'Heading', accessor: 'heading' },
+      {
+        Header: 'Heading',
+        accessor: 'heading',
+      },
       {
         Header: 'Description',
         accessor: 'description',
@@ -184,7 +187,7 @@ export default function SustainabilityHome() {
       {
         Header: 'Actions',
         accessor: 'sustainability_home_id',
-        Cell: ({ row }: any) => (
+        Cell: ({ row }: CellProps<SustainabilityHomeData>) => (
           <ActionButtons sustainability_home_id={row.original.sustainability_home_id} onDeletionSuccess={fetchSustainabilityHomes} />
         ),
       },
@@ -192,8 +195,12 @@ export default function SustainabilityHome() {
     [fetchSustainabilityHomes]
   );
 
-  const tableInstance = useTable(
-    { columns, data, initialState: { pageIndex: 0, pageSize: 10 } },
+  const tableInstance = useTable<SustainabilityHomeData>(
+    {
+      columns,
+      data,
+      initialState: { pageIndex: 0, pageSize: 10 },
+    },
     useGlobalFilter,
     usePagination
   );
@@ -373,4 +380,6 @@ export default function SustainabilityHome() {
       </div>
     </div>
   );
-}
+};
+
+export default SustainabilityHome;

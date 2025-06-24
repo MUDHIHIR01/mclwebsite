@@ -10,6 +10,12 @@ interface FormData {
   home_img: File | null;
 }
 
+interface Errors {
+  heading: string;
+  description: string;
+  home_img: string;
+}
+
 const AddNewsHome = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
@@ -17,13 +23,12 @@ const AddNewsHome = () => {
     description: '',
     home_img: null,
   });
-  const [errors, setErrors] = useState<Partial<FormData>>({
+  const [errors, setErrors] = useState<Errors>({
     heading: '',
     description: '',
     home_img: '',
   });
   const [loading, setLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -40,7 +45,11 @@ const AddNewsHome = () => {
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    const newErrors: Errors = {
+      heading: '',
+      description: '',
+      home_img: '',
+    };
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -52,14 +61,16 @@ const AddNewsHome = () => {
       newErrors.description = 'Description must not exceed 1000 characters';
     }
 
-    if (formData.home_img && !['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.home_img.type)) {
-      newErrors.home_img = 'Only JPEG, PNG, JPG, or GIF files are allowed';
-    } else if (formData.home_img && formData.home_img.size > 2 * 1024 * 1024) {
-      newErrors.home_img = 'Image size must not exceed 2MB';
+    if (formData.home_img) {
+      if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.home_img.type)) {
+        newErrors.home_img = 'Only JPEG, PNG, JPG, or GIF files are allowed';
+      } else if (formData.home_img.size > 2 * 1024 * 1024) {
+        newErrors.home_img = 'Image size must not exceed 2MB';
+      }
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object.values(newErrors).every((error) => !error);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,7 +78,6 @@ const AddNewsHome = () => {
     if (!validateForm()) return;
 
     setLoading(true);
-    setIsSubmitting(true);
 
     try {
       const payload = new FormData();
@@ -86,12 +96,15 @@ const AddNewsHome = () => {
       setTimeout(() => navigate('/news/home'), 2000);
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to create news home entry';
-      const backendErrors = error.response?.data?.errors || {};
-      setErrors(backendErrors);
+      const backendErrors: Partial<Errors> = error.response?.data?.errors || {};
+      setErrors({
+        heading: backendErrors.heading || '',
+        description: backendErrors.description || '',
+        home_img: backendErrors.home_img || '',
+      });
       toast.error(errorMessage, { position: 'top-right' });
     } finally {
       setLoading(false);
-      setIsSubmitting(false);
     }
   };
 
@@ -167,7 +180,7 @@ const AddNewsHome = () => {
             <button
               type="button"
               onClick={() => navigate('/news/home')}
-              className={`w-full sm:w-40 px-4 ${isSubmitting ? 'py-0.5' : 'py-1'} bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition shadow-md text-sm sm:text-base`}
+              className="w-full sm:w-40 px-4 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition shadow-md text-sm sm:text-base"
             >
               Cancel
             </button>

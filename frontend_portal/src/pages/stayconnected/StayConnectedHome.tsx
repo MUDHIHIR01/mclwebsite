@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useTable, useGlobalFilter, usePagination } from 'react-table';
+// REFINEMENT 1: Import the 'Column' and 'CellProps' types from react-table.
+import { useTable, useGlobalFilter, usePagination, Column, CellProps } from 'react-table';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -65,6 +66,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ stay_connected_id, onDele
   );
 };
 
+// REFINEMENT 2: Type the props for custom cells correctly.
 const DescriptionCell: React.FC<{ value: string | null }> = ({ value }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const maxLength = 100;
@@ -123,8 +125,9 @@ export default function StayConnectedHome() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axiosInstance.get<StayConnectedHomeData[]>('/api/stay-connected-home');
-      setData(response.data);
+      const response = await axiosInstance.get('/api/stay-connected-home');
+      // Assuming the API returns an object with a data property which is the array
+      setData(response.data.data || response.data);
     } catch (err: any) {
       const errorMessage = 'Failed to fetch stay connected home entries: ' + (err.response?.data?.message || err.message || 'Unknown error');
       setError(errorMessage);
@@ -138,13 +141,19 @@ export default function StayConnectedHome() {
     fetchStayConnectedHomes();
   }, [fetchStayConnectedHomes]);
 
-  const columns = useMemo(
+  // REFINEMENT 3: Explicitly type the columns array with Column<StayConnectedHomeData>[].
+  // This is the main fix for the TypeScript error.
+  const columns: Column<StayConnectedHomeData>[] = useMemo(
     () => [
       {
         Header: '#',
         id: 'rowIndex',
-        Cell: ({ row, flatRows }: any) => {
-          const originalIndex = flatRows.findIndex((flatRow: any) => flatRow.original === row.original);
+        // REFINEMENT 4: Remove 'any' and let TypeScript infer the types from CellProps.
+        Cell: ({ row, flatRows }: CellProps<StayConnectedHomeData>) => {
+          // The page-based index is often more intuitive than the flatRows index.
+          // This calculates index within the current page.
+          // For a global index across all pages: page.findIndex + pageIndex * pageSize
+          const originalIndex = flatRows.findIndex((flatRow) => flatRow.id === row.id);
           return <span>{originalIndex + 1}</span>;
         },
       },
@@ -152,12 +161,14 @@ export default function StayConnectedHome() {
       {
         Header: 'Description',
         accessor: 'description',
-        Cell: ({ value }: { value: string | null }) => <DescriptionCell value={value} />,
+        // 'value' is now correctly typed as 'string | null'.
+        Cell: ({ value }) => <DescriptionCell value={value} />,
       },
       {
         Header: 'Image',
         accessor: 'home_img',
-        Cell: ({ value }: { value: string | null }) => {
+        // 'value' is now 'string | null'.
+        Cell: ({ value }) => {
           if (!value) return <span className="text-gray-500 text-xs">No Image</span>;
           const baseUrl = axiosInstance.defaults.baseURL || window.location.origin;
           const imageUrl = `${baseUrl.replace(/\/$/, '')}/${value.replace(/^\//, '')}`;
@@ -179,12 +190,14 @@ export default function StayConnectedHome() {
       {
         Header: 'Created At',
         accessor: 'created_at',
-        Cell: ({ value }: { value: string }) => new Date(value).toLocaleDateString(),
+        // 'value' is now 'string'.
+        Cell: ({ value }) => new Date(value).toLocaleDateString(),
       },
       {
         Header: 'Actions',
         accessor: 'stay_connected_id',
-        Cell: ({ row }: any) => (
+        // 'row' is now correctly typed as Row<StayConnectedHomeData>.
+        Cell: ({ row }) => (
           <ActionButtons stay_connected_id={row.original.stay_connected_id} onDeletionSuccess={fetchStayConnectedHomes} />
         ),
       },
@@ -193,6 +206,7 @@ export default function StayConnectedHome() {
   );
 
   const tableInstance = useTable(
+    // REFINEMENT 5: The 'columns' object now correctly matches the expected type.
     { columns, data, initialState: { pageIndex: 0, pageSize: 10 } },
     useGlobalFilter,
     usePagination

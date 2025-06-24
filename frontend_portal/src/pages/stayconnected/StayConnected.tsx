@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useTable, useGlobalFilter, usePagination } from 'react-table';
+// REFINEMENT 1: Import the necessary types from react-table
+import { useTable, useGlobalFilter, usePagination, Column, CellProps } from 'react-table';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -22,6 +23,7 @@ interface ActionButtonsProps {
   onDeletionSuccess: () => void;
 }
 
+// ... (ActionButtons, DescriptionCell, ImageModal components remain the same) ...
 const ActionButtons: React.FC<ActionButtonsProps> = ({ stay_connected_id, onDeletionSuccess }) => {
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -64,7 +66,6 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ stay_connected_id, onDele
     </div>
   );
 };
-
 const DescriptionCell: React.FC<{ value: string | null }> = ({ value }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const maxLength = 100;
@@ -89,7 +90,6 @@ const DescriptionCell: React.FC<{ value: string | null }> = ({ value }) => {
     </div>
   );
 };
-
 const ImageModal: React.FC<{ imageUrl: string; onClose: () => void }> = ({ imageUrl, onClose }) => {
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50" role="dialog" aria-modal="true" onClick={onClose}>
@@ -112,6 +112,7 @@ const ImageModal: React.FC<{ imageUrl: string; onClose: () => void }> = ({ image
     </div>
   );
 };
+// ...
 
 export default function StayConnected() {
   const [data, setData] = useState<StayConnectedData[]>([]);
@@ -138,13 +139,16 @@ export default function StayConnected() {
     fetchStayConnected();
   }, [fetchStayConnected]);
 
-  const columns = useMemo(
+  // REFINEMENT 2: Explicitly type the columns array with Column<StayConnectedData>[].
+  // This is the main fix for the error.
+  const columns = useMemo<Column<StayConnectedData>[]>(
     () => [
       {
         Header: '#',
         id: 'rowIndex',
-        Cell: ({ row, flatRows }: any) => {
-          const originalIndex = flatRows.findIndex((flatRow: any) => flatRow.original === row.original);
+        // REFINEMENT 3: Use the imported CellProps for strong typing, removing `any`.
+        Cell: ({ row, flatRows }: CellProps<StayConnectedData>) => {
+          const originalIndex = flatRows.findIndex((flatRow) => flatRow.original === row.original);
           return <span>{originalIndex + 1}</span>;
         },
       },
@@ -152,12 +156,12 @@ export default function StayConnected() {
       {
         Header: 'Description',
         accessor: 'description',
-        Cell: ({ value }: { value: string | null }) => <DescriptionCell value={value} />,
+        Cell: ({ value }) => <DescriptionCell value={value} />,
       },
       {
         Header: 'Image',
         accessor: 'img_file',
-        Cell: ({ value }: { value: string | null }) => {
+        Cell: ({ value }) => {
           if (!value) return <span className="text-gray-500 text-xs">No Image</span>;
           const baseUrl = axiosInstance.defaults.baseURL || window.location.origin;
           const imageUrl = `${baseUrl.replace(/\/$/, '')}/${value.replace(/^\//, '')}`;
@@ -179,12 +183,13 @@ export default function StayConnected() {
       {
         Header: 'Created At',
         accessor: 'created_at',
-        Cell: ({ value }: { value: string }) => new Date(value).toLocaleDateString(),
+        Cell: ({ value }) => new Date(value).toLocaleDateString(),
       },
       {
         Header: 'Actions',
         accessor: 'stay_connected_id',
-        Cell: ({ row }: any) => (
+        // REFINEMENT 3: Use CellProps here as well for type safety.
+        Cell: ({ row }: CellProps<StayConnectedData>) => (
           <ActionButtons stay_connected_id={row.original.stay_connected_id} onDeletionSuccess={fetchStayConnected} />
         ),
       },
@@ -192,6 +197,7 @@ export default function StayConnected() {
     [fetchStayConnected]
   );
 
+  // FIX: Pass the correctly typed 'columns' array to useTable. No more errors here.
   const tableInstance = useTable(
     { columns, data, initialState: { pageIndex: 0, pageSize: 10 } },
     useGlobalFilter,
@@ -213,7 +219,8 @@ export default function StayConnected() {
     setGlobalFilter,
     state: { pageIndex, pageSize, globalFilter },
   } = tableInstance;
-
+  
+  // ... (rest of the component remains the same, no changes needed) ...
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.text('Stay Connected Entries', 20, 10);

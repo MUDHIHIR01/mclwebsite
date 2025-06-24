@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useTable, useGlobalFilter, usePagination } from 'react-table';
+import { useTable, useGlobalFilter, usePagination, Column, CellProps } from 'react-table';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -32,7 +32,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ values_home_id, onDeletio
       onDeletionSuccess();
     } catch (err) {
       toast.error('Failed to delete values home entry.', { position: 'top-right' });
-      console.error("Delete error:", err);
+      console.error('Delete error:', err);
     }
     setShowConfirm(false);
   };
@@ -69,9 +69,7 @@ const DescriptionCell: React.FC<{ value: string | null }> = ({ value }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const maxLength = 100;
 
-  if (!value) {
-    return <span className="text-gray-500 text-xs">No Description</span>;
-  }
+  if (!value) return <span className="text-gray-500 text-xs">No Description</span>;
 
   const truncatedText = value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
 
@@ -104,8 +102,8 @@ const ImageModal: React.FC<{ imageUrl: string; onClose: () => void }> = ({ image
           alt="Full-size image"
           className="w-full h-auto max-h-[80vh] object-contain rounded"
           onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = 'https://via.placeholder.com/300x300?text=Error';
-            (e.currentTarget as HTMLImageElement).alt = 'Image load error';
+            e.currentTarget.src = 'https://via.placeholder.com/300x300?text=Error';
+            e.currentTarget.alt = 'Image load error';
           }}
         />
       </div>
@@ -113,7 +111,7 @@ const ImageModal: React.FC<{ imageUrl: string; onClose: () => void }> = ({ image
   );
 };
 
-export default function ValuesHome() {
+const ValuesHome: React.FC = () => {
   const [data, setData] = useState<ValuesHomeData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -126,7 +124,7 @@ export default function ValuesHome() {
       const response = await axiosInstance.get<ValuesHomeData[]>('/api/values-home');
       setData(response.data);
     } catch (err: any) {
-      const errorMessage = 'Failed to fetch values home entries: ' + (err.response?.data?.message || err.message || 'Unknown error');
+      const errorMessage = `Failed to fetch values home entries: ${err.response?.data?.message || err.message || 'Unknown error'}`;
       setError(errorMessage);
       toast.error('Failed to fetch values home entries.');
     } finally {
@@ -138,26 +136,28 @@ export default function ValuesHome() {
     fetchValuesHomes();
   }, [fetchValuesHomes]);
 
-  const columns = useMemo(
+  const columns: Column<ValuesHomeData>[] = useMemo(
     () => [
       {
         Header: '#',
         id: 'rowIndex',
-        Cell: ({ row, flatRows }: any) => {
-          const originalIndex = flatRows.findIndex((flatRow: any) => flatRow.original === row.original);
-          return <span>{originalIndex + 1}</span>;
+        Cell: ({ row }: CellProps<ValuesHomeData>) => {
+          return <span>{data.findIndex((item) => item.values_home_id === row.original.values_home_id) + 1}</span>;
         },
       },
-      { Header: 'Heading', accessor: 'heading' },
+      {
+        Header: 'Heading',
+        accessor: 'heading',
+      },
       {
         Header: 'Description',
         accessor: 'description',
-        Cell: ({ value }: { value: string | null }) => <DescriptionCell value={value} />,
+        Cell: ({ value }: CellProps<ValuesHomeData, string | null>) => <DescriptionCell value={value} />,
       },
       {
         Header: 'Image',
         accessor: 'home_img',
-        Cell: ({ value }: { value: string | null }) => {
+        Cell: ({ value }: CellProps<ValuesHomeData, string | null>) => {
           if (!value) return <span className="text-gray-500 text-xs">No Image</span>;
           const baseUrl = axiosInstance.defaults.baseURL || window.location.origin;
           const imageUrl = `${baseUrl.replace(/\/$/, '')}/${value.replace(/^\//, '')}`;
@@ -168,8 +168,8 @@ export default function ValuesHome() {
                 alt="Values home item"
                 className="h-16 w-16 object-cover rounded cursor-pointer hover:opacity-80 transition"
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = 'https://via.placeholder.com/64x64?text=Error';
-                  (e.currentTarget as HTMLImageElement).alt = 'Image load error';
+                  e.currentTarget.src = 'https://via.placeholder.com/64x64?text=Error';
+                  e.currentTarget.alt = 'Image load error';
                 }}
               />
             </button>
@@ -179,23 +179,17 @@ export default function ValuesHome() {
       {
         Header: 'Created At',
         accessor: 'created_at',
-        Cell: ({ value }: { value: string }) => new Date(value).toLocaleDateString(),
+        Cell: ({ value }: CellProps<ValuesHomeData, string>) => new Date(value).toLocaleDateString(),
       },
       {
         Header: 'Actions',
         accessor: 'values_home_id',
-        Cell: ({ row }: any) => (
+        Cell: ({ row }: CellProps<ValuesHomeData>) => (
           <ActionButtons values_home_id={row.original.values_home_id} onDeletionSuccess={fetchValuesHomes} />
         ),
       },
     ],
-    [fetchValuesHomes]
-  );
-
-  const tableInstance = useTable(
-    { columns, data, initialState: { pageIndex: 0, pageSize: 10 } },
-    useGlobalFilter,
-    usePagination
+    [data, fetchValuesHomes]
   );
 
   const {
@@ -212,7 +206,15 @@ export default function ValuesHome() {
     setPageSize,
     setGlobalFilter,
     state: { pageIndex, pageSize, globalFilter },
-  } = tableInstance;
+  } = useTable<ValuesHomeData>(
+    {
+      columns,
+      data,
+      initialState: { pageIndex: 0, pageSize: 10 },
+    },
+    useGlobalFilter,
+    usePagination
+  );
 
   const exportToPDF = () => {
     const doc = new jsPDF();
@@ -245,16 +247,22 @@ export default function ValuesHome() {
     toast.success('Excel exported successfully!');
   };
 
-  if (loading) return <div className="flex justify-center items-center min-h-screen"><div className="text-lg font-semibold">Loading...</div></div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-lg font-semibold">Loading...</div>
+      </div>
+    );
+  }
 
   if (error && data.length === 0) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen p-4">
         <div className="text-red-500 text-xl font-semibold mb-4">Error</div>
-        <p className="text-gray-700 mb-2">{error}</p>
+        <p className="text-gray-700 mb-4">{error}</p>
         <button
           onClick={fetchValuesHomes}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
         >
           Try Again
         </button>
@@ -264,7 +272,7 @@ export default function ValuesHome() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6">
-      <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
+      <ToastContainer position="top-right" autoClose={3000} />
       {selectedImage && <ImageModal imageUrl={selectedImage} onClose={() => setSelectedImage(null)} />}
       <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
@@ -277,7 +285,9 @@ export default function ValuesHome() {
           </Link>
         </div>
 
-        {error && !loading && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md border border-red-300">{error}</div>}
+        {error && !loading && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md border border-red-300">{error}</div>
+        )}
 
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <input
@@ -287,8 +297,12 @@ export default function ValuesHome() {
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
           />
           <div className="flex gap-2">
-            <button onClick={exportToPDF} className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">Export PDF</button>
-            <button onClick={exportToExcel} className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">Export Excel</button>
+            <button onClick={exportToPDF} className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
+              Export PDF
+            </button>
+            <button onClick={exportToExcel} className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
+              Export Excel
+            </button>
           </div>
         </div>
 
@@ -313,12 +327,9 @@ export default function ValuesHome() {
                 page.map((row) => {
                   prepareRow(row);
                   return (
-                    <tr {...row.getRowProps()} className="hover:bg-gray-50 transition-colors">
+                    <tr {...row.getRowProps()} className="hover:bg-gray-50 transition">
                       {row.cells.map((cell) => (
-                        <td
-                          {...cell.getCellProps()}
-                          className="px-2 sm:px-6 py-4 text-sm text-gray-700"
-                        >
+                        <td {...cell.getCellProps()} className="px-2 sm:px-4 py-3 text-sm text-gray-700">
                           {cell.render('Cell')}
                         </td>
                       ))}
@@ -328,7 +339,7 @@ export default function ValuesHome() {
               ) : (
                 <tr>
                   <td colSpan={columns.length} className="text-center py-10 text-gray-500">
-                    No values home entries found matching your criteria.
+                    No values home entries found.
                   </td>
                 </tr>
               )}
@@ -373,4 +384,6 @@ export default function ValuesHome() {
       </div>
     </div>
   );
-}
+};
+
+export default ValuesHome;

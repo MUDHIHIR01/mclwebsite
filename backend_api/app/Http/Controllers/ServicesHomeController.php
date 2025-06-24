@@ -13,7 +13,7 @@ class ServicesHomeController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:sanctum')->except(['index', 'show', 'servicesHomeSlider']);
+        $this->middleware('auth:sanctum')->except(['index', 'show', 'servicesHomeSlider','latestService']);
     }
 
     /**
@@ -47,6 +47,20 @@ class ServicesHomeController extends Controller
             return response()->json(['error' => 'Failed to fetch services home sliders', 'details' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+
+    public function latestService()
+{
+    try {
+        \Log::info('Fetching the latest service home slider for public view');
+        $slider = ServicesHome::orderBy('services_home_id', 'desc')->first();
+        \Log::info('Retrieved latest slider: ', ['slider_id' => $slider?->services_home_id]);
+        return response()->json($slider ?: [], Response::HTTP_OK);
+    } catch (Exception $e) {
+        \Log::error('Error fetching latest service home slider: ' . $e->getMessage());
+        return response()->json(['error' => 'Failed to fetch latest service home slider', 'details' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+}
 
     /**
      * Store a newly created services home slider.

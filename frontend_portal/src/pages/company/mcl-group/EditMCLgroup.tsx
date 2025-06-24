@@ -1,11 +1,10 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Interface for the form's data state
 interface FormData {
   mcl_category: string;
   description: string;
@@ -14,6 +13,7 @@ interface FormData {
   removeImage?: boolean;
 }
 
+// Interface for the fetched data from the API
 interface MclGroupData {
   mcl_id: number;
   mcl_category: string;
@@ -22,9 +22,17 @@ interface MclGroupData {
   image_file: string | null;
 }
 
+// 1. Create a dedicated interface for form validation errors
+interface FormErrors {
+  mcl_category?: string;
+  description?: string;
+  weblink?: string;
+  image_file?: string;
+}
+
 const EditMclGroup = () => {
   const navigate = useNavigate();
-  const { mcl_id } = useParams<{ mcl_id: string }>(); // Using mcl_id to match route
+  const { mcl_id } = useParams<{ mcl_id: string }>();
   const [formData, setFormData] = useState<FormData>({
     mcl_category: '',
     description: '',
@@ -33,7 +41,9 @@ const EditMclGroup = () => {
     removeImage: false,
   });
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+
+  // 2. Use the new FormErrors interface for the errors state
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -58,20 +68,23 @@ const EditMclGroup = () => {
         navigate('/mcl-groups');
       }
     };
-
     fetchMclGroup();
   }, [mcl_id, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, image_file: file, removeImage: false }));
-    setErrors((prev) => ({ ...prev, image_file: undefined }));
+    if (errors.image_file) {
+      setErrors((prev) => ({ ...prev, image_file: undefined }));
+    }
   };
 
   const handleRemoveImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,10 +96,25 @@ const EditMclGroup = () => {
     }));
   };
 
+  // 3. Implement the validation logic with the correct types
   const validateForm = (): boolean => {
-    // Same validation logic as AddMclGroup
-    // ... (can be extracted to a shared utility function)
-    return true; // For brevity, assuming validation logic is correct
+    const newErrors: FormErrors = {};
+
+    if (!formData.mcl_category.trim()) {
+      newErrors.mcl_category = 'Category is required';
+    }
+
+    if (formData.image_file) {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+      if (!allowedTypes.includes(formData.image_file.type)) {
+        newErrors.image_file = 'Only JPEG, PNG, JPG, or GIF files are allowed';
+      } else if (formData.image_file.size > 2 * 1024 * 1024) { // 2MB
+        newErrors.image_file = 'Image size must not exceed 2MB';
+      }
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -102,26 +130,22 @@ const EditMclGroup = () => {
     if (formData.image_file) {
       payload.append('image_file', formData.image_file);
     } else if (formData.removeImage) {
-      payload.append('image_file', ''); // Sending empty string can signal removal on backend
+      payload.append('remove_image', 'true');
     }
-    // Laravel handles POST for updates when using FormData
-    // The route is Route::post('/{mcl_id}', ...) not Route::put(...)
-    // So we don't need to append _method: 'PUT'
     
+    // Use POST for FormData updates, which Laravel handles correctly.
     try {
-      // **FIXED ENDPOINT**: Removed `/update` to match Laravel routes
       const response = await axiosInstance.post(`/api/mcl-groups/${mcl_id}`, payload, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       toast.success(response.data.message || 'MCL Group updated successfully');
-      // Update local state after successful submission
       setCurrentImage(response.data.mcl_group?.image_file || null);
       setFormData(prev => ({ ...prev, image_file: null, removeImage: false }));
-      setTimeout(() => navigate('/mcl-groups'), 2000);
+      setTimeout(() => navigate('/mcl-group'), 2000); // Navigate to list page
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to update MCL Group';
       const backendErrors = error.response?.data?.errors || {};
-      setErrors(backendErrors);
+      setErrors(backendErrors); // This is now type-safe
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -142,7 +166,6 @@ const EditMclGroup = () => {
           Edit MCL Group
         </h2>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Form field for mcl_category */}
           <div>
             <label htmlFor="mcl_category" className="block text-sm font-medium text-gray-700">
               Category <span className="text-red-500">*</span>
@@ -153,16 +176,22 @@ const EditMclGroup = () => {
               name="mcl_category"
               value={formData.mcl_category}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className={`mt-1 block w-full rounded-md shadow-sm p-2 ${errors.mcl_category ? 'border-red-500' : 'border-gray-300'}`}
               required
             />
             {errors.mcl_category && <p className="mt-1 text-sm text-red-500">{errors.mcl_category}</p>}
           </div>
-          
-          {/* Other form fields (description, weblink) are similar */}
-          {/* ... */}
 
-          {/* Image Field */}
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+            <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows={4} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+          </div>
+
+          <div>
+            <label htmlFor="weblink" className="block text-sm font-medium text-gray-700">Weblink</label>
+            <input type="url" id="weblink" name="weblink" value={formData.weblink} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700">Image</label>
             {currentImage && (
@@ -186,7 +215,8 @@ const EditMclGroup = () => {
               disabled={formData.removeImage}
               className="mt-1 block w-full text-sm disabled:opacity-50"
             />
-            {errors.image_file && <p className="mt-1 text-sm text-red-500">{errors.image_file as string}</p>}
+            {/* 4. Removed the unsafe 'as string' cast. It's no longer needed. */}
+            {errors.image_file && <p className="mt-1 text-sm text-red-500">{errors.image_file}</p>}
           </div>
           
           <div className="flex justify-end gap-4">

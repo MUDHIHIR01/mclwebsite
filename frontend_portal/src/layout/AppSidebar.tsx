@@ -75,6 +75,15 @@ const getNavItemsForRole = (roleId: number) => {
       ),
       subItems: [{ name: "View Logs", path: "/user-logs" }],
     },
+     {
+      name: "Brands",
+      icon: (
+        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-orange-600 text-white">
+          ℹ️ {/* Info icon for about us */}
+        </span>
+      ),
+      subItems: [{ name: "Our Brand", path: "/brands" }],
+    },
     {
       name: "About Us",
       icon: (

@@ -27,7 +27,8 @@ const EditServices: React.FC = () => {
     setError(null);
     try {
       const response = await axiosInstance.get<ServiceData>(`/api/services/${serviceId}`);
-      const service = response.data.service || response.data;
+      // REFINED LINE: The response data is already the service object, as defined by the generic type.
+      const service = response.data;
       setServiceCategory(service.service_category);
       setUrlLink(service.url_link || '');
       setDescription(service.description || '');
@@ -59,8 +60,12 @@ const EditServices: React.FC = () => {
     if (description) {
       formData.append('description', description);
     }
+    
+    // Note: For Laravel, you might need to spoof the METHOD for updates with multipart/form-data
+    // formData.append('_method', 'PUT'); or 'PATCH'
 
     try {
+      // Using POST for updates is common with multipart/form-data. Ensure your API route accepts POST.
       await axiosInstance.post(`/api/services/${serviceId}/update`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -68,10 +73,10 @@ const EditServices: React.FC = () => {
       });
       toast.success('Service record updated successfully!', { position: 'top-right' });
       navigate('/services');
-    } catch (err: any) {
+    } catch (err: any)      {
       const errorMessage = err.response?.data?.errors 
         ? Object.values(err.response.data.errors).join(', ') 
-        : 'Failed to update service record.';
+        : (err.response?.data?.error || 'Failed to update service record.');
       setError(errorMessage);
       toast.error(errorMessage, { position: 'top-right' });
       console.error("Update error:", err);
@@ -80,7 +85,7 @@ const EditServices: React.FC = () => {
 
   if (loading) return <div className="flex justify-center items-center min-h-screen"><div className="text-lg font-semibold">Loading...</div></div>;
 
-  if (error) {
+  if (error && !serviceCategory) { // Only show full error page if data couldn't be fetched
     return (
       <div className="flex flex-col justify-center items-center min-h-screen p-4">
         <div className="text-red-500 text-xl font-semibold mb-4">Error</div>
@@ -124,13 +129,13 @@ const EditServices: React.FC = () => {
             />
           </div>
           <div>
-            <label htmlFor="service_image" className="block text-sm font-medium text-gray-700">Service Image</label>
+            <label htmlFor="service_image" className="block text-sm font-medium text-gray-700">Service Image (leave blank to keep existing)</label>
             <input
               id="service_image"
               type="file"
               accept="image/*"
               onChange={(e) => setServiceImg(e.target.files ? e.target.files[0] : null)}
-              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none"
+              className="mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
           </div>
           <div>
@@ -139,6 +144,7 @@ const EditServices: React.FC = () => {
               id="url_link"
               type="url"
               value={urlLink}
+              placeholder="https://example.com"
               onChange={(e) => setUrlLink(e.target.value)}
               className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />

@@ -114,7 +114,7 @@ const ImageModal: React.FC<{ imageUrl: string; onClose: () => void }> = ({ image
         </button>
         <img
           src={imageUrl}
-          alt="Full-size image"
+          alt="Full-size"
           className="w-full h-auto max-h-[80vh] object-contain rounded"
           onError={(e) => {
             (e.currentTarget as HTMLImageElement).src = 'https://via.placeholder.com/300x300?text=Error';
@@ -137,7 +137,8 @@ export default function Services() {
     setError(null);
     try {
       const response = await axiosInstance.get<ServiceData[]>('/api/services');
-      setData(response.data.services || response.data);
+      // REFINED LINE: The response data is the array itself, as defined by the generic type.
+      setData(response.data);
     } catch (err: any) {
       const errorMessage = 'Failed to fetch service records: ' + (err.response?.data?.error || err.message || 'Unknown error');
       setError(errorMessage);

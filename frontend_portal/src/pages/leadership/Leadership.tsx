@@ -1,10 +1,9 @@
-
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useTable, useGlobalFilter, usePagination, Row, Column, CellProps } from 'react-table';
+import { useTable, useGlobalFilter, usePagination, Row, Column } from 'react-table';
+import { Link } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { Link } from 'react-router-dom';
 import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -128,7 +127,7 @@ export default function Leadership() {
     setError(null);
     try {
       const response = await axiosInstance.get<LeadershipData[]>('/api/leadership');
-      setData(response.data.leadership || response.data);
+      setData(response.data);
     } catch (err: any) {
       const errorMessage = 'Failed to fetch leadership records: ' + (err.response?.data?.error || err.message || 'Unknown error');
       setError(errorMessage);
@@ -142,27 +141,24 @@ export default function Leadership() {
     fetchLeadership();
   }, [fetchLeadership]);
 
-  const columns: readonly Column<LeadershipData>[] = useMemo(
+  const columns = useMemo<Column<LeadershipData>[]>(
     () => [
       {
         Header: '#',
         id: 'rowIndex',
-        Cell: ({ row, flatRows }: CellProps<LeadershipData>) => {
-          const originalIndex = flatRows.findIndex(flatRow => flatRow.original === row.original);
-          return <span>{originalIndex + 1}</span>;
-        },
+        Cell: ({ row }) => <span>{row.index + 1}</span>,
       },
       { Header: 'Leader Name', accessor: 'leader_name' },
       { Header: 'Position', accessor: 'position' },
       {
         Header: 'Description',
         accessor: 'description',
-        Cell: ({ value }: CellProps<LeadershipData, string | null>) => <DescriptionCell value={value} />,
+        Cell: ({ value }: { value: string | null }) => <DescriptionCell value={value} />,
       },
       {
         Header: 'Image',
         accessor: 'leader_image',
-        Cell: ({ value }: CellProps<LeadershipData, string | null>) => {
+        Cell: ({ value }: { value: string | null }) => {
           if (!value) return <span className="text-gray-500 text-xs">No Image</span>;
           const baseUrl = axiosInstance.defaults.baseURL || window.location.origin;
           const imageUrl = `${baseUrl.replace(/\/$/, '')}/${value.replace(/^\//, '')}`;
@@ -184,12 +180,12 @@ export default function Leadership() {
       {
         Header: 'Created At',
         accessor: 'created_at',
-        Cell: ({ value }: CellProps<LeadershipData, string>) => new Date(value).toLocaleDateString(),
+        Cell: ({ value }: { value: string }) => new Date(value).toLocaleDateString(),
       },
       {
         Header: 'Actions',
         accessor: 'leadership_id',
-        Cell: ({ row }: CellProps<LeadershipData>) => (
+        Cell: ({ row }: { row: Row<LeadershipData> }) => (
           <ActionButtons leadershipId={row.original.leadership_id} onDeletionSuccess={fetchLeadership} />
         ),
       },
@@ -314,7 +310,7 @@ export default function Leadership() {
             </thead>
             <tbody {...getTableBodyProps()} className="divide-y divide-gray-200">
               {page.length > 0 ? (
-                page.map((row: Row<LeadershipData>) => {
+                page.map((row) => {
                   prepareRow(row);
                   return (
                     <tr {...row.getRowProps()} className="hover:bg-gray-50 transition-colors">

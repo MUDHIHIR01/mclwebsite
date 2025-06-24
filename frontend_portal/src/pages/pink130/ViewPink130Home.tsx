@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useTable, useGlobalFilter, usePagination } from 'react-table';
+// REFINEMENT 1: Import Column and CellProps for strong typing
+import { useTable, useGlobalFilter, usePagination, Column, CellProps, Row } from 'react-table';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -191,14 +192,16 @@ const ViewFtPink130Home: React.FC = () => {
   useEffect(() => {
     fetchFtPink130Home();
   }, [fetchFtPink130Home]);
-
-  const columns = useMemo(
+  
+  // REFINEMENT 2: Explicitly type the columns array to satisfy react-table's requirements.
+  const columns: Column<FtPink130HomeData>[] = useMemo(
     () => [
       {
         Header: '#',
         id: 'rowIndex',
-        Cell: ({ row, flatRows }: any) => {
-          const originalIndex = flatRows.findIndex((flatRow: any) => flatRow.original === row.original);
+        // REFINEMENT 3: Use CellProps for type safety instead of 'any'.
+        Cell: ({ row, flatRows }: CellProps<FtPink130HomeData>) => {
+          const originalIndex = flatRows.findIndex((flatRow: Row<FtPink130HomeData>) => flatRow.original === row.original);
           return <span>{originalIndex + 1}</span>;
         },
       },
@@ -206,12 +209,12 @@ const ViewFtPink130Home: React.FC = () => {
       {
         Header: 'Description',
         accessor: 'description',
-        Cell: ({ value }: { value: string | null }) => <DescriptionCell value={value} />,
+        Cell: ({ value }: CellProps<FtPink130HomeData, string | null>) => <DescriptionCell value={value} />,
       },
       {
         Header: 'Image',
         accessor: 'home_img',
-        Cell: ({ value }: { value: string | null }) => {
+        Cell: ({ value }: CellProps<FtPink130HomeData, string | null>) => {
           if (!value) return <span className="text-gray-500 text-xs">No Image</span>;
           const baseUrl = axiosInstance.defaults.baseURL || window.location.origin;
           const imageUrl = `${baseUrl.replace(/\/$/, '')}/${value.replace(/^\//, '')}`;
@@ -237,12 +240,12 @@ const ViewFtPink130Home: React.FC = () => {
       {
         Header: 'Created At',
         accessor: 'created_at',
-        Cell: ({ value }: { value: string }) => new Date(value).toLocaleDateString(),
+        Cell: ({ value }: CellProps<FtPink130HomeData, string>) => new Date(value).toLocaleDateString(),
       },
       {
         Header: 'Actions',
-        accessor: 'ft_pink_id',
-        Cell: ({ row }: any) => (
+        accessor: 'ft_pink_id', // This accessor is just for data access, not direct rendering.
+        Cell: ({ row }: CellProps<FtPink130HomeData>) => (
           <ActionButtons ft_pink_id={row.original.ft_pink_id} onDeletionSuccess={fetchFtPink130Home} />
         ),
       },
@@ -266,7 +269,7 @@ const ViewFtPink130Home: React.FC = () => {
     setGlobalFilter: setTableGlobalFilter,
   } = useTable(
     {
-      columns,
+      columns, // This 'columns' now has the correct, explicit type.
       data,
       initialState: { pageIndex: 0, pageSize: 10 },
     },

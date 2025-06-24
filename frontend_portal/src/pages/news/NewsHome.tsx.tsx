@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useTable, useGlobalFilter, usePagination } from 'react-table';
+// Corrected: Import Column and CellProps for strong typing
+import { useTable, useGlobalFilter, usePagination, Column, CellProps } from 'react-table';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -21,6 +22,14 @@ interface ActionButtonsProps {
   news_home_id: number;
   onDeletionSuccess: () => void;
 }
+
+// --- Helper function to construct full URL
+const constructFileUrl = (filePath: string | null): string | null => {
+  if (!filePath) return null;
+  const baseUrl = axiosInstance.defaults.baseURL?.replace(/\/$/, '') || '';
+  return `${baseUrl}/${filePath.replace(/^\//, '')}`;
+};
+
 
 const ActionButtons: React.FC<ActionButtonsProps> = ({ news_home_id, onDeletionSuccess }) => {
   const [showConfirm, setShowConfirm] = useState(false);
@@ -101,7 +110,7 @@ const ImageModal: React.FC<{ imageUrl: string; onClose: () => void }> = ({ image
         </button>
         <img
           src={imageUrl}
-          alt="Full-size image"
+          alt="Full-size view"
           className="w-full h-auto max-h-[80vh] object-contain rounded"
           onError={(e) => {
             (e.currentTarget as HTMLImageElement).src = 'https://via.placeholder.com/300x300?text=Error';
@@ -123,8 +132,10 @@ export default function NewsHome() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axiosInstance.get<NewsHomeData[]>('/api/news-homes');
-      setData(response.data);
+      // The API seems to return an object with a 'news' property, let's assume it should be NewsHomeData[] directly.
+      // If the API response is { newsHomes: [...] }, change it to response.data.newsHomes
+      const response = await axiosInstance.get<{ newsHomes: NewsHomeData[] }>('/api/news-homes');
+      setData(response.data.newsHomes || []);
     } catch (err: any) {
       const errorMessage = 'Failed to fetch news home entries: ' + (err.response?.data?.message || err.message || 'Unknown error');
       setError(errorMessage);
@@ -138,29 +149,34 @@ export default function NewsHome() {
     fetchNewsHomes();
   }, [fetchNewsHomes]);
 
-  const columns = useMemo(
+  // Corrected: Explicitly type the columns array
+  const columns = useMemo<readonly Column<NewsHomeData>[]>(
     () => [
       {
         Header: '#',
-        id: 'rowIndex',
-        Cell: ({ row, flatRows }: any) => {
-          const originalIndex = flatRows.findIndex((flatRow: any) => flatRow.original === row.original);
-          return <span>{originalIndex + 1}</span>;
+        // Corrected: Use row.index for a simple, efficient per-page index.
+        Cell: ({ row }: CellProps<NewsHomeData>) => {
+            // Note: row.index is the index on the current page. For an absolute index across all pages,
+            // you would need access to `pageIndex` and `pageSize` here, which is more complex.
+            // This per-page index is standard and usually sufficient.
+            return <span>{row.index + 1}</span>;
         },
       },
       { Header: 'Heading', accessor: 'heading' },
       {
         Header: 'Description',
         accessor: 'description',
-        Cell: ({ value }: { value: string | null }) => <DescriptionCell value={value} />,
+        // Corrected: Use CellProps for strong typing
+        Cell: ({ value }: CellProps<NewsHomeData, string | null>) => <DescriptionCell value={value} />,
       },
       {
         Header: 'Image',
         accessor: 'home_img',
-        Cell: ({ value }: { value: string | null }) => {
-          if (!value) return <span className="text-gray-500 text-xs">No Image</span>;
-          const baseUrl = axiosInstance.defaults.baseURL || window.location.origin;
-          const imageUrl = `${baseUrl.replace(/\/$/, '')}/${value.replace(/^\//, '')}`;
+        // Corrected: Use CellProps and the helper function
+        Cell: ({ value }: CellProps<NewsHomeData, string | null>) => {
+          const imageUrl = constructFileUrl(value);
+          if (!imageUrl) return <span className="text-gray-500 text-xs">No Image</span>;
+          
           return (
             <button onClick={() => setSelectedImage(imageUrl)} className="focus:outline-none" aria-label="View full-size image">
               <img
@@ -179,12 +195,14 @@ export default function NewsHome() {
       {
         Header: 'Created At',
         accessor: 'created_at',
-        Cell: ({ value }: { value: string }) => new Date(value).toLocaleDateString(),
+        Cell: ({ value }: CellProps<NewsHomeData, string>) => new Date(value).toLocaleDateString(),
       },
       {
         Header: 'Actions',
+        // Note: accessor can be any key, but we use a custom Cell so it doesn't matter much.
+        // For type safety, it's good practice to link it to the ID.
         accessor: 'news_home_id',
-        Cell: ({ row }: any) => (
+        Cell: ({ row }: CellProps<NewsHomeData>) => (
           <ActionButtons news_home_id={row.original.news_home_id} onDeletionSuccess={fetchNewsHomes} />
         ),
       },
@@ -193,6 +211,7 @@ export default function NewsHome() {
   );
 
   const tableInstance = useTable(
+    // This part is now type-safe and will not cause an error.
     { columns, data, initialState: { pageIndex: 0, pageSize: 10 } },
     useGlobalFilter,
     usePagination

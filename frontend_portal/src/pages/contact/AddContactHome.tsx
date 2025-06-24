@@ -4,11 +4,18 @@ import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Form data interface
+// Interface for the form's data state
 interface FormData {
   heading: string;
   description: string;
   home_img: File | null;
+}
+
+// 1. Create a dedicated interface for form validation errors
+interface FormErrors {
+  heading?: string;
+  description?: string;
+  home_img?: string;
 }
 
 export default function AddContactHome() {
@@ -18,23 +25,32 @@ export default function AddContactHome() {
     description: '',
     home_img: null,
   });
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+
+  // 2. Use the new FormErrors interface for the errors state
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    // Clear the error for the specific field when it's changed
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, home_img: file }));
-    setErrors((prev) => ({ ...prev, home_img: '' }));
+    // This is now type-safe, as we're just clearing the string-based error
+    if (errors.home_img) {
+      setErrors((prev) => ({ ...prev, home_img: undefined }));
+    }
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    // 3. Use the FormErrors type for the newErrors object
+    const newErrors: FormErrors = {};
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -47,6 +63,7 @@ export default function AddContactHome() {
     }
 
     if (formData.home_img) {
+      // These assignments are now correct and type-safe
       if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.home_img.type)) {
         newErrors.home_img = 'Only JPEG, PNG, JPG, or GIF files are allowed';
       } else if (formData.home_img.size > 2 * 1024 * 1024) {
@@ -81,7 +98,7 @@ export default function AddContactHome() {
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to create contact home slider';
       const backendErrors = error.response?.data?.errors || {};
-      setErrors(backendErrors);
+      setErrors(backendErrors); // This is now type-safe
       toast.error(errorMessage, { position: 'top-right' });
       console.error("Submit error:", error);
     } finally {
@@ -95,7 +112,6 @@ export default function AddContactHome() {
       <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">Create Contact Home Slider</h2>
-        
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -155,6 +171,7 @@ export default function AddContactHome() {
               onChange={handleFileChange}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100"
             />
+            {/* 4. This is now safe to render as errors.home_img is a string. */}
             {errors.home_img && (
               <p id="home_img-error" className="mt-1 text-sm text-red-600">{errors.home_img}</p>
             )}

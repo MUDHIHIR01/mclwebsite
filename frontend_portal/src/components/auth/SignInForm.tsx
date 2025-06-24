@@ -1,23 +1,66 @@
-import { useState, ChangeEvent, FormEvent } from "react";
+import { useState, ChangeEvent, FormEvent, SVGProps } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { EyeCloseIcon, EyeIcon } from "../../icons";
+import { toast } from "react-toastify";
+import axiosInstance from "../../axios";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
-import axiosInstance from "../../axios";
-import { toast } from "react-toastify";
 
-// You can add a logo component or use an <img> tag for a more visual branding element
-const BrandLogo = () => (
-    <svg className="w-16 h-16 text-white mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-    </svg>
+// --- ICON COMPONENTS (Added directly into this file) ---
+
+// The "ey icon" for showing the password
+const EyeIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    {...props}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+    />
+  </svg>
+);
+
+// The "tail icon" (closed eye) for hiding the password
+const EyeCloseIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+    {...props}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243l-4.243-4.243"
+    />
+  </svg>
 );
 
 
+// --- BRAND LOGO COMPONENT (Unchanged) ---
+const BrandLogo = () => (
+  <svg className="w-16 h-16 text-white mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+  </svg>
+);
+
+
+// --- MAIN SIGN-IN FORM COMPONENT ---
 export default function SignInForm() {
-  // --- STATE MANAGEMENT (No changes to logic) ---
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isChecked, setIsChecked] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -28,7 +71,6 @@ export default function SignInForm() {
   });
 
   const navigate = useNavigate();
-
   const { email, password } = formData;
 
   const handleFormChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -38,7 +80,6 @@ export default function SignInForm() {
     });
   };
   
-  // --- FORM VALIDATION (No changes to logic) ---
   const validateForm = () => {
     if (!email.match(/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
       toast.error("Please enter a valid email address", { position: "top-right", autoClose: 3000 });
@@ -51,7 +92,6 @@ export default function SignInForm() {
     return true;
   };
 
-  // --- SUBMISSION LOGIC (No changes to logic) ---
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -109,82 +149,86 @@ export default function SignInForm() {
   const handleCheckboxChange = (checked: boolean) => setIsChecked(checked);
   const handleLogoClick = () => navigate("/");
 
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
 
-  // --- MODERNIZED JSX & STYLING (with Split-Panel Layout) ---
   return (
-    <section className="min-h-screen w-full flex items-center justify-center p-4  bg-[#0A51A1] ">
-      
-      {/* Main Container: This has the fixed width and shadow */}
+    <section className="min-h-screen w-full flex items-center justify-center p-4 bg-[#0A51A1]">
       <div className="w-full max-w-sm lg:max-w-none lg:w-[700px] lg:min-h-[620px] bg-white rounded-2xl shadow-2xl flex flex-col lg:flex-row transition-all duration-300">
-        
-        {/* Decorative Panel (Left Side) - Hidden on mobile, visible on desktop */}
-        <div className="hidden lg:flex lg:w-2/5 flex-col justify-center items-center text-center p-8 text-white  bg-[#0A51A1] rounded-l-2xl">
-            <button onClick={handleLogoClick} className="focus:outline-none">
-                <BrandLogo />
-                <h2 className="text-2xl font-bold tracking-wide">Mwananchi</h2>
-                <p className="text-white/80 text-sm mt-2">Communication Limited</p>
-            </button>
-            <p className="mt-12 text-white/90">Your trusted source for news and information, now just a login away.</p>
+        <div className="hidden lg:flex lg:w-2/5 flex-col justify-center items-center text-center p-8 text-white bg-[#0A51A1] rounded-l-2xl">
+          <button onClick={handleLogoClick} className="focus:outline-none">
+            <BrandLogo />
+            <h2 className="text-2xl font-bold tracking-wide">Mwananchi</h2>
+            <p className="text-white/80 text-sm mt-2">Communication Limited</p>
+          </button>
+          <p className="mt-12 text-white/90">Your trusted source for news and information, now just a login away.</p>
         </div>
 
-        {/* Form Panel (Right Side) */}
         <div className="w-full lg:w-3/5 p-8 sm:p-12 flex flex-col justify-center">
-            {/* Header for Form */}
-            <div className="text-center lg:text-left mb-8">
-              <h1 className="text-3xl font-bold text-[#0A51A1]">
-                Sign In
-              </h1>
-              <p className="text-gray-500 mt-2">
-                Enter your credentials to access your account.
-              </p>
-            </div>
+          <div className="text-center lg:text-left mb-8">
+            <h1 className="text-3xl font-bold text-[#0A51A1]">Sign In</h1>
+            <p className="text-gray-500 mt-2">Enter your credentials to access your account.</p>
+          </div>
           
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Email Field */}
-              <div>
-                <Label className="font-medium text-gray-700">Email Address <span className="text-red-500">*</span></Label>
-                <Input name="email" placeholder="you@example.com" value={email} onChange={handleFormChange} disabled={isLoading} className="w-full mt-2 bg-gray-50 text-gray-900 placeholder-gray-400 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0A51A1] focus:border-[#0A51A1] py-2.5 px-4 transition duration-200" />
-              </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <Label className="font-medium text-gray-700">Email Address <span className="text-red-500">*</span></Label>
+              <Input name="email" placeholder="you@example.com" value={email} onChange={handleFormChange} disabled={isLoading} className="w-full mt-2 bg-gray-50 text-gray-900 placeholder-gray-400 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0A51A1] focus:border-[#0A51A1] py-2.5 px-4 transition duration-200" />
+            </div>
 
-              {/* Password Field */}
-              <div>
-                <Label className="font-medium text-gray-700">Password <span className="text-red-500">*</span></Label>
-                <div className="relative mt-2">
-                  <Input name="password" type={showPassword ? "text" : "password"} placeholder="••••••••••••" value={password} onChange={handleFormChange} disabled={isLoading} className="w-full bg-gray-50 text-gray-900 placeholder-gray-400 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0A51A1] focus:border-[#0A51A1] py-2.5 px-4 transition duration-200" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition" aria-label={showPassword ? "Hide password" : "Show password"}>
-                    {showPassword ? <EyeIcon className="h-6 w-6" /> : <EyeCloseIcon className="h-6 w-6" />}
-                  </button>
+            {/* --- PASSWORD FIELD: Fixed and fully functional --- */}
+            <div>
+              <Label className="font-medium text-gray-700">Password <span className="text-red-500">*</span></Label>
+              <div className="relative mt-2">
+                <Input 
+                  name="password" 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="••••••••••••" 
+                  value={password} 
+                  onChange={handleFormChange} 
+                  disabled={isLoading} 
+                  className="w-full bg-gray-50 text-gray-900 placeholder-gray-400 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0A51A1] focus:border-[#0A51A1] py-2.5 px-4 pr-12 transition duration-200" 
+                  aria-label="Password input"
+                />
+                <button 
+                  type="button" 
+                  onClick={togglePasswordVisibility} 
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition" 
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  disabled={isLoading}
+                >
+                  {/* The correct icon is shown based on the 'showPassword' state */}
+                  {showPassword ? <EyeIcon className="h-6 w-6" /> : <EyeCloseIcon className="h-6 w-6" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Checkbox checked={isChecked} onChange={handleCheckboxChange} disabled={isLoading} />
+                <span className="text-sm text-gray-600">Keep me logged in</span>
+              </div>
+              <Link to="/request-for/reset-password" className="text-sm text-[#0A51A1] hover:underline">
+                Forgot password?
+              </Link>
+            </div>
+
+            <Button className="w-full bg-[#0A51A1] text-white hover:opacity-90 rounded-lg py-3 text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex items-center justify-center" aria-live="polite">
+                  <svg className="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                  Processing...
                 </div>
-              </div>
+              ) : ( "Sign In" )}
+            </Button>
 
-              {/* Checkbox and Forgot Password */}
-              <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                      <Checkbox checked={isChecked} onChange={handleCheckboxChange} disabled={isLoading} />
-                      <span className="text-sm text-gray-600">Keep me logged in</span>
-                  </div>
-                  <Link to="/request-for/reset-password" className="text-sm text-[#0A51A1] hover:underline">
-                      Forgot password?
-                  </Link>
-              </div>
-
-              {/* Submit Button with Gradient - FIX: Removed 'type="submit"' prop */}
-              <Button className="w-full  bg-[#0A51A1]  text-white hover:opacity-90 rounded-lg py-3 text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed" disabled={isLoading}>
-                {isLoading ? (
-                  <div className="flex items-center justify-center" aria-live="polite">
-                    <svg className="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-                    Processing...
-                  </div>
-                ) : ( "Sign In" )}
-              </Button>
-
-              {/* Sign Up Link */}
-              <p className="text-center text-sm text-gray-600 pt-4">
-                Don’t have an account?{" "}
-                <Link to="/signup" className="font-semibold text-[#0A51A1] hover:underline">
-                  Sign Up Now
-                </Link>
-              </p>
+            <p className="text-center text-sm text-gray-600 pt-4">
+              Don’t have an account?{" "}
+              <Link to="/signup" className="font-semibold text-[#0A51A1] hover:underline">
+                Sign Up Now
+              </Link>
+            </p>
           </form>
         </div>
       </div>

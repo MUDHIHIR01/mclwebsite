@@ -11,6 +11,13 @@ interface FormData {
   pdf_file: File | null;
 }
 
+interface Errors {
+  category: string;
+  description: string;
+  news_img: string;
+  pdf_file: string;
+}
+
 const AddNews: React.FC = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
@@ -19,7 +26,7 @@ const AddNews: React.FC = () => {
     news_img: null,
     pdf_file: null,
   });
-  const [errors, setErrors] = useState<Partial<FormData>>({
+  const [errors, setErrors] = useState<Errors>({
     category: '',
     description: '',
     news_img: '',
@@ -27,9 +34,7 @@ const AddNews: React.FC = () => {
   });
   const [loading, setLoading] = useState<boolean>(false);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: '' }));
@@ -43,7 +48,12 @@ const AddNews: React.FC = () => {
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    const newErrors: Errors = {
+      category: '',
+      description: '',
+      news_img: '',
+      pdf_file: '',
+    };
 
     if (!formData.category.trim()) {
       newErrors.category = 'Category is required';
@@ -55,20 +65,24 @@ const AddNews: React.FC = () => {
       newErrors.description = 'Description must not exceed 1000 characters';
     }
 
-    if (formData.news_img && !['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.news_img.type)) {
-      newErrors.news_img = 'Only JPEG, PNG, JPG, or GIF files are allowed';
-    } else if (formData.news_img && formData.news_img.size > 2 * 1024 * 1024) {
-      newErrors.news_img = 'Image size must not exceed 2MB';
+    if (formData.news_img) {
+      if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.news_img.type)) {
+        newErrors.news_img = 'Only JPEG, PNG, JPG, or GIF files are allowed';
+      } else if (formData.news_img.size > 2 * 1024 * 1024) {
+        newErrors.news_img = 'Image size must not exceed 2MB';
+      }
     }
 
-    if (formData.pdf_file && !['application/pdf'].includes(formData.pdf_file.type)) {
-      newErrors.pdf_file = 'Only PDF files are allowed';
-    } else if (formData.pdf_file && formData.pdf_file.size > 2 * 1024 * 1024) {
-      newErrors.pdf_file = 'PDF size must not exceed 2MB';
+    if (formData.pdf_file) {
+      if (!['application/pdf'].includes(formData.pdf_file.type)) {
+        newErrors.pdf_file = 'Only PDF files are allowed';
+      } else if (formData.pdf_file.size > 2 * 1024 * 1024) {
+        newErrors.pdf_file = 'PDF size must not exceed 2MB';
+      }
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object.values(newErrors).every((error) => !error);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,8 +110,14 @@ const AddNews: React.FC = () => {
       setTimeout(() => navigate('/news'), 2000);
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to create news record';
-      const backendErrors = error.response?.data?.errors || {};
-      setErrors(backendErrors);
+      const backendErrors: Partial<Errors> = error.response?.data?.errors || {};
+      setErrors((prev) => ({
+        ...prev,
+        category: backendErrors.category || '',
+        description: backendErrors.description || '',
+        news_img: backendErrors.news_img || '',
+        pdf_file: backendErrors.pdf_file || '',
+      }));
       toast.error(errorMessage, { position: 'top-right' });
     } finally {
       setLoading(false);
@@ -111,10 +131,10 @@ const AddNews: React.FC = () => {
         <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-800 mb-6">
           Create New News
         </h2>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
           <div>
             <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-              Category *
+              Category <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -127,6 +147,7 @@ const AddNews: React.FC = () => {
               maxLength={255}
               aria-invalid={!!errors.category}
               aria-describedby={errors.category ? 'category-error' : undefined}
+              required
             />
             {errors.category && (
               <p id="category-error" className="mt-1 text-sm text-red-500">
@@ -147,6 +168,7 @@ const AddNews: React.FC = () => {
               className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 sm:p-3 lg:p-4 text-sm sm:text-base"
               placeholder="Enter description"
               maxLength={1000}
+              aria-describedby={errors.description ? 'description-error' : undefined}
             />
             {errors.description && (
               <p id="description-error" className="mt-1 text-sm text-red-500">
@@ -165,13 +187,16 @@ const AddNews: React.FC = () => {
               accept="image/jpeg,image/png,image/jpg,image/gif"
               onChange={handleFileChange}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              aria-describedby={errors.news_img ? 'news_img-error' : 'news_img-info'}
             />
             {errors.news_img && (
               <p id="news_img-error" className="mt-1 text-sm text-red-500">
                 {errors.news_img}
               </p>
             )}
-            <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed types: JPG, PNG, GIF.</p>
+            <p id="news_img-info" className="mt-1 text-xs text-gray-500">
+              Max file size: 2MB. Allowed types: JPG, PNG, GIF.
+            </p>
           </div>
           <div>
             <label htmlFor="pdf_file" className="block text-sm font-medium text-gray-700">
@@ -184,13 +209,16 @@ const AddNews: React.FC = () => {
               accept="application/pdf"
               onChange={handleFileChange}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              aria-describedby={errors.pdf_file ? 'pdf_file-error' : 'pdf_file-info'}
             />
             {errors.pdf_file && (
               <p id="pdf_file-error" className="mt-1 text-sm text-red-500">
                 {errors.pdf_file}
               </p>
             )}
-            <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed type: PDF.</p>
+            <p id="pdf_file-info" className="mt-1 text-xs text-gray-500">
+              Max file size: 2MB. Allowed type: PDF.
+            </p>
           </div>
           <div className="flex flex-col sm:flex-row justify-end gap-4">
             <button
@@ -203,7 +231,9 @@ const AddNews: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full sm:w-40 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md text-sm sm:text-base ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full sm:w-40 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md text-sm sm:text-base ${
+                loading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
               {loading ? (
                 <div className="flex items-center justify-center">

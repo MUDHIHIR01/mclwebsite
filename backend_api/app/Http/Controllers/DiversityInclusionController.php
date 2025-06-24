@@ -5,14 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\DiversityInclusion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Storage;
 use Exception;
 
 class DiversityInclusionController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:sanctum')->except(['index', 'show','latestdiversityinclusion','allDiversitiesAndIclusion']);
+        $this->middleware('auth:sanctum')->except(['index', 'show', 'latestdiversityinclusion', 'allDiversitiesAndIclusion']);
     }
 
     /**
@@ -29,9 +28,12 @@ class DiversityInclusionController extends Controller
         }
     }
 
-
-    public function allDiversitiesAndIclusion(){
-          try {
+    /**
+     * Display all diversity inclusion records.
+     */
+    public function allDiversitiesAndIclusion()
+    {
+        try {
             $diversityRecords = DiversityInclusion::orderBy('diversity_id', 'desc')->get();
             return response()->json(['diversity' => $diversityRecords], 200);
         } catch (Exception $e) {
@@ -39,6 +41,7 @@ class DiversityInclusionController extends Controller
             return response()->json(['error' => 'Failed to fetch diversity records.'], 500);
         }
     }
+
     /**
      * Display the latest diversity inclusion record based on created_at.
      */
@@ -82,9 +85,19 @@ class DiversityInclusionController extends Controller
 
             // Handle pdf_file upload
             if ($request->hasFile('pdf_file') && $request->file('pdf_file')->isValid()) {
-                $pdfPath = $request->file('pdf_file')->store('uploads', 'public');
-                $data['pdf_file'] = $pdfPath;
-                \Log::info('PDF file uploaded: ' . $pdfPath);
+                $file = $request->file('pdf_file');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $uploadPath = public_path('uploads');
+                
+                // Ensure uploads directory exists
+                if (!file_exists($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+
+                // Move file to public/uploads
+                $file->move($uploadPath, $filename);
+                $data['pdf_file'] = 'uploads/' . $filename;
+                \Log::info('PDF file uploaded: ' . $data['pdf_file']);
             }
 
             $diversity = DiversityInclusion::create($data);
@@ -141,13 +154,24 @@ class DiversityInclusionController extends Controller
             // Handle pdf_file upload
             if ($request->hasFile('pdf_file') && $request->file('pdf_file')->isValid()) {
                 // Delete old pdf_file if it exists
-                if ($diversity->pdf_file && Storage::disk('public')->exists($diversity->pdf_file)) {
-                    Storage::disk('public')->delete($diversity->pdf_file);
+                if ($diversity->pdf_file && file_exists(public_path($diversity->pdf_file))) {
+                    unlink(public_path($diversity->pdf_file));
                     \Log::info('Deleted old PDF file: ' . $diversity->pdf_file);
                 }
-                $pdfPath = $request->file('pdf_file')->store('uploads', 'public');
-                $data['pdf_file'] = $pdfPath;
-                \Log::info('New PDF file uploaded: ' . $pdfPath);
+
+                $file = $request->file('pdf_file');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $uploadPath = public_path('uploads');
+
+                // Ensure uploads directory exists
+                if (!file_exists($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+
+                // Move file to public/uploads
+                $file->move($uploadPath, $filename);
+                $data['pdf_file'] = 'uploads/' . $filename;
+                \Log::info('New PDF file uploaded: ' . $data['pdf_file']);
             } else {
                 $data['pdf_file'] = $diversity->pdf_file;
                 \Log::info('No new PDF file uploaded, preserving existing: ' . ($diversity->pdf_file ?: 'none'));
@@ -179,8 +203,8 @@ class DiversityInclusionController extends Controller
 
         try {
             // Delete pdf_file if it exists
-            if ($diversity->pdf_file && Storage::disk('public')->exists($diversity->pdf_file)) {
-                Storage::disk('public')->delete($diversity->pdf_file);
+            if ($diversity->pdf_file && file_exists(public_path($diversity->pdf_file))) {
+                unlink(public_path($diversity->pdf_file));
                 \Log::info('Deleted PDF file: ' . $diversity->pdf_file);
             }
 

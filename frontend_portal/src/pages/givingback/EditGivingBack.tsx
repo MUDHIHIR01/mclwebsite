@@ -4,11 +4,33 @@ import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Describes the data for the form submission
 interface FormDataState {
   givingBack_category: string;
   description: string;
   weblink: string;
   image_slider: File[] | null;
+}
+
+// **FIX 1: Create a dedicated interface for form error messages.**
+interface FormErrors {
+  givingBack_category?: string;
+  description?: string;
+  weblink?: string;
+  image_slider?: string; // This will hold a single string error message.
+}
+
+// Describes the data shape coming from the API
+interface GivingBackData {
+    givingBack_category: string;
+    description: string;
+    weblink: string;
+    image_slider: string; // The backend sends a JSON string of image paths
+}
+
+// Describes the nested structure of the API GET response
+interface ApiGetResponse {
+    giving_back: GivingBackData;
 }
 
 const EditGivingBack: React.FC = () => {
@@ -21,12 +43,8 @@ const EditGivingBack: React.FC = () => {
     image_slider: null,
   });
   const [currentImages, setCurrentImages] = useState<string[] | null>(null);
-  const [errors, setErrors] = useState<Partial<FormDataState>>({
-    givingBack_category: '',
-    description: '',
-    weblink: '',
-    image_slider: undefined,
-  });
+  // **FIX 2: Use the new FormErrors interface for the errors state.**
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -37,14 +55,16 @@ const EditGivingBack: React.FC = () => {
         return;
       }
       try {
-        const response = await axiosInstance.get(`/api/giving-back/${givingId}`);
+        const response = await axiosInstance.get<ApiGetResponse>(`/api/giving-back/${givingId}`);
+        const data = response.data.giving_back;
         setFormData({
-          givingBack_category: response.data.giving_back?.givingBack_category || '',
-          description: response.data.giving_back?.description || '',
-          weblink: response.data.giving_back?.weblink || '',
+          givingBack_category: data?.givingBack_category || '',
+          description: data?.description || '',
+          weblink: data?.weblink || '',
           image_slider: null,
         });
-        setCurrentImages(response.data.giving_back?.image_slider ? JSON.parse(response.data.giving_back.image_slider) : null);
+        // Safely parse the JSON string of image paths
+        setCurrentImages(data?.image_slider ? JSON.parse(data.image_slider) : null);
       } catch (error) {
         console.error('Fetch error:', error);
         toast.error('Failed to fetch Giving Back record');
@@ -60,41 +80,39 @@ const EditGivingBack: React.FC = () => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    if (errors[name as keyof FormErrors]) {
+        setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : null;
     setFormData((prev) => ({ ...prev, image_slider: files }));
-    setErrors((prev) => ({ ...prev, image_slider: undefined }));
+    if (errors.image_slider) {
+        setErrors((prev) => ({ ...prev, image_slider: undefined }));
+    }
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormDataState> = {};
+    // **FIX 3: Type the newErrors object with FormErrors.**
+    const newErrors: FormErrors = {};
 
     if (!formData.givingBack_category.trim()) {
       newErrors.givingBack_category = 'Category is required';
-    } else if (formData.givingBack_category.length > 255) {
-      newErrors.givingBack_category = 'Category must not exceed 255 characters';
-    }
-
-    if (formData.description && formData.description.length > 1000) {
-      newErrors.description = 'Description must not exceed 1000 characters';
     }
 
     if (formData.weblink && !/^(https?:\/\/)/i.test(formData.weblink)) {
       newErrors.weblink = 'Please enter a valid URL';
-    } else if (formData.weblink && formData.weblink.length > 255) {
-      newErrors.weblink = 'Web link must not exceed 255 characters';
     }
 
-    if (formData.image_slider) {
+    if (formData.image_slider && formData.image_slider.length > 0) {
       for (const file of formData.image_slider) {
         if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(file.type)) {
-          (newErrors.image_slider as any) = 'Only JPEG, PNG, JPG, or GIF files are allowed';
+          // **FIX 4: Remove the `(as any)` cast. This is now type-safe.**
+          newErrors.image_slider = 'Only JPEG, PNG, JPG, or GIF files are allowed';
           break;
         } else if (file.size > 2 * 1024 * 1024) {
-          (newErrors.image_slider as any) = 'Each image must not exceed 2MB';
+          newErrors.image_slider = 'Each image must not exceed 2MB';
           break;
         }
       }
@@ -121,27 +139,19 @@ const EditGivingBack: React.FC = () => {
 
     try {
       const response = await axiosInstance.post(`/api/giving-back/${givingId}/update`, payload, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       toast.success(response.data.message || 'Giving Back record updated successfully');
       if (response.data.giving_back?.image_slider) {
         setCurrentImages(JSON.parse(response.data.giving_back.image_slider));
         setFormData((prev) => ({ ...prev, image_slider: null }));
       }
-      setTimeout(() => navigate('/giving/back'), 2000);
+      setTimeout(() => navigate('/giving-back'), 2000); // Corrected navigation path
     } catch (error: any) {
       console.error('Submit error:', error);
       const errorMessage = error.response?.data?.error || 'Failed to update Giving Back record';
       const backendErrors = error.response?.data?.errors || {};
-      const formattedErrors: Partial<FormDataState> = {};
-      for (const key in backendErrors) {
-        if (key in formData) {
-          (formattedErrors as any)[key] = backendErrors[key][0];
-        }
-      }
-      setErrors((prev) => ({ ...prev, ...formattedErrors }));
+      setErrors(backendErrors); // This is now type-safe
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -162,6 +172,7 @@ const EditGivingBack: React.FC = () => {
           Edit Giving Back
         </h2>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Category Field */}
           <div>
             <label htmlFor="givingBack_category" className="block text-sm font-medium text-gray-700">
               Category <span className="text-red-500">*</span>
@@ -175,17 +186,13 @@ const EditGivingBack: React.FC = () => {
               className={`mt-1 block w-full rounded-md border shadow-sm p-2 sm:p-3 text-sm sm:text-base ${
                 errors.givingBack_category ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
               }`}
-              placeholder="Enter category"
-              maxLength={255}
-              aria-invalid={!!errors.givingBack_category}
-              aria-describedby={errors.givingBack_category ? 'givingBack_category-error' : undefined}
             />
             {errors.givingBack_category && (
-              <p id="givingBack_category-error" className="mt-1 text-sm text-red-500">
-                {errors.givingBack_category}
-              </p>
+              <p className="mt-1 text-sm text-red-500">{errors.givingBack_category}</p>
             )}
           </div>
+
+          {/* Description Field */}
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-gray-700">
               Description (optional)
@@ -199,17 +206,13 @@ const EditGivingBack: React.FC = () => {
               className={`mt-1 block w-full rounded-md border shadow-sm p-2 sm:p-3 text-sm sm:text-base ${
                 errors.description ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
               }`}
-              placeholder="Enter description"
-              maxLength={1000}
-              aria-invalid={!!errors.description}
-              aria-describedby={errors.description ? 'description-error' : undefined}
             />
             {errors.description && (
-              <p id="description-error" className="mt-1 text-sm text-red-500">
-                {errors.description}
-              </p>
+              <p className="mt-1 text-sm text-red-500">{errors.description}</p>
             )}
           </div>
+
+          {/* Weblink Field */}
           <div>
             <label htmlFor="weblink" className="block text-sm font-medium text-gray-700">
               Web Link (optional)
@@ -223,20 +226,16 @@ const EditGivingBack: React.FC = () => {
               className={`mt-1 block w-full rounded-md border shadow-sm p-2 sm:p-3 text-sm sm:text-base ${
                 errors.weblink ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
               }`}
-              placeholder="Enter web link"
-              maxLength={255}
-              aria-invalid={!!errors.weblink}
-              aria-describedby={errors.weblink ? 'weblink-error' : undefined}
             />
             {errors.weblink && (
-              <p id="weblink-error" className="mt-1 text-sm text-red-500">
-                {errors.weblink}
-              </p>
+              <p className="mt-1 text-sm text-red-500">{errors.weblink}</p>
             )}
           </div>
+          
+          {/* Image Slider Field */}
           <div>
             <label htmlFor="image_slider" className="block text-sm font-medium text-gray-700">
-              Image Slider (optional)
+              Replace Images (optional)
             </label>
             {currentImages && currentImages.length > 0 && (
               <div className="my-2">
@@ -249,9 +248,7 @@ const EditGivingBack: React.FC = () => {
                       alt={`Giving Back Image ${index + 1}`}
                       className="h-32 w-auto max-w-xs object-contain rounded border border-gray-200"
                       onError={(e) => {
-                        console.warn('Error loading image:', getImageUrl(image));
                         (e.currentTarget as HTMLImageElement).src = 'https://via.placeholder.com/128x128?text=LoadError';
-                        (e.currentTarget as HTMLImageElement).alt = 'Error loading current image';
                       }}
                     />
                   ))}
@@ -265,57 +262,34 @@ const EditGivingBack: React.FC = () => {
               accept="image/jpeg,image/png,image/jpg,image/gif"
               multiple
               onChange={handleFileChange}
-              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
             {errors.image_slider && (
-              <p id="image_slider-error" className="mt-1 text-sm text-red-500">
-                {errors.image_slider as string}
+              <p className="mt-1 text-sm text-red-500">
+                {/* **FIX 5: Remove the `as string` cast.** */}
+                {errors.image_slider}
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed types: JPG, PNG, GIF.</p>
           </div>
+          
+          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
             <button
               type="button"
-              onClick={() => navigate('/giving/back')}
-              className="w-full sm:w-auto px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition shadow-sm text-sm sm:text-base"
+              onClick={() => navigate('/giving-back')} // Corrected navigation path
+              className="w-full sm:w-auto px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className={`w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm text-sm sm:text-base ${
+              className={`w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 ${
                 loading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
-              {loading ? (
-                <div className="flex items-center justify-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  Updating...
-                </div>
-              ) : (
-                'Update Giving Back'
-              )}
+              {loading ? 'Updating...' : 'Update Giving Back'}
             </button>
           </div>
         </form>

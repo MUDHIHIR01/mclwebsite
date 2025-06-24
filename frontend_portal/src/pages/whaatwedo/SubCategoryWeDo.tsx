@@ -124,7 +124,7 @@ const ImageModal: React.FC<{ imageUrl: string; onClose: () => void }> = ({ image
         className="absolute top-2 right-2 text-white text-2xl focus:outline-none"
         aria-label="Close"
       >
-        &times;
+        ×
       </button>
       <img src={imageUrl} alt="Full-size" className="w-full h-auto rounded-lg" />
     </div>
@@ -136,7 +136,7 @@ const ImageCell: React.FC<{ value: string | null; onImageClick: (url: string) =>
   onImageClick,
 }) => {
   if (!value) return <span className="text-gray-500 text-xs">No Image</span>;
-  // Ensure the image URL is absolute by prepending the base URL
+  // Ensure the image URL is absolute
   const imageUrl = value.startsWith('http')
     ? value
     : `${axiosInstance.defaults.baseURL?.replace(/\/$/, '')}/${value.replace(/^\//, '')}`;
@@ -195,7 +195,7 @@ const SubCategoryWeDo: React.FC = () => {
           flatRows.findIndex((flatRow) => flatRow.original.subcategory_id === row.original.subcategory_id) + 1,
       },
       { Header: 'Subcategory', accessor: 'subcategory' },
-      { Header: 'Category', accessor: 'what_we_do.category' },
+      { Header: 'Category', accessor: (row) => row.what_we_do.category }, // Fixed: Use accessor function
       { Header: 'Description', accessor: 'description', Cell: ({ value }) => <DescriptionCell value={value} /> },
       {
         Header: 'Image',
@@ -289,17 +289,18 @@ const SubCategoryWeDo: React.FC = () => {
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Subcategories');
-    XLSX.write(wb, 'subcategories.xlsx');
+    XLSX.writeFile(wb, 'subcategories.xlsx');
   };
 
-  if (loading)
+  if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-lg font-semibold">Loading...</div>
       </div>
     );
+  }
 
-  if (error && data.length === 0)
+  if (error && data.length === 0) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen p-4">
         <div className="text-red-500 text-xl font-semibold mb-4">Error</div>
@@ -312,6 +313,7 @@ const SubCategoryWeDo: React.FC = () => {
         </button>
       </div>
     );
+  }
 
   return (
     <div className="container mx-auto p-4 sm:p-6">

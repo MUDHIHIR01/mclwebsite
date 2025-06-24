@@ -4,10 +4,18 @@ import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Interface for form data
 interface FormData {
   heading: string;
   description: string;
   home_img: File | null;
+}
+
+// Interface for error messages
+interface FormErrors {
+  heading?: string;
+  description?: string;
+  home_img?: string;
 }
 
 const AddValuesHome = () => {
@@ -17,11 +25,7 @@ const AddValuesHome = () => {
     description: '',
     home_img: null,
   });
-  const [errors, setErrors] = useState<Partial<FormData>>({
-    heading: '',
-    description: '',
-    home_img: '',
-  });
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,7 +44,7 @@ const AddValuesHome = () => {
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    const newErrors: FormErrors = {};
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -87,7 +91,11 @@ const AddValuesHome = () => {
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to create values home entry';
       const backendErrors = error.response?.data?.errors || {};
-      setErrors(backendErrors);
+      setErrors({
+        heading: backendErrors.heading?.[0] || '',
+        description: backendErrors.description?.[0] || '',
+        home_img: backendErrors.home_img?.[0] || '',
+      });
       toast.error(errorMessage, { position: 'top-right' });
     } finally {
       setLoading(false);

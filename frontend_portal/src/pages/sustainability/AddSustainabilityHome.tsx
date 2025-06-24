@@ -4,26 +4,32 @@ import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Interface for the form's data values
 interface FormData {
   heading: string;
   description: string;
   home_img: File | null;
 }
 
-const AddSustainabilityHome = () => {
+// REFINEMENT 1: Create a dedicated interface for form error messages.
+// This is the key fix. All error messages are strings.
+interface FormErrors {
+  heading?: string;
+  description?: string;
+  home_img?: string;
+}
+
+const AddSustainabilityHome: React.FC = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
     heading: '',
     description: '',
     home_img: null,
   });
-  const [errors, setErrors] = useState<Partial<FormData>>({
-    heading: '',
-    description: '',
-    home_img: '',
-  });
+  // REFINEMENT 2: Use the new FormErrors interface and initialize as an empty object.
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // REMOVED: 'isSubmitting' state is redundant. The 'loading' state handles disabling the button.
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -36,11 +42,13 @@ const AddSustainabilityHome = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, home_img: file }));
+    // FIX: This assignment is now valid because errors.home_img is a string.
     setErrors((prev) => ({ ...prev, home_img: '' }));
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    // REFINEMENT 3: Use the FormErrors type for the local newErrors object.
+    const newErrors: FormErrors = {};
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -52,10 +60,14 @@ const AddSustainabilityHome = () => {
       newErrors.description = 'Description must not exceed 1000 characters';
     }
 
-    if (formData.home_img && !['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.home_img.type)) {
-      newErrors.home_img = 'Only JPEG, PNG, JPG, or GIF files are allowed';
-    } else if (formData.home_img && formData.home_img.size > 2 * 1024 * 1024) {
-      newErrors.home_img = 'Image size must not exceed 2MB';
+    if (formData.home_img) {
+      if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.home_img.type)) {
+        // FIX: This assignment is now valid.
+        newErrors.home_img = 'Only JPEG, PNG, JPG, or GIF files are allowed';
+      } else if (formData.home_img.size > 2 * 1024 * 1024) {
+        // FIX: This assignment is also valid now.
+        newErrors.home_img = 'Image size must not exceed 2MB';
+      }
     }
 
     setErrors(newErrors);
@@ -67,7 +79,6 @@ const AddSustainabilityHome = () => {
     if (!validateForm()) return;
 
     setLoading(true);
-    setIsSubmitting(true);
 
     try {
       const payload = new FormData();
@@ -87,11 +98,17 @@ const AddSustainabilityHome = () => {
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to create sustainability home entry';
       const backendErrors = error.response?.data?.errors || {};
-      setErrors(backendErrors);
+      
+      // REFINEMENT 4: Explicitly map backend errors to our FormErrors type for safety.
+      const formattedErrors: FormErrors = {};
+      if (backendErrors.heading) formattedErrors.heading = backendErrors.heading[0];
+      if (backendErrors.description) formattedErrors.description = backendErrors.description[0];
+      if (backendErrors.home_img) formattedErrors.home_img = backendErrors.home_img[0];
+      
+      setErrors(formattedErrors);
       toast.error(errorMessage, { position: 'top-right' });
     } finally {
       setLoading(false);
-      setIsSubmitting(false);
     }
   };
 
@@ -159,6 +176,7 @@ const AddSustainabilityHome = () => {
             />
             {errors.home_img && (
               <p id="home_img-error" className="mt-1 text-sm text-red-500">
+                {/* FIX: This now renders a string, which is a valid ReactNode. The error is gone. */}
                 {errors.home_img}
               </p>
             )}
@@ -167,14 +185,14 @@ const AddSustainabilityHome = () => {
             <button
               type="button"
               onClick={() => navigate('/sustainability/home')}
-              className={`w-full sm:w-40 px-4 ${isSubmitting ? 'py-0.5' : 'py-1'} bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition shadow-md text-sm sm:text-base`}
+              className={`w-full sm:w-auto px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition shadow-md text-sm sm:text-base`}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className={`w-full sm:w-40 px-4 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md text-sm sm:text-base ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md text-sm sm:text-base ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {loading ? (
                 <div className="flex items-center justify-center">

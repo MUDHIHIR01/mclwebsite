@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import axiosInstance from '../../axios';
 import { toast } from 'react-toastify';
@@ -95,8 +94,8 @@ export const ImageModal = ({ imageUrl, onClose }: { imageUrl: string; onClose: (
           alt="Full-size image"
           className="w-full h-auto max-h-[80vh] object-contain rounded"
           onError={(e) => {
-            e.currentTarget.src = 'https://via.placeholder.com/300x300?text=Error';
-            e.currentTarget.alt = 'Image load error';
+            (e.currentTarget as HTMLImageElement).src = 'https://via.placeholder.com/300x300?text=Error';
+            (e.currentTarget as HTMLImageElement).alt = 'Image load error';
           }}
         />
       </div>

@@ -26,8 +26,16 @@ const EditContactUs: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axiosInstance.get<ContactData>(`/api/contact-us/${cont_us_id}`);
+      // **FIX: Changed the generic type to accurately describe the API response.**
+      // This tells TypeScript the response data has all the properties of ContactData,
+      // AND it might also have an optional 'contact' property that contains the ContactData.
+      const response = await axiosInstance.get<{ contact?: ContactData } & ContactData>(
+        `/api/contact-us/${cont_us_id}`
+      );
+
+      // This line is now type-safe and will no longer cause an error.
       const contact = response.data.contact || response.data;
+
       setCategory(contact.category);
       setUrlLink(contact.url_link || '');
       setDescription(contact.description || '');
@@ -59,8 +67,13 @@ const EditContactUs: React.FC = () => {
     if (description) {
       formData.append('description', description);
     }
+    
+    // For Laravel updates with multipart/form-data, POST is often used with a _method field.
+    // If your route is Route::put(...) or Route::patch(...), you might need this:
+    // formData.append('_method', 'PUT');
 
     try {
+      // Using POST for updates is common with FormData.
       await axiosInstance.post(`/api/contact-us/${cont_us_id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -80,7 +93,7 @@ const EditContactUs: React.FC = () => {
 
   if (loading) return <div className="flex justify-center items-center min-h-screen"><div className="text-lg font-semibold">Loading...</div></div>;
 
-  if (error) {
+  if (error && !loading) { // Added !loading to prevent showing error and loader at the same time
     return (
       <div className="flex flex-col justify-center items-center min-h-screen p-4">
         <div className="text-red-500 text-xl font-semibold mb-4">Error</div>

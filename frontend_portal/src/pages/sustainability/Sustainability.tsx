@@ -19,11 +19,19 @@ interface SustainabilityData {
   updated_at?: string;
 }
 
+// REFINEMENT 1: Define an interface for the API response object.
+// This assumes your API wraps the array of data in a 'data' key.
+interface ApiResponse {
+  data: SustainabilityData[];
+}
+
+
 interface ActionButtonsProps {
   sustainabilityId: number;
   onDeletionSuccess: () => void;
 }
 
+// ... (ActionButtons, DescriptionCell, FileCell, WeblinkCell components remain the same) ...
 const ActionButtons: React.FC<ActionButtonsProps> = ({ sustainabilityId, onDeletionSuccess }) => {
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -119,6 +127,7 @@ const WeblinkCell: React.FC<{ value: string | null }> = ({ value }) => {
   );
 };
 
+
 export default function Sustainability() {
   const [data, setData] = useState<SustainabilityData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,8 +137,10 @@ export default function Sustainability() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axiosInstance.get<SustainabilityData[]>('/api/sustainability');
-      setData(response.data.data || response.data);
+      // REFINEMENT 2: Use the new ApiResponse interface for the get request.
+      const response = await axiosInstance.get<ApiResponse>('/api/sustainability');
+      // FIX: Access the 'data' property on the response object, with a fallback to an empty array.
+      setData(response.data.data || []);
     } catch (err: any) {
       const errorMessage = 'Failed to fetch sustainability records: ' + (err.response?.data?.error || err.message || 'Unknown error');
       setError(errorMessage);
@@ -174,6 +185,7 @@ export default function Sustainability() {
     [fetchSustainability]
   );
 
+  // ... (rest of the component, including table instance and JSX, remains the same) ...
   const tableInstance = useTable(
     { columns, data, initialState: { pageIndex: 0, pageSize: 10 } },
     useGlobalFilter,

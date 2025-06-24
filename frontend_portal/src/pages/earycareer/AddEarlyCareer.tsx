@@ -11,6 +11,13 @@ interface FormData {
   video_file: File | null;
 }
 
+interface FormErrors {
+  category?: string;
+  description?: string;
+  img_file?: string;
+  video_file?: string;
+}
+
 const AddEarlyCareer = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
@@ -19,32 +26,33 @@ const AddEarlyCareer = () => {
     img_file: null,
     video_file: null,
   });
-  const [errors, setErrors] = useState<Partial<FormData>>({
-    category: '',
-    description: '',
-    img_file: '',
-    video_file: '',
-  });
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // FIX: Removed unused 'isSubmitting' state
+  // const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    if (errors[name as keyof FormErrors]) {
+        setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name } = e.target;
+    // This correctly handles cases where no file is selected
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, [name]: file }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    if (errors[name as keyof FormErrors]) {
+        setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    const newErrors: FormErrors = {};
 
     if (!formData.category.trim()) {
       newErrors.category = 'Category is required';
@@ -52,16 +60,20 @@ const AddEarlyCareer = () => {
       newErrors.category = 'Category must not exceed 255 characters';
     }
 
-    if (formData.img_file && !['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.img_file.type)) {
-      newErrors.img_file = 'Only JPEG, PNG, JPG, or GIF files are allowed';
-    } else if (formData.img_file && formData.img_file.size > 2 * 1024 * 1024) {
-      newErrors.img_file = 'Image size must not exceed 2MB';
+    if (formData.img_file) {
+      if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.img_file.type)) {
+        newErrors.img_file = 'Only JPEG, PNG, JPG, or GIF files are allowed';
+      } else if (formData.img_file.size > 2 * 1024 * 1024) {
+        newErrors.img_file = 'Image size must not exceed 2MB';
+      }
     }
 
-    if (formData.video_file && !['video/mp4', 'video/avi', 'video/mov', 'video/wmv'].includes(formData.video_file.type)) {
-      newErrors.video_file = 'Only MP4, AVI, MOV, or WMV files are allowed';
-    } else if (formData.video_file && formData.video_file.size > 10 * 1024 * 1024) {
-      newErrors.video_file = 'Video size must not exceed 10MB';
+    if (formData.video_file) {
+      if (!['video/mp4', 'video/x-msvideo', 'video/quicktime', 'video/x-ms-wmv'].includes(formData.video_file.type)) {
+        newErrors.video_file = 'Only MP4, AVI, MOV, or WMV files are allowed';
+      } else if (formData.video_file.size > 10 * 1024 * 1024) {
+        newErrors.video_file = 'Video size must not exceed 10MB';
+      }
     }
 
     setErrors(newErrors);
@@ -73,7 +85,7 @@ const AddEarlyCareer = () => {
     if (!validateForm()) return;
 
     setLoading(true);
-    setIsSubmitting(true);
+    // FIX: Removed setIsSubmitting(true)
 
     try {
       const payload = new FormData();
@@ -97,15 +109,15 @@ const AddEarlyCareer = () => {
       const errorMessage = error.response?.data?.error || 'Failed to create early career entry';
       const backendErrors = error.response?.data?.errors || {};
       setErrors({
-        category: backendErrors.category?.[0] || '',
-        description: backendErrors.description?.[0] || '',
-        img_file: backendErrors.img_file?.[0] || '',
-        video_file: backendErrors.video_file?.[0] || '',
+        category: backendErrors.category?.[0],
+        description: backendErrors.description?.[0],
+        img_file: backendErrors.img_file?.[0],
+        video_file: backendErrors.video_file?.[0],
       });
       toast.error(errorMessage, { position: 'top-right' });
     } finally {
       setLoading(false);
-      setIsSubmitting(false);
+      // FIX: Removed setIsSubmitting(false)
     }
   };
 
@@ -184,7 +196,7 @@ const AddEarlyCareer = () => {
               type="file"
               id="video_file"
               name="video_file"
-              accept="video/mp4,video/avi,video/mov,video/wmv"
+              accept="video/mp4,video/avi,video/quicktime,video/wmv"
               onChange={handleFileChange}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
@@ -198,14 +210,14 @@ const AddEarlyCareer = () => {
             <button
               type="button"
               onClick={() => navigate('/early-careers')}
-              className={`w-full sm:w-40 px-4 ${isSubmitting ? 'py-0.5' : 'py-1'} bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition shadow-md text-sm sm:text-base`}
+              className={`w-full sm:w-40 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition shadow-md text-sm sm:text-base`}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className={`w-full sm:w-40 px-4 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md text-sm sm:text-base ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full sm:w-40 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md text-sm sm:text-base ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {loading ? (
                 <div className="flex items-center justify-center">

@@ -10,6 +10,12 @@ interface FormData {
   home_img: File | null;
 }
 
+interface FormErrors {
+  heading?: string;
+  description?: string;
+  home_img?: string;
+}
+
 const AddGivingBackHome = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
@@ -17,30 +23,29 @@ const AddGivingBackHome = () => {
     description: '',
     home_img: null,
   });
-  const [errors, setErrors] = useState<Partial<FormData>>({
-    heading: '',
-    description: '',
-    home_img: '',
-  });
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, home_img: file }));
-    setErrors((prev) => ({ ...prev, home_img: '' }));
+    if (errors.home_img) {
+      setErrors((prev) => ({ ...prev, home_img: undefined }));
+    }
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    const newErrors: FormErrors = {};
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -52,10 +57,12 @@ const AddGivingBackHome = () => {
       newErrors.description = 'Description must not exceed 1000 characters';
     }
 
-    if (formData.home_img && !['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.home_img.type)) {
-      newErrors.home_img = 'Only JPEG, PNG, JPG, or GIF files are allowed';
-    } else if (formData.home_img && formData.home_img.size > 2 * 1024 * 1024) {
-      newErrors.home_img = 'Image size must not exceed 2MB';
+    if (formData.home_img) {
+      if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.home_img.type)) {
+        newErrors.home_img = 'Only JPEG, PNG, JPG, or GIF files are allowed';
+      } else if (formData.home_img.size > 2 * 1024 * 1024) {
+        newErrors.home_img = 'Image size must not exceed 2MB';
+      }
     }
 
     setErrors(newErrors);
@@ -67,7 +74,6 @@ const AddGivingBackHome = () => {
     if (!validateForm()) return;
 
     setLoading(true);
-    setIsSubmitting(true);
 
     try {
       const payload = new FormData();
@@ -91,7 +97,6 @@ const AddGivingBackHome = () => {
       toast.error(errorMessage, { position: 'top-right' });
     } finally {
       setLoading(false);
-      setIsSubmitting(false);
     }
   };
 
@@ -167,14 +172,14 @@ const AddGivingBackHome = () => {
             <button
               type="button"
               onClick={() => navigate('/giving-back')}
-              className={`w-full sm:w-40 px-4 ${isSubmitting ? 'py-0.5' : 'py-1'} bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition shadow-md text-sm sm:text-base`}
+              className="w-full sm:w-40 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition shadow-md text-sm sm:text-base"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className={`w-full sm:w-40 px-4 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md text-sm sm:text-base ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full sm:w-40 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md text-sm sm:text-base ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {loading ? (
                 <div className="flex items-center justify-center">

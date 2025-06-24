@@ -1,4 +1,3 @@
-// src/components/EditWhatWeDo.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../../axios';
@@ -9,6 +8,12 @@ interface FormData {
   heading: string;
   description: string;
   home_img: File | null;
+}
+
+interface FormErrors {
+  heading: string;
+  description: string;
+  home_img: string | undefined;
 }
 
 interface WhatWeDoHomeData {
@@ -27,7 +32,7 @@ const EditWhatWeDo: React.FC = () => {
     home_img: null,
   });
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Partial<FormData>>({
+  const [errors, setErrors] = useState<FormErrors>({
     heading: '',
     description: '',
     home_img: undefined,
@@ -74,7 +79,7 @@ const EditWhatWeDo: React.FC = () => {
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    const newErrors: Partial<FormErrors> = {};
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -94,7 +99,7 @@ const EditWhatWeDo: React.FC = () => {
       }
     }
 
-    setErrors(newErrors);
+    setErrors(newErrors as FormErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -123,10 +128,10 @@ const EditWhatWeDo: React.FC = () => {
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to update what we do entry';
       const backendErrors = error.response?.data?.errors || {};
-      const formattedErrors: Partial<FormData> = {};
+      const formattedErrors: Partial<FormErrors> = {};
       for (const key in backendErrors) {
         if (key in formData) {
-          formattedErrors[key as keyof FormData] = backendErrors[key][0];
+          formattedErrors[key as keyof FormErrors] = backendErrors[key][0];
         }
       }
       setErrors((prev) => ({ ...prev, ...formattedErrors }));
@@ -231,7 +236,7 @@ const EditWhatWeDo: React.FC = () => {
             />
             {errors.home_img && (
               <p id="home_img-error" className="mt-1 text-sm text-red-500">
-                {errors.home_img as string}
+                {errors.home_img}
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed types: JPG, PNG, GIF.</p>

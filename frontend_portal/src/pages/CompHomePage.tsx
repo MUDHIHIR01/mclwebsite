@@ -13,7 +13,7 @@ import {
   ArrowRightIcon,
 } from "@heroicons/react/24/outline";
 
-// --- INTERFACES (Unchanged) ---
+// --- INTERFACES ---
 interface CompanySliderData {
   company_id: number;
   heading: string;
@@ -32,21 +32,33 @@ interface CardData {
   createdAt: string;
 }
 
-// --- Slider Section Component (Unchanged from previous version) ---
+// --- Slider Section Component ---
 const CompanySlideshow: React.FC = () => {
-  const staticData: CompanySliderData[] = [
-    {
-      "company_id": 1,
-      "description": "The FT Group, part of Nikkei Inc., provides a broad range of information, news and services to ambitious individuals and organisations.",
-      "home_img": "uploads/company_images/1750412254_comp.png",
-      "heading": "WHO WE ARE",
-      "created_at": "2025-06-20T09:33:49.000000Z",
-      "updated_at": "2025-06-20T09:39:34.000000Z"
-    }
-  ];
-
-  const [data] = useState<CompanySliderData[]>(staticData);
+  const [data, setData] = useState<CompanySliderData[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSliderData = async () => {
+      try {
+        setLoading(true);
+        const response = await axiosInstance.get("/api/homeSliders");
+        const sliderData = response.data; // Direct array as per example response
+        if (!Array.isArray(sliderData)) {
+          throw new Error("Invalid data format received");
+        }
+        setData(sliderData);
+      } catch (err) {
+        setError("Failed to load slider content");
+        toast.error("Could not load slider content");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSliderData();
+  }, []);
 
   useEffect(() => {
     if (data.length <= 1) return;
@@ -54,14 +66,22 @@ const CompanySlideshow: React.FC = () => {
     return () => clearInterval(interval);
   }, [data.length]);
 
-  if (data.length === 0) {
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-6 bg-gray-800">
+        <ArrowPathIcon className="w-8 h-8 mx-auto text-[#0d7680] animate-spin" />
+      </div>
+    );
+  }
+
+  if (error || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-6 bg-gray-800">
         <div className="flex items-center gap-3 mb-6">
           <InformationCircleIcon className="w-10 h-10 text-[#0d7680]" />
           <h2 className="text-3xl font-bold text-white">No Sliders Found</h2>
         </div>
-        <p className="text-lg text-gray-200">Content could not be loaded.</p>
+        <p className="text-lg text-gray-200">{error || "Content could not be loaded."}</p>
       </div>
     );
   }
@@ -134,7 +154,7 @@ const CompanySlideshow: React.FC = () => {
   );
 };
 
-// --- Individual Card Component (Unchanged from previous version) ---
+// --- Individual Card Component ---
 const ContentCard: React.FC<{ item: CardData }> = ({ item }) => {
   return (
     <motion.div
@@ -173,7 +193,7 @@ const ContentCard: React.FC<{ item: CardData }> = ({ item }) => {
   );
 };
 
-// --- Content Card Section Component (Refactored for white background) ---
+// --- Content Card Section Component ---
 const ContentCardSection: React.FC<{ data: CardData[]; loading: boolean; error: string | null; onRetry: () => void; }> = ({ data, loading, error, onRetry }) => {
   if (loading) {
     return (
@@ -197,7 +217,7 @@ const ContentCardSection: React.FC<{ data: CardData[]; loading: boolean; error: 
     <section className="py-16">
       <div className="max-w-6xl mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Our Company Initiatives</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold text-[#ed1c24]">Our Company Initiatives</h2>
           <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
             Explore the latest from across our company departments.
           </p>
@@ -210,8 +230,7 @@ const ContentCardSection: React.FC<{ data: CardData[]; loading: boolean; error: 
   );
 };
 
-
-// --- Endpoint Configuration (Unchanged) ---
+// --- Endpoint Configuration ---
 const contentEndpoints = [
   { url: "/api/sliders", cardTitle: "MCL-Group", idKey: "mcl_home_id", imgKey: "mcl_home_img", link: "/company/mcl-group", extractor: (res: any) => res.data.data },
   { url: "/api/leadershipHomeSlider", cardTitle: "Leadership", idKey: "leadership_home_id", imgKey: "home_img", link: "/company/leadership", extractor: (res: any) => res.data },
@@ -222,7 +241,7 @@ const contentEndpoints = [
   { url: "/api/ourStandardHomeSlider", cardTitle: "Our Standards", idKey: "id", imgKey: "home_img", link: "/company/our-standards", extractor: (res: any) => res.data?.data?.our_standard_homes },
 ];
 
-// --- Main HomePage Component (Refactored for white background) ---
+// --- Main HomePage Component ---
 const HomePage: React.FC = () => {
   const [cardData, setCardData] = useState<CardData[]>([]);
   const [cardsLoading, setCardsLoading] = useState(true);

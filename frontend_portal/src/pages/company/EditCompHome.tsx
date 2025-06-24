@@ -5,10 +5,19 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { CompanyData } from './CompanyComponents';
 
+// This interface is for the form's data state
 interface FormData {
   heading: string;
   description: string;
   home_img: File | null;
+}
+
+// 1. Create a dedicated interface for form validation errors.
+// All properties are optional strings.
+interface FormErrors {
+  heading?: string;
+  description?: string;
+  home_img?: string;
 }
 
 const EditCompHome = () => {
@@ -20,11 +29,9 @@ const EditCompHome = () => {
     home_img: null,
   });
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Partial<FormData>>({
-    heading: '',
-    description: '',
-    home_img: undefined,
-  });
+
+  // 2. Use the new FormErrors interface for the errors state.
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -57,17 +64,23 @@ const EditCompHome = () => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    // Clear the error for the field being edited
+    if (errors[name as keyof FormErrors]) {
+        setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData((prev) => ({ ...prev, home_img: file }));
-    setErrors((prev) => ({ ...prev, home_img: undefined }));
+    if (errors.home_img) {
+      setErrors((prev) => ({ ...prev, home_img: undefined }));
+    }
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    // 3. Use the FormErrors type for the newErrors object.
+    const newErrors: FormErrors = {};
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -80,6 +93,7 @@ const EditCompHome = () => {
     }
 
     if (formData.home_img) {
+      // These assignments are now type-safe.
       if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.home_img.type)) {
         newErrors.home_img = 'Only JPEG, PNG, JPG, or GIF files are allowed';
       } else if (formData.home_img.size > 2 * 1024 * 1024) {
@@ -97,6 +111,9 @@ const EditCompHome = () => {
 
     setLoading(true);
     const payload = new FormData();
+    // Use POST with a _method override for file uploads on an update route.
+    // This is a common pattern in some frameworks like Laravel.
+    payload.append('_method', 'POST'); 
     payload.append('heading', formData.heading);
     payload.append('description', formData.description || '');
     if (formData.home_img) {
@@ -104,20 +121,22 @@ const EditCompHome = () => {
     }
 
     try {
+      // Use POST for FormData, even for an update. The backend handles it.
       const response = await axiosInstance.post(`/api/companies/${companyId}`, payload, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       toast.success(response.data.message || 'Company updated successfully');
       setFormData((prev) => ({ ...prev, home_img: null }));
-      setCurrentImage(response.data.company?.home_img || null);
+      setCurrentImage(response.data.company?.home_img || currentImage);
       setTimeout(() => navigate('/company'), 2000);
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to update company';
       const backendErrors = error.response?.data?.errors || {};
-      const formattedErrors: Partial<FormData> = {};
+      // Use the correct type for formatted errors
+      const formattedErrors: FormErrors = {};
       for (const key in backendErrors) {
         if (key in formData) {
-          formattedErrors[key as keyof FormData] = backendErrors[key][0];
+          formattedErrors[key as keyof FormErrors] = backendErrors[key][0];
         }
       }
       setErrors((prev) => ({ ...prev, ...formattedErrors }));
@@ -205,8 +224,8 @@ const EditCompHome = () => {
                   alt="Current Company"
                   className="h-32 w-auto max-w-xs object-contain rounded border border-gray-200"
                   onError={(e) => {
-                    e.currentTarget.src = 'https://via.placeholder.com/128x128?text=LoadError';
-                    e.currentTarget.alt = 'Error loading current image';
+                    (e.currentTarget as HTMLImageElement).src = 'https://via.placeholder.com/128x128?text=LoadError';
+                    (e.currentTarget as HTMLImageElement).alt = 'Error loading current image';
                     console.warn("Error loading current image from URL:", displayImageUrl);
                   }}
                 />
@@ -220,9 +239,10 @@ const EditCompHome = () => {
               onChange={handleFileChange}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            {/* 4. Remove the incorrect 'as string' cast. This is now safe to render. */}
             {errors.home_img && (
               <p id="home_img-error" className="mt-1 text-sm text-red-500">
-                {errors.home_img as string}
+                {errors.home_img}
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed types: JPG, PNG, GIF.</p>

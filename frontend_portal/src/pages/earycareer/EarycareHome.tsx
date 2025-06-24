@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useTable, useGlobalFilter, usePagination } from 'react-table';
+// **FIX 1: Import `Column` and `CellProps` from react-table**
+import { useTable, useGlobalFilter, usePagination, Column, CellProps } from 'react-table';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -126,22 +127,24 @@ const EarycareHome: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  const columns = useMemo(
+  // **FIX 2: Add the explicit type annotation for the columns array.**
+  const columns: readonly Column<EarycareHomeData>[] = useMemo(
     () => [
       {
         Header: '#',
-        Cell: ({ row, flatRows }: any) => flatRows.indexOf(row) + 1,
+        // **FIX 3: Improve typing for Cell props.**
+        Cell: ({ row }: CellProps<EarycareHomeData>) => row.index + 1,
       },
       { Header: 'Heading', accessor: 'heading' },
       {
         Header: 'Description',
         accessor: 'description',
-        Cell: ({ value }: { value: string | null }) => <DescriptionCell value={value} />,
+        Cell: ({ value }: CellProps<EarycareHomeData, string | null>) => <DescriptionCell value={value} />,
       },
       {
         Header: 'Image',
         accessor: 'home_img',
-        Cell: ({ value }: { value: string | null }) =>
+        Cell: ({ value }: CellProps<EarycareHomeData, string | null>) =>
           value ? (
             <button onClick={() => setSelectedImage(getImageUrl(value))} className="focus:outline-none" aria-label="View image">
               <img src={getImageUrl(value)} alt="Earycare home item" className="h-16 w-16 object-cover rounded cursor-pointer hover:opacity-80" />
@@ -153,17 +156,18 @@ const EarycareHome: React.FC = () => {
       {
         Header: 'Created At',
         accessor: 'created_at',
-        Cell: ({ value }: { value: string }) => new Date(value).toLocaleDateString(),
+        Cell: ({ value }: CellProps<EarycareHomeData, string>) => new Date(value).toLocaleDateString(),
       },
       {
         Header: 'Actions',
         accessor: 'earycare_id',
-        Cell: ({ row }: any) => <ActionButtons earycare_id={row.original.earycare_id} onDelete={fetchData} />,
+        Cell: ({ row }: CellProps<EarycareHomeData>) => <ActionButtons earycare_id={row.original.earycare_id} onDelete={fetchData} />,
       },
     ],
     [fetchData]
   );
 
+  // This hook will now receive the correctly typed 'columns' and the error will be resolved.
   const {
     getTableProps,
     getTableBodyProps,

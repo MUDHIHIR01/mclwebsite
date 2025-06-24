@@ -1,6 +1,6 @@
-
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useTable, useGlobalFilter, usePagination } from 'react-table';
+// 1. Import 'Column' and 'Row' types from react-table
+import { useTable, useGlobalFilter, usePagination, Column, Row } from 'react-table';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -144,13 +144,15 @@ export default function CompHome() {
     fetchCompanies();
   }, [fetchCompanies]);
 
-  const columns = useMemo(
+  // 2. Explicitly type the useMemo return value
+  const columns = useMemo<Column<CompanyData>[]>(
     () => [
       {
         Header: '#',
         id: 'rowIndex',
-        Cell: ({ row, flatRows }: any) => {
-          const originalIndex = flatRows.findIndex((flatRow: any) => flatRow.original === row.original);
+        // 3. (Good Practice) Use the imported types instead of 'any'
+        Cell: ({ row, flatRows }: { row: Row<CompanyData>, flatRows: Row<CompanyData>[] }) => {
+          const originalIndex = flatRows.findIndex((flatRow) => flatRow.original === row.original);
           return <span>{originalIndex + 1}</span>;
         },
       },
@@ -190,15 +192,16 @@ export default function CompHome() {
       {
         Header: 'Actions',
         accessor: 'company_id',
-        Cell: ({ row }: any) => (
+        Cell: ({ row }: { row: Row<CompanyData> }) => (
           <ActionButtons companyId={row.original.company_id} onDeletionSuccess={fetchCompanies} />
         ),
       },
     ],
-    [fetchCompanies]
+    [fetchCompanies] // setSelectedImage is stable and doesn't need to be a dependency
   );
 
   const tableInstance = useTable(
+    // The 'columns' object now has the correct type and passes validation
     { columns, data, initialState: { pageIndex: 0, pageSize: 10 } },
     useGlobalFilter,
     usePagination
@@ -306,7 +309,7 @@ export default function CompHome() {
                   {headerGroup.headers.map((column) => (
                     <th
                       {...column.getHeaderProps()}
-                      className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
                       {column.render('Header')}
                     </th>

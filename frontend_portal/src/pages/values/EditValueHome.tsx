@@ -10,6 +10,12 @@ interface FormData {
   home_img: File | null;
 }
 
+interface Errors {
+  heading?: string;
+  description?: string;
+  home_img?: string;
+}
+
 interface ValuesHomeData {
   values_home_id: number;
   heading: string;
@@ -26,11 +32,7 @@ const EditValuesHome = () => {
     home_img: null,
   });
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Partial<FormData>>({
-    heading: '',
-    description: '',
-    home_img: undefined,
-  });
+  const [errors, setErrors] = useState<Errors>({});
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -50,7 +52,7 @@ const EditValuesHome = () => {
         setCurrentImage(response.data.home_img);
       } catch (error: any) {
         toast.error('Failed to fetch values home entry');
-        console.error("Fetch “‘error:", error);
+        console.error('Fetch error:', error);
         navigate('/value/home');
       }
     };
@@ -63,17 +65,17 @@ const EditValuesHome = () => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-ទ: setFormData((prev) => ({ ...prev, home_img: file }));
+    setFormData((prev) => ({ ...prev, home_img: file }));
     setErrors((prev) => ({ ...prev, home_img: undefined }));
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    const newErrors: Errors = {};
 
     if (!formData.heading.trim()) {
       newErrors.heading = 'Heading is required';
@@ -122,7 +124,7 @@ const EditValuesHome = () => {
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to update values home entry';
       const backendErrors = error.response?.data?.errors || {};
-      const formattedErrors: Partial<FormData> = {};
+      const formattedErrors: Errors = {};
       for (const key in backendErrors) {
         if (key in formData) {
           formattedErrors[key as keyof FormData] = backendErrors[key][0];
@@ -130,7 +132,7 @@ const EditValuesHome = () => {
       }
       setErrors((prev) => ({ ...prev, ...formattedErrors }));
       toast.error(errorMessage);
-      console.error("Submit error:", error);
+      console.error('Submit error:', error);
     } finally {
       setLoading(false);
     }
@@ -215,7 +217,7 @@ const EditValuesHome = () => {
                   onError={(e) => {
                     e.currentTarget.src = 'https://via.placeholder.com/128x128?text=LoadError';
                     e.currentTarget.alt = 'Error loading current image';
-                    console.warn("Error loading current image from URL:", displayImageUrl);
+                    console.warn('Error loading current image from URL:', displayImageUrl);
                   }}
                 />
               </div>
@@ -230,7 +232,7 @@ const EditValuesHome = () => {
             />
             {errors.home_img && (
               <p id="home_img-error" className="mt-1 text-sm text-red-500">
-                {errors.home_img as string}
+                {errors.home_img}
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed types: JPG, PNG, GIF.</p>
