@@ -42,7 +42,8 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ mcl_home_id, onDeletionSu
 
   return (
     <div className="relative flex items-center gap-2">
-      <Link to={`/edit/mcl-home/${mcl_home_id}`} className="p-1 text-blue-600 hover:text-blue-700" aria-label="Edit home slider">
+      {/* This Link correctly navigates to the route /edit-mcl-home/:mcl_homeId */}
+      <Link to={`/edit-mcl-home/${mcl_home_id}`} className="p-1 text-blue-600 hover:text-blue-700" aria-label="Edit home slider">
         <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
       </Link>
       <button onClick={() => setShowConfirm(true)} className="p-1 text-red-600 hover:text-red-700" aria-label="Delete home slider">
@@ -99,7 +100,7 @@ const ImageModal: React.FC<{ imageUrl: string; onClose: () => void }> = ({ image
   );
 };
 
-// 2. Renamed component for consistency
+// Renamed component for consistency
 const ViewMclHome: React.FC = () => {
   const [data, setData] = useState<MclHomeData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,9 +111,8 @@ const ViewMclHome: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      // 3. The API response data *is* the array, no need for `.data.data`
-      const response = await axiosInstance.get<MclHomeData[]>('/api/mcl-home');
-      setData(response.data || []);
+      const response = await axiosInstance.get<{ data: MclHomeData[] }>('/api/mcl-home');
+      setData(response.data.data || []);
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || 'Failed to fetch home sliders';
       setError(errorMessage);
@@ -126,13 +126,11 @@ const ViewMclHome: React.FC = () => {
     fetchMclHomes();
   }, [fetchMclHomes]);
 
-  // 4. Added explicit type `Column<MclHomeData>[]` to the columns definition
   const columns = useMemo<Column<MclHomeData>[]>(
     () => [
       {
         Header: '#',
         id: 'rowIndex',
-        // Type the cell props for safety and clarity
         Cell: ({ row }: { row: Row<MclHomeData> }) => {
           return row.index + 1;
         },
@@ -178,7 +176,6 @@ const ViewMclHome: React.FC = () => {
     canPreviousPage, canNextPage, pageOptions, nextPage, previousPage,
     setPageSize, setGlobalFilter, state: { pageIndex, pageSize, globalFilter },
   } = useTable(
-    // Now this passes type checking
     { columns, data, initialState: { pageIndex: 0, pageSize: 10 } },
     useGlobalFilter,
     usePagination
@@ -294,5 +291,5 @@ const ViewMclHome: React.FC = () => {
   );
 };
 
-// 2. Renamed export for consistency
+// Renamed export for consistency
 export default ViewMclHome;

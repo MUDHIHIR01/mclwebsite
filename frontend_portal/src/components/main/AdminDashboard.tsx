@@ -5,16 +5,14 @@ import axiosInstance from '../../axios'; // Assuming your pre-configured axios i
 
 interface CardItem {
   name: string;
-  // FIX: Use React.ReactNode instead of JSX.Element. This fixes both errors.
   icon: React.ReactNode;
   apiUrl: string;
-  apiKey: string; // The key in the JSON response that holds the count
+  apiKey: string;
+  color: string; // Add color property for each card
 }
 
 // --- Data Configuration for Dashboard Cards ---
 
-// An array defining the properties for each dashboard card.
-// This makes it easy to add or remove cards in the future.
 const cardItems: CardItem[] = [
   {
     name: "MCL Groups",
@@ -25,6 +23,7 @@ const cardItems: CardItem[] = [
     ),
     apiUrl: "/api/count/mcl-groups",
     apiKey: "count_mcl_group",
+    color: "bg-[#0A51A1]", // Blue
   },
   {
     name: "Services",
@@ -35,6 +34,7 @@ const cardItems: CardItem[] = [
     ),
     apiUrl: "/api/count/services",
     apiKey: "count_services",
+    color: "bg-[#2E7D32]", // Green
   },
   {
     name: "Leaders",
@@ -45,6 +45,7 @@ const cardItems: CardItem[] = [
     ),
     apiUrl: "/api/count/leadership",
     apiKey: "count_leaders",
+    color: "bg-[#D81B60]", // Pink
   },
   {
     name: "News",
@@ -55,14 +56,12 @@ const cardItems: CardItem[] = [
     ),
     apiUrl: "/api/count/news",
     apiKey: "count_news",
+    color: "bg-[#F57C00]", // Orange
   },
 ];
 
 // --- Reusable Dashboard Card Component ---
 
-/**
- * A single card component that fetches and displays data from a given API endpoint.
- */
 function DashboardCard({ item }: { item: CardItem }) {
   const [count, setCount] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -73,13 +72,12 @@ function DashboardCard({ item }: { item: CardItem }) {
       try {
         setLoading(true);
         const response = await axiosInstance.get(item.apiUrl);
-        // Access the count using the dynamic key from our cardItems config
         const fetchedCount = response.data[item.apiKey];
 
         if (typeof fetchedCount !== 'number') {
-            throw new Error(`Invalid data format received for ${item.name}`);
+          throw new Error(`Invalid data format received for ${item.name}`);
         }
-        
+
         setCount(fetchedCount);
         setError(null);
       } catch (err: any) {
@@ -92,25 +90,23 @@ function DashboardCard({ item }: { item: CardItem }) {
     };
 
     fetchCount();
-  }, [item.apiUrl, item.name, item.apiKey]); // Dependencies for the effect
+  }, [item.apiUrl, item.name, item.apiKey]);
 
-  // Renders a placeholder with a pulsing animation while loading
   const renderLoadingState = () => (
     <div className="h-16 w-24 bg-white bg-opacity-20 rounded-md animate-pulse"></div>
   );
-  
-  // Renders the fetched count or an error message
+
   const renderCount = () => {
     if (error) {
-        return <span className="text-2xl font-bold text-red-200">{error}</span>;
+      return <span className="text-2xl font-bold text-red-200">{error}</span>;
     }
     return <span className="text-6xl font-bold">{count ?? '--'}</span>;
-  }
+  };
 
   return (
-    <div className="p-6 rounded-xl shadow-lg flex flex-col justify-between
-                   bg-gradient-to-br bg-[#0A51A1] 
-                   text-white hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+    <div
+      className={`p-6 rounded-xl shadow-lg flex flex-col justify-between bg-gradient-to-br ${item.color} text-white hover:shadow-2xl hover:-translate-y-1 transition-all duration-300`}
+    >
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-semibold">{item.name}</h3>
         {item.icon}
@@ -124,9 +120,6 @@ function DashboardCard({ item }: { item: CardItem }) {
 
 // --- Main AdminDashboard Component ---
 
-/**
- * The main dashboard container that lays out all the cards.
- */
 export default function AdminDashboard() {
   return (
     <div className="p-6 bg-gray-100 min-h-screen">

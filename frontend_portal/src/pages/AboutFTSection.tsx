@@ -247,7 +247,7 @@ const AboutContentSection: React.FC = () => {
             {cards.map((card) => (
               <motion.div
                 key={`${card.type}-${card.id}`}
-                className="bg-[#fff1e5] shadow-lg flex flex-col"
+                className="bg-[white] shadow-lg flex flex-col"
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: "easeOut" }}
@@ -332,7 +332,7 @@ const BrandsSection: React.FC = () => {
   const extendedBrands = [...brands, ...brands];
 
   return (
-    <section className="py-12 bg-[#fff1e5]">
+    <section className="py-12 bg-white">
       <div className="max-w-6xl mx-auto px-4">
         <h2 className="text-3xl font-bold text-center text-[#ed1c24] mb-8">Our Brands</h2>
         <div className="overflow-hidden">

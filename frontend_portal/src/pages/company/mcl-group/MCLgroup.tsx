@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useTable, useGlobalFilter, usePagination, Column, Row } from 'react-table';
-// The libraries are now used, so these imports are correct.
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -9,13 +8,14 @@ import axiosInstance from '../../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// --- Interfaces for Type Safety ---
+// --- Interfaces for Type Safety (Aligned with Controller) ---
 interface MclGroupData {
   mcl_id: number;
   mcl_category: string;
   description: string | null;
   weblink: string | null;
   image_file: string | null;
+  home_page: boolean;
   created_at: string;
 }
 
@@ -30,6 +30,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ mclId, onDeletionSuccess 
 
   const handleDelete = async () => {
     try {
+      // Correct API endpoint from routes
       await axiosInstance.delete(`/api/mcl-groups/${mclId}`);
       toast.success('MCL Group deleted successfully!');
       onDeletionSuccess();
@@ -41,7 +42,8 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ mclId, onDeletionSuccess 
 
   return (
     <div className="relative flex items-center gap-2">
-      <Link to={`/edit/mcl-group/${mclId}`} className="p-1 text-blue-500 hover:text-blue-600" aria-label="Edit">
+      {/* CORRECTED: Link now matches the React Router definition: /mcl-groups/edit/:mcl_groupId */}
+      <Link to={`/mcl-groups/edit/${mclId}`} className="p-1 text-blue-500 hover:text-blue-600" aria-label="Edit">
         <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
       </Link>
       <button onClick={() => setShowConfirm(true)} className="p-1 text-red-500 hover:text-red-600" aria-label="Delete">
@@ -83,7 +85,8 @@ export default function MclGroupList() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axiosInstance.get('/api/mcl-groups');
+      // CORRECTED: The controller wraps the array in a 'data' key.
+      const response = await axiosInstance.get<{ data: MclGroupData[] }>('/api/mcl-groups');
       setData(response.data.data || []);
     } catch (err: any) {
       const errorMessage = 'Failed to fetch MCL Groups. Please try again later.';
@@ -118,7 +121,7 @@ export default function MclGroupList() {
       { Header: 'Created At', accessor: 'created_at', Cell: ({ value }) => new Date(value).toLocaleDateString() },
       {
         Header: 'Actions',
-        accessor: 'mcl_id', // Accessor must be a key of MclGroupData
+        accessor: 'mcl_id',
         Cell: ({ row }) => <ActionButtons mclId={row.original.mcl_id} onDeletionSuccess={fetchMclGroups} />,
       },
     ],
@@ -128,7 +131,6 @@ export default function MclGroupList() {
   const tableInstance = useTable({ columns, data, initialState: { pageIndex: 0, pageSize: 10 } }, useGlobalFilter, usePagination);
   const { getTableProps, getTableBodyProps, headerGroups, page, prepareRow, setGlobalFilter, state: { globalFilter } } = tableInstance;
 
-  // --- **FIXED**: Implemented export functions ---
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.text('MCL Group List', 14, 15);
@@ -163,17 +165,13 @@ export default function MclGroupList() {
     toast.success('Excel exported successfully!');
   };
 
-  if (loading) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
-  }
+  if (loading) return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
 
   if (error) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen p-4 text-center">
         <p className="text-red-500 text-lg mb-4">{error}</p>
-        <button onClick={fetchMclGroups} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-          Try Again
-        </button>
+        <button onClick={fetchMclGroups} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Try Again</button>
       </div>
     );
   }
@@ -186,6 +184,7 @@ export default function MclGroupList() {
       <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">MCL Group Management</h2>
+          {/* CORRECTED: Link to add page matches route definition */}
           <Link to="/add/mcl-group" className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition shadow-md">
             Create MCL Group
           </Link>
@@ -231,7 +230,6 @@ export default function MclGroupList() {
             </tbody>
           </table>
         </div>
-        {/* You can add pagination controls from your other components here if you need them */}
       </div>
     </div>
   );

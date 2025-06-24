@@ -18,8 +18,8 @@ class ServiceController extends Controller
      */
     public function __construct()
     {
-        // Require authentication for all methods except for the public-facing ones.
-        $this->middleware('auth:sanctum')->except(['index', 'show', 'latestservice','allService']);
+        // Require authentication for all methods except public-facing ones.
+        $this->middleware('auth:sanctum')->except(['index', 'show', 'latestservice', 'allService']);
     }
 
     /**
@@ -30,16 +30,15 @@ class ServiceController extends Controller
     public function index(): JsonResponse
     {
         try {
-            // Renamed allService to index for standard RESTful practice.
             $services = Service::orderBy('service_id', 'desc')->get();
-            return response()->json(['services' => $services]);
+            return response()->json(['services' => $services], 200);
         } catch (Exception $e) {
             Log::error('Error fetching service records: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to fetch service records.'], 500);
         }
     }
 
-       /**
+    /**
      * Count the total number of service records.
      *
      * @return JsonResponse
@@ -55,12 +54,16 @@ class ServiceController extends Controller
         }
     }
 
-     public function allService(): JsonResponse
+    /**
+     * Display all services (alias for index).
+     *
+     * @return JsonResponse
+     */
+    public function allService(): JsonResponse
     {
         try {
-            // Renamed allService to index for standard RESTful practice.
             $services = Service::orderBy('service_id', 'desc')->get();
-            return response()->json(['services' => $services]);
+            return response()->json(['services' => $services], 200);
         } catch (Exception $e) {
             Log::error('Error fetching service records: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to fetch service records.'], 500);
@@ -75,11 +78,11 @@ class ServiceController extends Controller
     public function latestservice(): JsonResponse
     {
         try {
-            $latestService = Service::latest('created_at')->first(); // A more expressive way to get the latest.
+            $latestService = Service::latest('created_at')->first();
             if (!$latestService) {
                 return response()->json(['message' => 'No service record found'], 404);
             }
-            return response()->json(['service' => $latestService]);
+            return response()->json(['service' => $latestService], 200);
         } catch (Exception $e) {
             Log::error('Error fetching latest service record: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to fetch latest service record.'], 500);
@@ -94,23 +97,25 @@ class ServiceController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        Log::info('Store request received', ['files' => $request->allFiles()]);
+
         $validator = Validator::make($request->all(), [
             'service_category' => 'required|string|max:255',
-            'service_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'service_image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'url_link' => 'nullable|url|max:255',
             'description' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
+            Log::error('Validation errors: ', $validator->errors()->toArray());
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
         try {
             $data = $validator->validated();
 
-            if ($request->hasFile('service_image')) {
-                // Use the helper method to handle the upload and get the path
-                $data['service_image'] = $this->handleImageUpload($request->file('service_image'));
+            if ($request->hasFile('service_image') && $request->file('service_image')->isValid()) {
+                $data['service_img'] = $this->handleImageUpload($request->file('service_image'));
             }
 
             $service = Service::create($data);
@@ -133,7 +138,7 @@ class ServiceController extends Controller
         if (!$service) {
             return response()->json(['message' => 'Service record not found'], 404);
         }
-        return response()->json(['service' => $service]);
+        return response()->json(['service' => $service], 200);
     }
 
     /**
@@ -145,12 +150,13 @@ class ServiceController extends Controller
      */
     public function update(Request $request, $service_id): JsonResponse
     {
+        Log::info('Update request received for service_id: ' . $service_id, ['files' => $request->allFiles()]);
+
         $service = Service::find($service_id);
         if (!$service) {
             return response()->json(['message' => 'Service record not found'], 404);
         }
 
-        // Note: 'sometimes' rule is great for updates, only validates if present.
         $validator = Validator::make($request->all(), [
             'service_category' => 'sometimes|required|string|max:255',
             'service_image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -159,20 +165,19 @@ class ServiceController extends Controller
         ]);
 
         if ($validator->fails()) {
+            Log::error('Validation errors: ', $validator->errors()->toArray());
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
         try {
             $data = $validator->validated();
 
-            if ($request->hasFile('service_image')) {
-                // Use the helper method to upload the new image and get its path
-                // The old image is deleted within the helper if it exists
-                $data['service_image'] = $this->handleImageUpload($request->file('service_image'), $service->service_image);
+            if ($request->hasFile('service_image') && $request->file('service_image')->isValid()) {
+                $data['service_img'] = $this->handleImageUpload($request->file('service_image'), $service->service_img);
             }
 
-            $service->update($data); // More idiomatic way to update
-            return response()->json(['message' => 'Service record updated successfully.', 'service' => $service->fresh()]);
+            $service->update($data);
+            return response()->json(['message' => 'Service record updated successfully', 'service' => $service->fresh()], 200);
         } catch (Exception $e) {
             Log::error('Error updating service record: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to update service record.', 'details' => $e->getMessage()], 500);
@@ -193,17 +198,14 @@ class ServiceController extends Controller
         }
 
         try {
-            // Use the helper to delete the associated image before deleting the record
-            $this->deleteImage($service->service_image);
+            $this->deleteImage($service->service_img);
             $service->delete();
-
-            return response()->json(['message' => 'Service record deleted successfully']);
+            return response()->json(['message' => 'Service record deleted successfully'], 200);
         } catch (Exception $e) {
             Log::error('Error deleting service record: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to delete service record.', 'details' => $e->getMessage()], 500);
         }
     }
-
 
     /**
      * Handles the file upload process.
@@ -211,10 +213,13 @@ class ServiceController extends Controller
      * @param UploadedFile $image The uploaded file instance.
      * @param string|null $oldImagePath The path to the old image to be deleted.
      * @return string The public path to the newly saved image.
+     * @throws Exception If the file cannot be moved.
      */
     private function handleImageUpload(UploadedFile $image, ?string $oldImagePath = null): string
     {
-        // First, delete the old image if it exists.
+        Log::info('Starting image upload process for file: ' . $image->getClientOriginalName());
+
+        // Delete the old image if it exists.
         if ($oldImagePath) {
             $this->deleteImage($oldImagePath);
         }
@@ -224,13 +229,21 @@ class ServiceController extends Controller
 
         // Define the upload path within the public directory.
         $uploadPath = 'uploads/service_images';
+        $fullPath = public_path($uploadPath);
+
+        // Create the directory if it doesn't exist.
+        if (!File::exists($fullPath)) {
+            Log::info('Creating directory: ' . $fullPath);
+            File::makeDirectory($fullPath, 0755, true);
+        }
 
         // Move the file to the public/uploads/service_images directory.
-        $image->move(public_path($uploadPath), $imageName);
-        
-        Log::info('Service image uploaded: ' . $uploadPath . '/' . $imageName);
+        if (!$image->move($fullPath, $imageName)) {
+            Log::error('Failed to move image to: ' . $fullPath . '/' . $imageName);
+            throw new Exception('Failed to move uploaded image to ' . $fullPath);
+        }
 
-        // Return the relative path for storing in the database.
+        Log::info('Service image uploaded: ' . $uploadPath . '/' . $imageName);
         return $uploadPath . '/' . $imageName;
     }
 

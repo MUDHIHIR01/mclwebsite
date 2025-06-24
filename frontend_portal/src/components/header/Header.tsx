@@ -23,7 +23,7 @@ interface MobileMenuProps {
 
 // --- Constant Data (Performance Refinement) ---
 const companyMenuItems: NavItem[] = [
-  { label: "MCL-Group", path: "/company/mcl-group" },
+  { label: "NMG-Group", path: "/company/mcl-group" },
   { label: "Leadership", path: "/company/leadership" },
   { label: "Diversity and Inclusion", path: "/company/diversity-and-inclusion" },
   { label: "Sustainability", path: "/company/sustainability" },
