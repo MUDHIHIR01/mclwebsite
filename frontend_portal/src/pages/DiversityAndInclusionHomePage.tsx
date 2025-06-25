@@ -145,14 +145,14 @@ const DiversityHomeSlideshow: React.FC = () => {
           >
             <button
               onClick={() => setCurrentSlide((p) => (p - 1 + data.length) % data.length)}
-              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              className="p-3 bg-[#003459] text-white rounded-full hover:bg-black/70 transition"
               aria-label="Previous slide"
             >
               <ChevronLeftIcon className="w-6 h-6" />
             </button>
             <button
               onClick={() => setCurrentSlide((p) => (p + 1) % data.length)}
-              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              className="p-3 bg-[#003459] text-white rounded-full hover:bg-black/70 transition"
               aria-label="Next slide"
             >
               <ChevronRightIcon className="w-6 h-6" />
@@ -186,16 +186,16 @@ const DiversityCard: React.FC<{ item: DiversityData }> = ({ item }) => {
       <div className="p-8 flex flex-col flex-grow text-black">
         <h3 className="uppercase text-xl sm:text-2xl font-bold relative pb-4 mb-4 text-[#33302d]">
           {item.diversity_category}
-          <span className="absolute bottom-0 left-0 h-1 w-1/4 bg-[#33302d]"></span>
+          <span className="absolute bottom-0 left-0 h-1 w-1/4 bg-[#003459]"></span>
         </h3>
-        <p className="text-gray-700 text-base font-medium flex-grow line-clamp-4">{item.description}</p>
+        <p className="text-red text-base font-medium flex-grow line-clamp-4">{item.description}</p>
         <div className="mt-6">
           {item.pdf_file && (
             <a
               href={`${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${item.pdf_file.replace(/^\//, "")}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-lg font-bold text-[#0d7680] hover:text-[#0a5a60]"
+              className="flex items-center gap-2 text-lg font-bold text-[red] hover:text-[#0a5a60]"
             >
               View Report
               <NewspaperIcon className="w-5 h-5" />

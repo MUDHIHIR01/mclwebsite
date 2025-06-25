@@ -157,14 +157,14 @@ const NewsHomeSlideshow: React.FC<{
           >
             <button
               onClick={() => setCurrentSlide((p) => (p - 1 + slideshowItems.length) % slideshowItems.length)}
-              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              className="p-3 bg-[#003459] text-white rounded-full hover:bg-black/70 transition"
               aria-label="Previous slide"
             >
               <ChevronLeftIcon className="w-6 h-6" />
             </button>
             <button
               onClick={() => setCurrentSlide((p) => (p + 1) % slideshowItems.length)}
-              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              className="p-3 bg-[#003459] text-white rounded-full hover:bg-black/70 transition"
               aria-label="Next slide"
             >
               <ChevronRightIcon className="w-6 h-6" />
@@ -278,14 +278,14 @@ const NewsCard: React.FC<{
         </span>
       </div>
       <div className="p-8 flex flex-col flex-grow text-black">
-        <h3 className="uppercase text-xl sm:text-2xl font-bold relative pb-4 mb-4 text-[#33302d]">
+        <h3 className="uppercase text-xl sm:text-2xl font-bold relative pb-4 mb-4 text-[#003459]">
           {item.category}
           <span className="absolute bottom-0 left-0 h-1 w-1/4 bg-[#33302d]"></span>
         </h3>
         <p className="text-gray-700 text-base font-medium flex-grow line-clamp-4">{item.description}</p>
         <button
           onClick={() => onViewMore(item.news_id)}
-          className="mt-6 inline-flex items-center justify-center px-4 py-2 text-[#0d7680] font-semibold rounded-full border border-[#0d7680] hover:bg-[#0d7680] hover:text-white transition"
+          className="mt-6 inline-flex items-center justify-center px-4 py-2 text-[#ed1c24] font-semibold rounded-full border border-[#ed1c24] hover:bg-[#0d7680] hover:text-white transition"
         >
           View More
           <ChevronRightIcon className="w-5 h-5 ml-2" />
@@ -354,12 +354,12 @@ const HorizontalSliderCard: React.FC<{
         )}
       </div>
       <div className="w-full md:w-3/5 p-6 flex flex-col justify-center">
-        <h3 className="text-xl font-bold text-[#33302d]">{item.category}</h3>
+        <h3 className="text-xl font-bold text-[#003459]">{item.category}</h3>
         <p className="mt-3 text-gray-700 text-base line-clamp-4 flex-grow">{item.description}</p>
         <div className="mt-5">
           <button
             onClick={() => onViewMore(item.news_id)}
-            className="inline-flex items-center text-sm font-semibold text-[#0d7680] px-5 py-2.5 rounded-full border border-[#0d7680] hover:bg-[#0d7680] hover:text-white transition"
+            className="inline-flex items-center text-sm font-semibold text-[#ed1c24] px-5 py-2.5 rounded-full border border-[#ed1c24] hover:bg-[#0d7680] hover:text-white transition"
           >
             Read More
             <ChevronRightIcon className="w-4 h-4 ml-2" />

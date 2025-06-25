@@ -137,14 +137,14 @@ const AboutHeroSection: React.FC = () => {
           >
             <button
               onClick={() => setCurrentSlide((prev) => (prev - 1 + data.length) % data.length)}
-              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              className="p-3 bg-[#003459] text-white rounded-full hover:bg-black/70 transition"
               aria-label="Previous slide"
             >
               <ChevronLeftIcon className="w-6 h-6" />
             </button>
             <button
               onClick={() => setCurrentSlide((prev) => (prev + 1) % data.length)}
-              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              className="p-3 bg-[#003459] text-white rounded-full hover:bg-black/70 transition"
               aria-label="Next slide"
             >
               <ChevronRightIcon className="w-6 h-6" />
@@ -260,7 +260,7 @@ const AboutContentSection: React.FC = () => {
                     alt={card.title}
                     onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/400x200?text=Image+Error")}
                   />
-                  <span className="absolute top-4 right-6 md:right-12 bg-white text-black text-xs font-bold px-3 py-1 rounded-full uppercase">
+                  <span className="absolute top-4 right-6 md:right-12 bg-white text-[#003459] text-xs font-bold px-3 py-1 rounded-full uppercase">
                     {card.type}
                   </span>
                 </div>
@@ -271,7 +271,7 @@ const AboutContentSection: React.FC = () => {
                   </h3>
                   <p className="text-gray-700 text-base font-medium flex-grow">{card.description}</p>
                   <div className="mt-6">
-                    <Link to={card.linkUrl} className="flex items-center gap-2 text-lg font-bold text-[#0d7680] hover:text-[#0a5a60]">
+                    <Link to={card.linkUrl} className="flex items-center gap-2 text-lg font-bold text-[#ed1c24] hover:text-[#0a5a60]">
                       Find more
                       <ArrowRightIcon className="w-5 h-5" />
                     </Link>
@@ -332,7 +332,7 @@ const BrandsSection: React.FC = () => {
   const extendedBrands = [...brands, ...brands];
 
   return (
-    <section className="py-12 bg-white">
+    <section className="py-12 bg-[#f1c40f]">
       <div className="max-w-6xl mx-auto px-4">
         <h2 className="text-3xl font-bold text-center text-[#ed1c24] mb-8">Our Brands</h2>
         <div className="overflow-hidden">
@@ -375,7 +375,7 @@ const BrandsSection: React.FC = () => {
 const AboutPage: React.FC = () => (
   <div
     className="min-h-screen text-white font-sans flex flex-col"
-    style={{ backgroundColor: '#003459' }}
+    style={{ backgroundColor: 'white' }}
   >
     <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
     

@@ -161,14 +161,14 @@ const ContactHomeSlideshow: React.FC = () => {
           >
             <button
               onClick={() => setCurrentSlide((p) => (p - 1 + data.length) % data.length)}
-              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              className="p-3 bg-[#003459] text-white rounded-full hover:bg-black/70 transition"
               aria-label="Previous slide"
             >
               <ChevronLeftIcon className="w-6 h-6" />
             </button>
             <button
               onClick={() => setCurrentSlide((p) => (p + 1) % data.length)}
-              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              className="p-3 bg-[#003459] text-white rounded-full hover:bg-black/70 transition"
               aria-label="Next slide"
             >
               <ChevronRightIcon className="w-6 h-6" />
@@ -211,14 +211,14 @@ const ContactCard: React.FC<{ category: ContactCategory; onViewMore: (id: number
         </span>
       </div>
       <div className="p-8 flex flex-col flex-grow text-black">
-        <h3 className="uppercase text-xl sm:text-2xl font-bold relative pb-4 mb-4 text-[#33302d]">
+        <h3 className="uppercase text-xl sm:text-2xl font-bold relative pb-4 mb-4 text-[#003459]">
           {category.category}
           <span className="absolute bottom-0 left-0 h-1 w-1/4 bg-[#33302d]"></span>
         </h3>
         <p className="text-gray-700 text-base font-medium flex-grow line-clamp-4">{category.description}</p>
         <button
           onClick={() => onViewMore(category.contactus_id)}
-          className="mt-6 inline-flex items-center justify-center px-4 py-2 text-[#0d7680] font-semibold rounded-full border border-[#0d7680] hover:bg-[#0d7680] hover:text-white transition"
+          className="mt-6 inline-flex items-center justify-center px-4 py-2 text-[#ed1c24] font-semibold rounded-full border border-[#ed1c24] hover:bg-[#0d7680] hover:text-white transition"
         >
           View More
           <ChevronRightIcon className="w-5 h-5 ml-2" />
@@ -289,7 +289,7 @@ const ContactSection: React.FC = () => {
         </div>
         {isLoading ? (
           <div className="w-full py-20 text-center">
-            <ArrowPathIcon className="w-8 h-8 mx-auto text-[#0d7680] animate-spin" />
+            <ArrowPathIcon className="w-8 h-8 mx-auto text-[#ed1c24] animate-spin" />
           </div>
         ) : categories.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mt-12">
@@ -375,7 +375,7 @@ const ContactSection: React.FC = () => {
                                   href={info.contact_us.url_link}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="hover:text-[#0d7680]"
+                                  className="hover:text-[#003459 ]"
                                 >
                                   Visit Website
                                 </a>

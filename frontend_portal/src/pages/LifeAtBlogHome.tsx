@@ -161,14 +161,14 @@ const BlogHomeSlideshow: React.FC = () => {
           >
             <button
               onClick={() => setCurrentSlide((p) => (p - 1 + data.length) % data.length)}
-              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              className="p-3 bg-[#003459] text-white rounded-full hover:bg-black/70 transition"
               aria-label="Previous slide"
             >
               <ChevronLeftIcon className="w-6 h-6" />
             </button>
             <button
               onClick={() => setCurrentSlide((p) => (p + 1) % data.length)}
-              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              className="p-3 bg-[#003459] text-white rounded-full hover:bg-black/70 transition"
               aria-label="Next slide"
             >
               <ChevronRightIcon className="w-6 h-6" />
@@ -363,7 +363,7 @@ const BlogCard: React.FC<{ item: BlogData; onReadMore: (id: number, title: strin
         </span>
       </div>
       <div className="p-8 flex flex-col flex-grow text-black">
-        <h3 className="uppercase text-xl sm:text-2xl font-bold relative pb-4 mb-4 text-[#33302d]">
+        <h3 className="uppercase text-xl sm:text-2xl font-bold relative pb-4 mb-4 text-[#003459]">
           {item.heading}
           <span className="absolute bottom-0 left-0 h-1 w-1/4 bg-[#33302d]"></span>
         </h3>
@@ -371,7 +371,7 @@ const BlogCard: React.FC<{ item: BlogData; onReadMore: (id: number, title: strin
         <div className="mt-6">
           <button
             onClick={() => onReadMore(item.blog_id, item.heading)}
-            className="flex items-center gap-2 text-lg font-bold text-[#0d7680] hover:text-[#0a5a60]"
+            className="flex items-center gap-2 text-lg font-bold text-[#ed1c24] hover:text-[#0a5a60]"
           >
             Read More
             <LinkIcon className="w-5 h-5" />

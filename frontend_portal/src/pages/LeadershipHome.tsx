@@ -158,14 +158,14 @@ const LeadershipHomeSlideshow: React.FC = () => {
           >
             <button
               onClick={() => setCurrentSlide((p) => (p - 1 + data.length) % data.length)}
-              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              className="p-3 bg-[#003459] text-white rounded-full hover:bg-black/70 transition"
               aria-label="Previous"
             >
               <ChevronLeftIcon className="w-6 h-6" />
             </button>
             <button
               onClick={() => setCurrentSlide((p) => (p + 1) % data.length)}
-              className="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition"
+              className="p-3 bg-[#003459] text-white rounded-full hover:bg-black/70 transition"
               aria-label="Next"
             >
               <ChevronRightIcon className="w-6 h-6" />
@@ -259,7 +259,7 @@ const LeadershipCardSection: React.FC = () => {
     return (
       <div className="w-full py-20 flex flex-col items-center justify-center px-4 text-center">
         <InformationCircleIcon className="w-12 h-12 mx-auto text-gray-400" />
-        <h3 className="mt-4 text-2xl font-bold text-gray-800">{error ? "Failed to Load Content" : "No Content Available"}</h3>
+        <h3 className="mt-4 text-2xl font-bold text-[#003459]">{error ? "Failed to Load Content" : "No Content Available"}</h3>
         <p className="mt-2 text-gray-600">{error || "There is no leadership team to display at the moment."}</p>
         {error && (
           <button
