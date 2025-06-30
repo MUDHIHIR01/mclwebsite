@@ -161,6 +161,7 @@ import  StayCoonnectedLayout  from './pages/StayCoonnectedLayout'
 import  Brands  from  './pages/brands/Brands'
 import  AddBrand  from './pages/brands/AddBrand.tsx'
 import  EditBrand from './pages/brands/EditBrand.tsx'
+import  OurBrands  from  './pages/OurBrands'
 
 // Define props for ProtectedRoute
 interface ProtectedRouteProps {
@@ -1146,6 +1147,9 @@ export default function App() {
     </ProtectedRoute>
   }
 />
+
+
+
             <Route
               path="/calendar"
               element={
@@ -1262,7 +1266,8 @@ export default function App() {
              <Route path="/careers/benefits" element={< BenefitiesLayout />} />
               <Route path="/careers/values" element={< ValuesLayout />} />
               <Route path="/careers/early-careers" element={< EaryCareerLayout />} />
-               <Route path="/careers/stay-connected" element={< StayCoonnectedLayout />} />
+               <Route path="/careers/stay-connected" element={< StayCoonnectedLayout />} />\
+               <Route path="/our-brands" element={<OurBrands />}/>
               
                 
           <Route path="/sign-in" element={<SignIn />} />

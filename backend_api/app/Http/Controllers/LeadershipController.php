@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Leadership;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule; // Import Rule
 use Exception;
 
 class LeadershipController extends Controller
@@ -58,18 +59,18 @@ class LeadershipController extends Controller
     }
 
     /**
- * Count the total number of leadership records.
- */
-public function countLeadership()
-{
-    try {
-        $count = Leadership::count();
-        return response()->json(['count_leaders' => $count], 200);
-    } catch (Exception $e) {
-        \Log::error('Error counting leadership records: ' . $e->getMessage());
-        return response()->json(['error' => 'Failed to count leadership records.'], 500);
+     * Count the total number of leadership records.
+     */
+    public function countLeadership()
+    {
+        try {
+            $count = Leadership::count();
+            return response()->json(['count_leaders' => $count], 200);
+        } catch (Exception $e) {
+            \Log::error('Error counting leadership records: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to count leadership records.'], 500);
+        }
     }
-}
 
     /**
      * Store a newly created leadership record.
@@ -81,6 +82,7 @@ public function countLeadership()
         $validator = Validator::make($request->all(), [
             'leader_name' => 'required|string|max:255',
             'position' => 'required|string|max:255',
+            'level' => ['required', 'string', Rule::in(['Board of Directors', 'Management'])], // Add validation for level
             'leader_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'description' => 'nullable|string',
         ]);
@@ -93,13 +95,11 @@ public function countLeadership()
         try {
             $data = $validator->validated();
 
-            // Handle leader_image upload
             if ($request->hasFile('leader_image') && $request->file('leader_image')->isValid()) {
                 $image = $request->file('leader_image');
                 $imageName = time() . '_' . preg_replace('/\s+/', '_', $image->getClientOriginalName());
                 $uploadPath = public_path('uploads/leadership_images');
                 
-                // Ensure the directory exists
                 if (!file_exists($uploadPath)) {
                     mkdir($uploadPath, 0755, true);
                 }
@@ -146,6 +146,7 @@ public function countLeadership()
         $validator = Validator::make($request->all(), [
             'leader_name' => 'required|string|max:255',
             'position' => 'required|string|max:255',
+            'level' => ['required', 'string', Rule::in(['Board of Directors', 'Management'])], // Add validation for level
             'leader_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'description' => 'nullable|string',
         ]);
@@ -158,9 +159,7 @@ public function countLeadership()
         try {
             $data = $validator->validated();
 
-            // Handle leader_image upload
             if ($request->hasFile('leader_image') && $request->file('leader_image')->isValid()) {
-                // Delete old leader_image if it exists
                 if ($leadership->leader_image && file_exists(public_path($leadership->leader_image))) {
                     unlink(public_path($leadership->leader_image));
                     \Log::info('Deleted old leader image: ' . $leadership->leader_image);
@@ -170,7 +169,6 @@ public function countLeadership()
                 $imageName = time() . '_' . preg_replace('/\s+/', '_', $image->getClientOriginalName());
                 $uploadPath = public_path('uploads/leadership_images');
                 
-                // Ensure the directory exists
                 if (!file_exists($uploadPath)) {
                     mkdir($uploadPath, 0755, true);
                 }
@@ -202,7 +200,6 @@ public function countLeadership()
         }
 
         try {
-            // Delete leader_image if it exists
             if ($leadership->leader_image && file_exists(public_path($leadership->leader_image))) {
                 unlink(public_path($leadership->leader_image));
                 \Log::info('Deleted leader image: ' . $leadership->leader_image);

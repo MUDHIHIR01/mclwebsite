@@ -55,6 +55,7 @@ class BrandController extends Controller
         $validator = Validator::make($request->all(), [
             'category' => 'nullable|string|max:255',
             'description' => 'nullable|string',
+            'url_link' => 'nullable|url|max:2048', // Add validation for url_link
             'brand_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -120,6 +121,7 @@ class BrandController extends Controller
         $validator = Validator::make($request->all(), [
             'category' => 'nullable|string|max:255',
             'description' => 'nullable|string',
+            'url_link' => 'nullable|url|max:2048', // Add validation for url_link
             'brand_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 

@@ -7,6 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 interface FormData {
   category: string;
   description: string;
+  url_link: string; // Add url_link
   brand_img: File | null;
 }
 
@@ -15,6 +16,7 @@ const AddBrand = () => {
   const [formData, setFormData] = useState<FormData>({
     category: '',
     description: '',
+    url_link: '', // Initialize url_link
     brand_img: null,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
@@ -54,6 +56,7 @@ const AddBrand = () => {
       const payload = new FormData();
       payload.append('category', formData.category);
       payload.append('description', formData.description || '');
+      payload.append('url_link', formData.url_link || ''); // Append url_link
       if (formData.brand_img) {
         payload.append('brand_img', formData.brand_img);
       }
@@ -69,6 +72,7 @@ const AddBrand = () => {
       setErrors({
         category: backendErrors.category?.[0] || '',
         description: backendErrors.description?.[0] || '',
+        url_link: backendErrors.url_link?.[0] || '', // Handle url_link errors
         brand_img: backendErrors.brand_img?.[0] || '',
       });
       toast.error(errorMessage, { position: 'top-right' });
@@ -100,6 +104,16 @@ const AddBrand = () => {
               placeholder="Enter description (optional)"
             />
             {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
+          </div>
+          {/* New URL Link field */}
+          <div>
+            <label htmlFor="url_link" className="block text-sm font-medium text-gray-700">URL Link</label>
+            <input
+              type="url" id="url_link" name="url_link" value={formData.url_link} onChange={handleChange}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+              placeholder="https://example.com (optional)"
+            />
+            {errors.url_link && <p className="mt-1 text-sm text-red-500">{errors.url_link}</p>}
           </div>
           <div>
             <label htmlFor="brand_img" className="block text-sm font-medium text-gray-700">Brand Image (optional)</label>

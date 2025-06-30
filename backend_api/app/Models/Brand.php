@@ -11,9 +11,15 @@ class Brand extends Model
 
     protected $primaryKey = 'brand_id';
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'brand_img',
         'category',
         'description',
+        'url_link', // Add url_link to fillable
     ];
 }

@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id('leadership_id');
             $table->string('position', 255)->nullable();
             $table->string('leader_name', 255);
+             $table->string('level');
             $table->string('leader_image', 255)->nullable();
             $table->text('description')->nullable();
             $table->timestamps();

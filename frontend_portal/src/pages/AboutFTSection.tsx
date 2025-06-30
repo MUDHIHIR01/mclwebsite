@@ -24,15 +24,6 @@ interface AboutCardData {
   createdAt: string;
 }
 
-interface BrandData {
-  brand_id: number;
-  brand_img: string;
-  category: string;
-  description: string;
-  created_at: string;
-  updated_at: string;
-}
-
 // --- Full-Page Landing Loader ---
 const LandingLoader: React.FC = () => {
   const loaderVariants: Variants = {
@@ -190,6 +181,48 @@ const AboutHeroSection: React.FC = () => {
   );
 };
 
+// New static content section
+const AboutUsStaticSection: React.FC = () => {
+  return (
+    <section className="py-16 bg-[#fafaf1]">
+      <div className="max-w-4xl mx-auto px-4 text-center">
+        <motion.h2
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="text-3xl sm:text-4xl font-bold text-[#ed1c24] mb-6"
+        >
+          About Us
+        </motion.h2>
+        <motion.h3
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+          className="text-2xl font-semibold text-[#003459] mb-4"
+        >
+          Mwananchi Communications LTD
+        </motion.h3>
+        <motion.p
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
+          className="text-lg text-gray-700 leading-relaxed"
+        >
+          Mwananchi Communications Limited is a subsidiary of Nation Media Group. It is the leading print media company in Tanzania with print as well as online platforms. It was established in May 1999 as a Media Communication Limited and transformed to the advertising & Public Relations agency in year 2001 and was later acquired by Nation Media Group in the year 2002. Through Newspapers, we deliver a literate and informed audience who are opinion leaders, early adopters, and heavy consumers of different brands and service.
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut", delay: 0.6 }}
+          className="text-lg text-gray-700 leading-relaxed mt-4"
+        >
+          Our print also delivers a mass market audience  ranging from the young and upwardly mobile to the lower/middle class who are mainstay of the Tanzania economy. Our Digital platforms provide you with an urban and peri-urban audience and allow you a window into the world. It is the most effective way to reach anybody out there both local and international with an interest in the Tanzania and East Africa market.
+        </motion.p>
+      </div>
+    </section>
+  );
+};
+
 const AboutContentSection: React.FC = () => {
   const [cards, setCards] = useState<AboutCardData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -325,86 +358,6 @@ const AboutContentSection: React.FC = () => {
   );
 };
 
-const BrandsSection: React.FC = () => {
-  const [brands, setBrands] = useState<BrandData[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchBrands = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await axiosInstance.get<BrandData[]>("/api/allBrands");
-      setBrands(Array.isArray(response.data) ? response.data : []);
-    } catch {
-      toast.error("Failed to fetch brands.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchBrands();
-  }, [fetchBrands]);
-
-  if (loading) {
-    return (
-      <div className="py-8 text-center">
-        <ArrowPathIcon className="w-8 h-8 mx-auto text-white animate-spin" />
-      </div>
-    );
-  }
-
-  if (!brands.length) {
-    return (
-      <div className="py-8 text-center text-white">
-        <InformationCircleIcon className="w-12 h-12 mx-auto text-gray-400" />
-        <p className="mt-4 text-lg">No brands found at this time.</p>
-      </div>
-    );
-  }
-
-  const extendedBrands = [...brands, ...brands];
-
-  return (
-    <section className="py-12 bg-[#fafaf1]">
-      <div className="max-w-6xl mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center text-[#ed1c24] mb-8">Our Brands</h2>
-        <div className="overflow-hidden">
-          <motion.div
-            className="flex"
-            animate={{
-              x: ["0%", "-100%"],
-              transition: {
-                x: {
-                  repeat: Infinity,
-                  repeatType: "loop",
-                  duration: brands.length * 4,
-                  ease: "linear",
-                },
-              },
-            }}
-          >
-            {extendedBrands.map((brand, index) => (
-              <div
-                key={`${brand.brand_id}-${index}`}
-                className="flex-shrink-0 w-40 mx-4"
-              >
-                <img
-                  src={`${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${brand.brand_img.replace(/^\//, "")}`}
-                  alt={brand.category}
-                  className="w-full h-20 object-contain"
-                  onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/150x50?text=Image+Error")}
-                  loading="lazy"
-                />
-                <p className="text-center text-sm font-medium text-[#003459] mt-2">{brand.category}</p>
-              </div>
-            ))}
-          </motion.div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
 const AboutPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
@@ -427,8 +380,8 @@ const AboutPage: React.FC = () => {
         <AboutHeroSection />
       </header>
       <main className="flex-grow">
+        <AboutUsStaticSection />
         <AboutContentSection />
-        <BrandsSection />
       </main>
       <footer>
         <Footer />

@@ -7,6 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 interface FormData {
   category: string;
   description: string;
+  url_link: string; // Add url_link
   brand_img: File | null;
 }
 
@@ -16,6 +17,7 @@ const EditBrand = () => {
   const [formData, setFormData] = useState<FormData>({
     category: '',
     description: '',
+    url_link: '', // Initialize url_link
     brand_img: null,
   });
   const [currentImage, setCurrentImage] = useState<string | null>(null);
@@ -35,6 +37,7 @@ const EditBrand = () => {
         setFormData({
           category: brand.category || '',
           description: brand.description || '',
+          url_link: brand.url_link || '', // Set url_link from fetched data
           brand_img: null,
         });
         setCurrentImage(brand.brand_img);
@@ -78,6 +81,7 @@ const EditBrand = () => {
     const payload = new FormData();
     payload.append('category', formData.category);
     payload.append('description', formData.description || '');
+    payload.append('url_link', formData.url_link || ''); // Append url_link
     if (formData.brand_img) {
       payload.append('brand_img', formData.brand_img);
     }
@@ -98,6 +102,7 @@ const EditBrand = () => {
       setErrors({
         category: backendErrors.category?.[0] || '',
         description: backendErrors.description?.[0] || '',
+        url_link: backendErrors.url_link?.[0] || '', // Handle url_link errors
         brand_img: backendErrors.brand_img?.[0] || '',
       });
       toast.error(errorMessage);
@@ -123,29 +128,30 @@ const EditBrand = () => {
           <div>
             <label htmlFor="category" className="block text-sm font-medium text-gray-700">Category</label>
             <input
-              type="text"
-              id="category"
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
+              type="text" id="category" name="category" value={formData.category} onChange={handleChange}
               className="mt-1 block w-full rounded-md border border-gray-300 p-2"
-              placeholder="Enter category (optional)"
-              maxLength={255}
+              placeholder="Enter category (optional)" maxLength={255}
             />
             {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
           </div>
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
             <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows={4}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+              id="description" name="description" value={formData.description} onChange={handleChange}
+              rows={4} className="mt-1 block w-full rounded-md border border-gray-300 p-2"
               placeholder="Enter description (optional)"
             />
             {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
+          </div>
+          {/* New URL Link field */}
+          <div>
+            <label htmlFor="url_link" className="block text-sm font-medium text-gray-700">URL Link</label>
+            <input
+              type="url" id="url_link" name="url_link" value={formData.url_link} onChange={handleChange}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+              placeholder="https://example.com (optional)"
+            />
+            {errors.url_link && <p className="mt-1 text-sm text-red-500">{errors.url_link}</p>}
           </div>
           <div>
             <label htmlFor="brand_img" className="block text-sm font-medium text-gray-700">Change Brand Image (optional)</label>
@@ -153,19 +159,13 @@ const EditBrand = () => {
               <div className="my-2">
                 <p className="text-sm text-gray-600 mb-1">Current Image:</p>
                 <img
-                  src={displayImageUrl}
-                  alt="Current Brand"
-                  className="h-32 w-auto object-contain rounded border"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
+                  src={displayImageUrl} alt="Current Brand" className="h-32 w-auto object-contain rounded border"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
               </div>
             )}
             <input
-              type="file"
-              id="brand_img"
-              name="brand_img"
+              type="file" id="brand_img" name="brand_img"
               accept="image/jpeg,image/png,image/jpg,image/gif"
               onChange={handleFileChange}
               className="mt-1 block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -175,15 +175,13 @@ const EditBrand = () => {
           </div>
           <div className="flex justify-end gap-4 pt-4">
             <button
-              type="button"
-              onClick={() => navigate('/brands')}
+              type="button" onClick={() => navigate('/brands')}
               className="px-4 py-2 bg-gray-500 text-white rounded-lg"
             >
               Cancel
             </button>
             <button
-              type="submit"
-              disabled={loading}
+              type="submit" disabled={loading}
               className={`px-4 py-2 bg-blue-600 text-white rounded-lg ${loading ? 'opacity-50' : ''}`}
             >
               {loading ? 'Updating...' : 'Update Brand'}

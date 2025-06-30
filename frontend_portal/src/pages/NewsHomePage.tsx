@@ -943,7 +943,7 @@ const NewsPage: React.FC = () => {
             <div className="text-center mb-12">
               <h2 className="text-3xl sm:text-4xl font-bold text-[#ed1c24] inline-flex items-center">
                 <NewspaperIcon className="w-9 h-9 mr-3" />
-                Latest News and Events
+                Latest News 
               </h2>
               <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
                 Stay up to date with our latest announcements, stories, and media.

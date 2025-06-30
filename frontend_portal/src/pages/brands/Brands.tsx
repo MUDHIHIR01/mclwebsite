@@ -1,5 +1,4 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-// 1. Import the 'Column' and 'Row' types from react-table
 import { useTable, useGlobalFilter, usePagination, Column, Row } from 'react-table';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -13,6 +12,7 @@ interface BrandData {
   brand_id: number;
   category: string | null;
   description: string | null;
+  url_link: string | null; // Add url_link
   brand_img: string | null;
   created_at: string;
 }
@@ -91,19 +91,16 @@ export default function Brands() {
     fetchBrands();
   }, [fetchBrands]);
 
-  // Wrapped in useCallback for referential stability in useMemo dependencies
   const handleImageClick = useCallback((imageUrl: string) => {
     setSelectedImage(imageUrl);
     setShowImagePopup(true);
   }, []);
 
-  // 2. Explicitly type the useMemo hook's return value
   const columns = useMemo<Column<BrandData>[]>(
     () => [
       {
         Header: '#',
         id: 'rowIndex',
-        // 3. (Optional but good practice) Type the cell props
         Cell: ({ row, flatRows }: { row: Row<BrandData>; flatRows: Row<BrandData>[] }) => {
           const originalIndex = flatRows.findIndex((flatRow) => flatRow.original === row.original);
           return <span>{originalIndex + 1}</span>;
@@ -118,6 +115,19 @@ export default function Brands() {
         Header: 'Description', 
         accessor: 'description', 
         Cell: ({ value }: { value: string | null }) => value || <span className="text-gray-500">N/A</span> 
+      },
+      // New URL Link column
+      {
+        Header: 'URL Link',
+        accessor: 'url_link',
+        Cell: ({ value }: { value: string | null }) => {
+          if (!value) return <span className="text-gray-500">N/A</span>;
+          return (
+            <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline" title={value}>
+              {value.length > 30 ? `${value.substring(0, 30)}...` : value}
+            </a>
+          );
+        },
       },
       {
         Header: 'Image',
@@ -153,12 +163,10 @@ export default function Brands() {
         ),
       },
     ],
-    // Add dependencies used inside the memoized value
     [fetchBrands, handleImageClick]
   );
 
   const tableInstance = useTable(
-    // The 'columns' object now correctly matches the expected type
     { columns, data, initialState: { pageIndex: 0, pageSize: 10 } },
     useGlobalFilter,
     usePagination
@@ -174,11 +182,12 @@ export default function Brands() {
     const doc = new jsPDF();
     doc.text('Brands List', 20, 10);
     autoTable(doc, {
-      head: [['#', 'Category', 'Description', 'Created At']],
+      head: [['#', 'Category', 'Description', 'URL Link', 'Created At']], // Add URL Link to header
       body: data.map((row, index) => [
         index + 1,
         row.category || 'N/A',
         row.description || 'N/A',
+        row.url_link || 'N/A', // Add url_link to body
         new Date(row.created_at).toLocaleDateString(),
       ]),
     });
@@ -192,6 +201,7 @@ export default function Brands() {
         '#': index + 1,
         Category: row.category || 'N/A',
         Description: row.description || 'N/A',
+        'URL Link': row.url_link || 'N/A', // Add URL Link to Excel data
         'Created At': new Date(row.created_at).toLocaleDateString(),
       }))
     );

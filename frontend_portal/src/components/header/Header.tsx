@@ -50,8 +50,10 @@ const navItems: NavItem[] = [
   { label: "About Us", path: "/" },
   { label: "Company", path: "/company/home", dropdown: companyMenuItems },
   { label: "Services", path: "/company/services" },
+  { label: "Our  Brands", path: "/our-brands" },
   { label: "Careers", path: "/careers/what-we-do", dropdown: careersMenuItems },
   { label: "News", path: "/company/news" },
+   { label: "Events", path: "/our-events" },
   { label: "Contact", path: "/company/contact-us" },
 ];
 

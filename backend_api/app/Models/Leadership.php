@@ -15,6 +15,7 @@ class Leadership extends Model
 
     protected $fillable = [
         'position',
+        'level', // Add level
         'leader_name',
         'leader_image',
         'description',
