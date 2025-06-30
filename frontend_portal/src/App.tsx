@@ -165,6 +165,7 @@ import  OurBrands  from  './pages/OurBrands'
 import  Events  from './pages/events/Events'
 import  AddOurEvent  from './pages/events/AddOurEvent'
 import EditOurEvent from './pages/events/EditOurEvent'
+import  EventsLayouts  from  './pages/EventsLayouts'
 
 // Define props for ProtectedRoute
 interface ProtectedRouteProps {
@@ -1298,6 +1299,8 @@ export default function App() {
               <Route path="/careers/early-careers" element={< EaryCareerLayout />} />
                <Route path="/careers/stay-connected" element={< StayCoonnectedLayout />} />\
                <Route path="/our-brands" element={<OurBrands />}/>
+               <Route path="/all-events" element={<EventsLayouts />}/>
+               
               
                 
           <Route path="/sign-in" element={<SignIn />} />

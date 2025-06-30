@@ -53,7 +53,7 @@ const navItems: NavItem[] = [
   { label: "Our  Brands", path: "/our-brands" },
   { label: "Careers", path: "/careers/what-we-do", dropdown: careersMenuItems },
   { label: "News", path: "/company/news" },
-   { label: "Events", path: "/our-events" },
+   { label: "Events", path: "/all-events" },
   { label: "Contact", path: "/company/contact-us" },
 ];
 

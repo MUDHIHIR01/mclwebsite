@@ -115,7 +115,7 @@ Route::get('/leadershipHomeSlider', [LeadershipHomeController::class, 'leadershi
       Route::get('/latestEarlyCareer', [EarlyCareersController::class, 'latestEarlyCareer']);
       Route::get('/allBrands', [BrandController::class, 'allBrands']);
       Route::get('/latestService', [ServicesHomeController::class, 'latestService']);
-        
+        Route::get('/all-events', [EventController::class, 'allEvents']);
 
 // Protected Routes
 Route::middleware(['auth:sanctum', 'token.expiration'])->group(function () {
@@ -520,7 +520,6 @@ Route::delete('/early-careers/{early_career_id}', [EarlyCareersController::class
 
 Route::prefix('events')->group(function () {
     Route::get('/', [EventController::class, 'index']);
-    Route::get('/all', [EventController::class, 'allEvents']);
     Route::get('/latest', [EventController::class, 'latestEvent']);
     Route::get('/count', [EventController::class, 'countEvents']);
     Route::get('/{event_id}', [EventController::class, 'show']);
