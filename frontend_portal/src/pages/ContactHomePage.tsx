@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { useState, useEffect, useCallback } from "react";
 import axiosInstance from "../axios";
 import { ToastContainer, toast } from "react-toastify";
@@ -13,7 +13,6 @@ import {
   PhoneIcon,
   EnvelopeIcon,
   MapPinIcon,
-  XMarkIcon,
   LinkIcon,
 } from "@heroicons/react/24/outline";
 
@@ -29,7 +28,7 @@ interface ContactCategory {
   contactus_id: number;
   category: string;
   description: string;
-  img_file: string;
+  img_file: string | null;
   url_link: string | null;
 }
 
@@ -46,6 +45,40 @@ interface ContactInfo {
     url_link: string | null;
   };
 }
+
+// --- Full-Page Landing Loader ---
+const LandingLoader: React.FC = () => {
+  const loaderVariants: Variants = {
+    animate: {
+      opacity: [0.5, 1, 0.5],
+      scale: [1, 1.05, 1],
+      transition: {
+        repeat: Infinity,
+        duration: 1.5,
+        ease: "easeInOut",
+      },
+    },
+  };
+
+  return (
+    <motion.div
+      className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#0d7680] to-gray-800 z-50"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.5 } }}
+    >
+      <motion.div variants={loaderVariants} animate="animate" className="mb-4">
+        <ArrowPathIcon className="w-16 h-16 text-white animate-spin" />
+      </motion.div>
+      <motion.h2
+        variants={loaderVariants}
+        animate="animate"
+        className="text-2xl font-bold text-white"
+      >
+        Loading Contact Page...
+      </motion.h2>
+    </motion.div>
+  );
+};
 
 // --- Contact Home Slideshow ---
 const ContactHomeSlideshow: React.FC = () => {
@@ -69,7 +102,9 @@ const ContactHomeSlideshow: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => { fetchContactHomes(); }, [fetchContactHomes]);
+  useEffect(() => {
+    fetchContactHomes();
+  }, [fetchContactHomes]);
 
   useEffect(() => {
     if (data.length <= 1) return;
@@ -102,7 +137,8 @@ const ContactHomeSlideshow: React.FC = () => {
             onClick={fetchContactHomes}
             className="mt-6 flex items-center px-6 py-3 bg-gray-800 text-white font-semibold rounded-full hover:bg-gray-700 transition"
           >
-            <ArrowPathIcon className="w-5 h-5 mr-2" />Try Again
+            <ArrowPathIcon className="w-5 h-5 mr-2" />
+            Try Again
           </button>
         )}
       </div>
@@ -110,7 +146,9 @@ const ContactHomeSlideshow: React.FC = () => {
   }
 
   const baseURL = axiosInstance.defaults.baseURL?.replace(/\/$/, "") || "";
-  const imagePath = data[currentSlide].home_img ? `${baseURL}/${data[currentSlide].home_img.replace(/^\//, "")}` : "https://via.placeholder.com/1200x600?text=Image+Missing";
+  const imagePath = data[currentSlide].home_img
+    ? `${baseURL}/${data[currentSlide].home_img.replace(/^\//, "")}`
+    : "https://via.placeholder.com/1200x600?text=Image+Missing";
 
   return (
     <section className="relative min-h-[80vh] w-full overflow-hidden bg-gray-800">
@@ -181,26 +219,33 @@ const ContactHomeSlideshow: React.FC = () => {
 };
 
 // --- Contact Card ---
-const ContactCard: React.FC<{ category: ContactCategory; onViewMore: (id: number) => void; }> = ({ category, onViewMore }) => {
+const ContactCard: React.FC<{ category: ContactCategory; contactInfos: ContactInfo[] }> = ({ category, contactInfos }) => {
   const [hasImageError, setHasImageError] = useState(false);
-  const imageUrl = `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${category.img_file.replace(/^\//, "")}`;
+  const baseURL = axiosInstance.defaults.baseURL?.replace(/\/$/, "") || "";
+  const imageUrl = category.img_file
+    ? `${baseURL}/${category.img_file.replace(/^\//, "")}`
+    : "https://via.placeholder.com/400x300?text=Image+Missing";
+
+  if (!axiosInstance.defaults.baseURL) {
+    console.warn("axiosInstance.defaults.baseURL is not set. Using placeholder image.");
+  }
 
   return (
     <motion.div
-      className="bg-[white] shadow-lg flex flex-col"
+      className="bg-white shadow-lg flex flex-col w-full max-w-md rounded-lg"
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
       whileHover={{ y: -12 }}
     >
       <div className="relative px-4 -mt-8 md:px-8 md:-mt-10">
-        {hasImageError ? (
-          <div className="w-full h-64 bg-gray-100 flex items-center justify-center shadow-md">
-            <InformationCircleIcon className="w-16 h-16 text-gray-300" />
+        {hasImageError || !category.img_file ? (
+          <div className="w-full h-64 bg-gray-100 flex items-center justify-center shadow-md rounded-t-lg">
+            <InformationCircleIcon className="w-16 h-16 text-[#0d7680]" />
           </div>
         ) : (
           <img
-            className="w-full h-64 object-cover shadow-md"
+            className="w-full h-64 object-cover shadow-md rounded-t-lg"
             src={imageUrl}
             alt={category.category}
             onError={() => setHasImageError(true)}
@@ -213,16 +258,58 @@ const ContactCard: React.FC<{ category: ContactCategory; onViewMore: (id: number
       <div className="p-8 flex flex-col flex-grow text-black">
         <h3 className="uppercase text-xl sm:text-2xl font-bold relative pb-4 mb-4 text-[#003459]">
           {category.category}
-          <span className="absolute bottom-0 left-0 h-1 w-1/4 bg-[#33302d]"></span>
+          <span className="absolute bottom-0 left-0 h-1 w-1/4 bg>#33302d]"></span>
         </h3>
         <p className="text-gray-700 text-base font-medium flex-grow line-clamp-4">{category.description}</p>
-        <button
-          onClick={() => onViewMore(category.contactus_id)}
-          className="mt-6 inline-flex items-center justify-center px-4 py-2 text-[#ed1c24] font-semibold rounded-full border border-[#ed1c24] hover:bg-[#0d7680] hover:text-white transition"
-        >
-          View More
-          <ChevronRightIcon className="w-5 h-5 ml-2" />
-        </button>
+        {contactInfos.length > 0 ? (
+          <div className="mt-6 space-y-6">
+            {contactInfos.map((info) => (
+              <div key={info.contact_info_id} className="p-4 border border-gray-200 rounded-lg">
+                <ul className="space-y-3 text-gray-700">
+                  <li className="flex items-start">
+                    <PhoneIcon className="w-5 h-5 mr-3 text-[#ed1c24] mt-1 flex-shrink-0" />
+                    <span>{info.phone_one}{info.phone_two && ` / ${info.phone_two}`}</span>
+                  </li>
+                  <li className="flex items-start">
+                    <EnvelopeIcon className="w-5 h-5 mr-3 text-[#ed1c24] mt-1 flex-shrink-0" />
+                    <a href={`mailto:${info.email_address}`} className="hover:text-[#0d7680] break-all">
+                      {info.email_address}
+                    </a>
+                  </li>
+                  {info.webmail_address && (
+                    <li className="flex items-start">
+                      <EnvelopeIcon className="w-5 h-5 mr-3 text-[#ed1c24] mt-1 flex-shrink-0" />
+                      <a href={`mailto:${info.webmail_address}`} className="hover:text-[#0d7680] break-all">
+                        {info.webmail_address}
+                      </a>
+                    </li>
+                  )}
+                  <li className="flex items-start">
+                    <MapPinIcon className="w-5 h-5 mr-3 text-[#ed1c24] mt-1 flex-shrink-0" />
+                    <span>{info.location}</span>
+                  </li>
+                  {info.contact_us.url_link && (
+                    <li className="flex items-start">
+                      <LinkIcon className="w-5 h-5 mr-3 text-[#ed1c24] mt-1 flex-shrink-0" />
+                      <a
+                        href={info.contact_us.url_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-[#003459]"
+                      >
+                        Visit Website
+                      </a>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-6 text-center py-4">
+            <p className="text-gray-500">No detailed contact information available for this category.</p>
+          </div>
+        )}
       </div>
     </motion.div>
   );
@@ -233,8 +320,6 @@ const ContactSection: React.FC = () => {
   const [categories, setCategories] = useState<ContactCategory[]>([]);
   const [allContactInfos, setAllContactInfos] = useState<ContactInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedDetails, setSelectedDetails] = useState<ContactInfo[] | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -244,13 +329,13 @@ const ContactSection: React.FC = () => {
         axiosInstance.get<{ contact_infos: ContactInfo[] }>("/api/contactInfo"),
       ]);
 
-      if (categoriesRes.status === 'fulfilled' && categoriesRes.value.data.contacts) {
+      if (categoriesRes.status === "fulfilled" && categoriesRes.value.data?.contacts) {
         setCategories(categoriesRes.value.data.contacts);
       } else {
         toast.error("Failed to fetch contact categories.");
       }
 
-      if (contactInfosRes.status === 'fulfilled' && contactInfosRes.value.data.contact_infos) {
+      if (contactInfosRes.status === "fulfilled" && contactInfosRes.value.data?.contact_infos) {
         setAllContactInfos(contactInfosRes.value.data.contact_infos);
       } else {
         console.warn("Could not pre-fetch contact details.");
@@ -262,25 +347,16 @@ const ContactSection: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  const handleViewMore = (categoryId: number) => {
-    const details = allContactInfos.filter(info => info.contactus_id === categoryId);
-    setSelectedDetails(details);
-    setIsModalOpen(true);
-    if (details.length === 0) {
-      toast.info("No specific contact information found for this category.");
-    }
-  };
-
-  const closeModal = () => setIsModalOpen(false);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   return (
     <section className="bg-gray-100 py-16 sm:py-24">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl sm:text-4xl font-bold text-[#ed1c24] inline-flex items-center">
-            <ChatBubbleLeftRightIcon className="w-9 h-9 mr-3" />
+            <ChatBubbleLeftRightIcon className="w-9 h-9 mr-3 text-[#0d7680]" />
             How Can We Help You?
           </h2>
           <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
@@ -289,120 +365,40 @@ const ContactSection: React.FC = () => {
         </div>
         {isLoading ? (
           <div className="w-full py-20 text-center">
-            <ArrowPathIcon className="w-8 h-8 mx-auto text-[#ed1c24] animate-spin" />
+            <ArrowPathIcon className="w-8 h-8 mx-auto text-[#0d7680] animate-spin" />
           </div>
         ) : categories.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mt-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-12">
             {categories.map((category) => (
-              <ContactCard key={category.contactus_id} category={category} onViewMore={handleViewMore} />
+              <ContactCard
+                key={category.contactus_id}
+                category={category}
+                contactInfos={allContactInfos.filter((info) => info.contactus_id === category.contactus_id)}
+              />
             ))}
           </div>
         ) : (
           <div className="w-full py-20 flex flex-col items-center justify-center px-4 text-center">
-            <InformationCircleIcon className="w-12 h-12 mx-auto text-gray-400" />
+            <InformationCircleIcon className="w-12 h-12 mx-auto text-[#0d7680]" />
             <h3 className="mt-4 text-2xl font-bold text-gray-800">No Content Available</h3>
             <p className="mt-2 text-gray-600">No contact categories found.</p>
           </div>
         )}
       </div>
-      <AnimatePresence>
-        {isModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
-            onClick={closeModal}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-6 sm:p-8">
-                <div className="flex justify-between items-start mb-4">
-                  <h2 className="text-2xl font-bold text-[#33302d]">Contact Information</h2>
-                  <button
-                    onClick={closeModal}
-                    className="text-gray-400 hover:text-gray-600"
-                    aria-label="Close modal"
-                  >
-                    <XMarkIcon className="w-7 h-7" />
-                  </button>
-                </div>
-                <div className="mt-6 border-t border-gray-200 pt-6">
-                  {selectedDetails && selectedDetails.length > 0 ? (
-                    <div className="space-y-6">
-                      {selectedDetails.map((info) => (
-                        <div key={info.contact_info_id} className="p-4 border border-gray-200 rounded-lg">
-                          <h3 className="font-semibold text-lg mb-3 text-[#33302d]">{info.contact_us.category}</h3>
-                          <ul className="space-y-3 text-gray-700">
-                            <li className="flex items-start">
-                              <PhoneIcon className="w-5 h-5 mr-3 text-gray-400 mt-1 flex-shrink-0" />
-                              <span>{info.phone_one}{info.phone_two && ` / ${info.phone_two}`}</span>
-                            </li>
-                            <li className="flex items-start">
-                              <EnvelopeIcon className="w-5 h-5 mr-3 text-gray-400 mt-1 flex-shrink-0" />
-                              <a
-                                href={`mailto:${info.email_address}`}
-                                className="hover:text-[#0d7680] break-all"
-                              >
-                                {info.email_address}
-                              </a>
-                            </li>
-                            {info.webmail_address && (
-                              <li className="flex items-start">
-                                <EnvelopeIcon className="w-5 h-5 mr-3 text-gray-400 mt-1 flex-shrink-0" />
-                                <a
-                                  href={`mailto:${info.webmail_address}`}
-                                  className="hover:text-[#0d7680] break-all"
-                                >
-                                  {info.webmail_address}
-                                </a>
-                              </li>
-                            )}
-                            <li className="flex items-start">
-                              <MapPinIcon className="w-5 h-5 mr-3 text-gray-400 mt-1 flex-shrink-0" />
-                              <span>{info.location}</span>
-                            </li>
-                            {info.contact_us.url_link && (
-                              <li className="flex items-start">
-                                <LinkIcon className="w-5 h-5 mr-3 text-gray-400 mt-1 flex-shrink-0" />
-                                <a
-                                  href={info.contact_us.url_link}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="hover:text-[#003459 ]"
-                                >
-                                  Visit Website
-                                </a>
-                              </li>
-                            )}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-10">
-                      <ChatBubbleLeftRightIcon className="w-12 h-12 mx-auto text-gray-400" />
-                      <p className="mt-4 text-gray-500">No detailed contact information available for this category.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </section>
   );
 };
 
 // --- Main ContactHomePage Component ---
 const ContactHomePage: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate combined loading state for slideshow and contact section
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1000); // Adjust based on actual fetch time
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">
       <ToastContainer
@@ -415,6 +411,9 @@ const ContactHomePage: React.FC = () => {
         pauseOnHover
         theme="colored"
       />
+      <AnimatePresence>
+        {isLoading && <LandingLoader />}
+      </AnimatePresence>
       <header>
         <ContactHomeSlideshow />
       </header>

@@ -30,7 +30,7 @@ class LeadershipController extends Controller
     public function allLeadership()
     {
         try {
-            $leadership = Leadership::orderBy('leadership_id', 'desc')->get();
+            $leadership = Leadership::orderBy('leadership_id', 'asc')->get();
             return response()->json(['leadership' => $leadership], 200);
         } catch (Exception $e) {
             \Log::error('Error fetching leadership records: ' . $e->getMessage());

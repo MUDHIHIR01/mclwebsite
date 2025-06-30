@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -32,6 +32,40 @@ interface BrandData {
   created_at: string;
   updated_at: string;
 }
+
+// --- Full-Page Landing Loader ---
+const LandingLoader: React.FC = () => {
+  const loaderVariants: Variants = {
+    animate: {
+      opacity: [0.5, 1, 0.5],
+      scale: [1, 1.05, 1],
+      transition: {
+        repeat: Infinity,
+        duration: 1.5,
+        ease: "easeInOut",
+      },
+    },
+  };
+
+  return (
+    <motion.div
+      className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#0d7680] to-gray-800 z-50"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.5 } }}
+    >
+      <motion.div variants={loaderVariants} animate="animate" className="mb-4">
+        <ArrowPathIcon className="w-16 h-16 text-white animate-spin" />
+      </motion.div>
+      <motion.h2
+        variants={loaderVariants}
+        animate="animate"
+        className="text-2xl font-bold text-white"
+      >
+        Loading About Page...
+      </motion.h2>
+    </motion.div>
+  );
+};
 
 const AboutHeroSection: React.FC = () => {
   const [data, setData] = useState<AboutSliderData[]>([]);
@@ -165,7 +199,7 @@ const AboutContentSection: React.FC = () => {
     try {
       const [companyRes, serviceRes, careersRes, newsRes] = await Promise.allSettled([
         axiosInstance.get("/api/latest/mcl-groups"),
-        axiosInstance.get("/api/latestService"), // Updated endpoint
+        axiosInstance.get("/api/latestService"),
         axiosInstance.get("/api/latestEarlyCareer"),
         axiosInstance.get("/api/latestnew"),
       ]);
@@ -184,11 +218,11 @@ const AboutContentSection: React.FC = () => {
         });
       }
       if (serviceRes.status === "fulfilled" && serviceRes.value.data) {
-        const service = serviceRes.value.data; // Adjusted to match response structure
+        const service = serviceRes.value.data;
         orderedCards.push({
           id: service.services_home_id,
           type: "Service",
-          title: service.heading || "Our Services", // Map heading to title
+          title: service.heading || "Our Services",
           description: service.description,
           imageUrl: service.home_img,
           linkUrl: "/company/services",
@@ -328,11 +362,10 @@ const BrandsSection: React.FC = () => {
     );
   }
 
-  // Duplicate brands array for seamless looping
   const extendedBrands = [...brands, ...brands];
 
   return (
-    <section className="py-12 bg-[#f1c40f]">
+    <section className="py-12 bg-[#fafaf1]">
       <div className="max-w-6xl mx-auto px-4">
         <h2 className="text-3xl font-bold text-center text-[#ed1c24] mb-8">Our Brands</h2>
         <div className="overflow-hidden">
@@ -344,7 +377,7 @@ const BrandsSection: React.FC = () => {
                 x: {
                   repeat: Infinity,
                   repeatType: "loop",
-                  duration: brands.length * 4, // Adjust speed based on number of brands
+                  duration: brands.length * 4,
                   ease: "linear",
                 },
               },
@@ -362,7 +395,7 @@ const BrandsSection: React.FC = () => {
                   onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/150x50?text=Image+Error")}
                   loading="lazy"
                 />
-                <p className="text-center text-sm font-medium text-gray-800 mt-2">{brand.category}</p>
+                <p className="text-center text-sm font-medium text-[#003459] mt-2">{brand.category}</p>
               </div>
             ))}
           </motion.div>
@@ -372,26 +405,36 @@ const BrandsSection: React.FC = () => {
   );
 };
 
-const AboutPage: React.FC = () => (
-  <div
-    className="min-h-screen text-white font-sans flex flex-col"
-    style={{ backgroundColor: 'white' }}
-  >
-    <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
-    
-    <header>
-      <AboutHeroSection />
-    </header>
-    
-    <main className="flex-grow">
-      <AboutContentSection />
-      <BrandsSection />
-    </main>
+const AboutPage: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
 
-    <footer>
-      <Footer />
-    </footer>
-  </div>
-);
+  // Simulate combined loading state for all sections
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1000); // Adjust based on actual fetch time
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div
+      className="min-h-screen text-white font-sans flex flex-col"
+      style={{ backgroundColor: 'white' }}
+    >
+      <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
+      <AnimatePresence>
+        {isLoading && <LandingLoader />}
+      </AnimatePresence>
+      <header>
+        <AboutHeroSection />
+      </header>
+      <main className="flex-grow">
+        <AboutContentSection />
+        <BrandsSection />
+      </main>
+      <footer>
+        <Footer />
+      </footer>
+    </div>
+  );
+};
 
 export default AboutPage;

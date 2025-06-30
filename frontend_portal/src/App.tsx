@@ -427,7 +427,7 @@ export default function App() {
 <Route path="/edit-sustainability/:sustainabilityId" element={<ProtectedRoute><EditSustainability /></ProtectedRoute>} />
 
 <Route path="/leadership" element={<ProtectedRoute><Leadership /></ProtectedRoute>} />
-<Route path="/add/leadership" element={<ProtectedRoute><AddLeadership /></ProtectedRoute>} />
+<Route path="/add-leadership" element={<ProtectedRoute><AddLeadership /></ProtectedRoute>} />
 <Route path="/edit-leadership/:leadershipId" element={<ProtectedRoute><EditLeadership /></ProtectedRoute>} />
 
 <Route path="/diversity-and-inclusion" element={<ProtectedRoute><DiversityHome/></ProtectedRoute>} />

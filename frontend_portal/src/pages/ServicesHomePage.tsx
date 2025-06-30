@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { useState, useEffect, useCallback } from "react";
 import axiosInstance from "../axios";
 import { ToastContainer, toast } from "react-toastify";
@@ -29,6 +29,40 @@ interface ServiceData {
   url_link: string | null;
 }
 
+// --- Full-Page Landing Loader ---
+const LandingLoader: React.FC = () => {
+  const loaderVariants: Variants = {
+    animate: {
+      opacity: [0.5, 1, 0.5],
+      scale: [1, 1.05, 1],
+      transition: {
+        repeat: Infinity,
+        duration: 1.5,
+        ease: "easeInOut",
+      },
+    },
+  };
+
+  return (
+    <motion.div
+      className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#0d7680] to-gray-800 z-50"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.5 } }}
+    >
+      <motion.div variants={loaderVariants} animate="animate" className="mb-4">
+        <ArrowPathIcon className="w-16 h-16 text-white animate-spin" />
+      </motion.div>
+      <motion.h2
+        variants={loaderVariants}
+        animate="animate"
+        className="text-2xl font-bold text-white"
+      >
+        Loading Services...
+      </motion.h2>
+    </motion.div>
+  );
+};
+
 // --- Services Home Slideshow ---
 const ServicesHomeSlideshow: React.FC = () => {
   const [data, setData] = useState<ServicesHomeData[]>([]);
@@ -42,15 +76,17 @@ const ServicesHomeSlideshow: React.FC = () => {
     try {
       const response = await axiosInstance.get<ServicesHomeData[]>("/api/servicesHomeSlider");
       setData(Array.isArray(response.data) ? response.data : []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError("Failed to fetch services sliders.");
-      toast.error("Error fetching services sliders.");
+      toast.error("Error fetching services sliders.", { position: "top-right" });
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { fetchServicesHome(); }, [fetchServicesHome]);
+  useEffect(() => {
+    fetchServicesHome();
+  }, [fetchServicesHome]);
 
   useEffect(() => {
     if (data.length <= 1) return;
@@ -58,14 +94,27 @@ const ServicesHomeSlideshow: React.FC = () => {
     return () => clearInterval(interval);
   }, [data.length]);
 
+  const loaderVariants: Variants = {
+    animate: {
+      opacity: [0.5, 1, 0.5],
+      transition: { repeat: Infinity, duration: 1.5, ease: "easeInOut" },
+    },
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-6 bg-gray-800">
-        <div className="flex items-center gap-3 mb-6">
+        <motion.div variants={loaderVariants} animate="animate" className="flex items-center gap-3 mb-6">
           <ArrowPathIcon className="w-10 h-10 text-[#0d7680] animate-spin" />
           <h2 className="text-3xl font-bold text-white">Loading...</h2>
-        </div>
-        <p className="text-lg text-gray-200">Fetching slider content...</p>
+        </motion.div>
+        <motion.p
+          variants={loaderVariants}
+          animate="animate"
+          className="text-lg text-gray-200"
+        >
+          Fetching slider content...
+        </motion.p>
       </div>
     );
   }
@@ -165,8 +214,20 @@ const ServicesHomeSlideshow: React.FC = () => {
 // --- Individual Service Card Component ---
 const ServiceCard: React.FC<{ service: ServiceData }> = ({ service }) => {
   const [hasImageError, setHasImageError] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const imageUrl = service.service_img ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${service.service_img.replace(/^\//, "")}` : null;
   const showPlaceholder = hasImageError || !imageUrl;
+  const isLongDescription = service.description.length > 200;
+
+  const splitDescription = (desc: string) => {
+    const paragraphs = desc.split("\n\n").filter((p) => p.trim());
+    if (paragraphs.length <= 1) return { first: desc, rest: [] };
+    const first = paragraphs[0];
+    const rest = paragraphs.slice(1).map((p) => p.split(/[.!?]\s+/).filter((s) => s.trim()));
+    return { first, rest: rest.flat() };
+  };
+
+  const { first, rest } = splitDescription(service.description);
 
   return (
     <motion.div
@@ -198,9 +259,35 @@ const ServiceCard: React.FC<{ service: ServiceData }> = ({ service }) => {
           {service.service_category}
           <span className="absolute bottom-0 left-0 h-1 w-1/4 bg-[#003459]"></span>
         </h3>
-        <p className="text-gray-700 text-base font-medium flex-grow line-clamp-4">{service.description}</p>
-        <div className="mt-6">
-          {service.url_link && (
+        <AnimatePresence>
+          <motion.div
+            key={`desc-${isExpanded}`}
+            initial={{ height: isLongDescription && !isExpanded ? "6rem" : "auto", opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: "6rem", opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className={`text-gray-700 text-base font-medium flex-grow ${isLongDescription && !isExpanded ? "line-clamp-4" : ""}`}
+          >
+            <p>{first}</p>
+            {isExpanded && rest.length > 0 && (
+              <ul className="mt-2 list-disc list-inside">
+                {rest.map((point, index) => (
+                  <li key={index}>{point}</li>
+                ))}
+              </ul>
+            )}
+          </motion.div>
+        </AnimatePresence>
+        {isLongDescription && (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="mt-2 text-[#ed1c24] font-semibold hover:text-[#0a5a60]"
+          >
+            {isExpanded ? "Read Less" : "Read More"}
+          </button>
+        )}
+        {service.url_link && (
+          <div className="mt-6">
             <a
               href={service.url_link}
               target="_blank"
@@ -210,8 +297,8 @@ const ServiceCard: React.FC<{ service: ServiceData }> = ({ service }) => {
               Learn More
               <LinkIcon className="w-5 h-5" />
             </a>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </motion.div>
   );
@@ -227,22 +314,33 @@ const ServicesSection: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axiosInstance.get("/api/allService");
+      const response = await axiosInstance.get<{ services: ServiceData[] }>("/api/allService");
       setServices(Array.isArray(response.data.services) ? response.data.services : []);
-    } catch (err) {
+    } catch (err: unknown) {
       setError("Could not fetch services data.");
-      toast.error("Could not fetch services data.");
+      toast.error("Could not fetch services data.", { position: "top-right" });
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { fetchServices(); }, [fetchServices]);
+  useEffect(() => {
+    fetchServices();
+  }, [fetchServices]);
+
+  const loaderVariants: Variants = {
+    animate: {
+      opacity: [0.5, 1, 0.5],
+      transition: { repeat: Infinity, duration: 1.5, ease: "easeInOut" },
+    },
+  };
 
   if (loading) {
     return (
       <div className="w-full py-20 text-center">
-        <ArrowPathIcon className="w-8 h-8 mx-auto text-[#0d7680] animate-spin" />
+        <motion.div variants={loaderVariants} animate="animate">
+          <ArrowPathIcon className="w-8 h-8 mx-auto text-[#0d7680] animate-spin" />
+        </motion.div>
       </div>
     );
   }
@@ -289,9 +387,20 @@ const ServicesSection: React.FC = () => {
 
 // --- Main ServicesHomePage Component ---
 const ServicesHomePage: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate combined loading state for slideshow and services
+    const timer = setTimeout(() => setIsLoading(false), 1000); // Adjust based on actual fetch time
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">
       <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
+      <AnimatePresence>
+        {isLoading && <LandingLoader />}
+      </AnimatePresence>
       <header>
         <ServicesHomeSlideshow />
       </header>

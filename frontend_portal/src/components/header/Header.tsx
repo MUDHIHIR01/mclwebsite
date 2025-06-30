@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
-// --- REFINEMENT: Import the logo as a module ---
 // Place your logo.png inside your `src/assets` folder.
 // Adjust the path '../../assets/logo.png' if your file structure is different.
 import mclLogo from '../../assets/logo.png';
@@ -61,27 +60,34 @@ const navLinkClass = "relative no-underline font-semibold text-base uppercase te
 
 // --- Sub-Components ---
 const DropdownMenu: React.FC<DropdownMenuProps> = ({ isOpen, items, onClose }) => (
+  // --- REFINEMENT: Key change for smooth hover ---
+  // Replaced `mt-2` with `top-full pt-2` and added `overflow-hidden`.
+  // `top-full` removes the gap between the nav link and the dropdown.
+  // `pt-2` adds the visual spacing back, but inside the hoverable area.
+  // `overflow-hidden` ensures a cleaner animation.
   <motion.div
-    className={`absolute left-0 mt-2 w-56 bg-[#0A51A1] rounded-lg z-50 ${isOpen ? "block" : "hidden"}`}
+    className={`absolute left-0 top-full pt-2 w-56 z-50 ${isOpen ? "block" : "hidden"}`}
     initial={{ opacity: 0, y: -10 }}
     animate={{ opacity: isOpen ? 1 : 0, y: isOpen ? 0 : -10 }}
     transition={{ duration: 0.3 }}
   >
-    <div className="py-2 max-h-96 overflow-y-auto">
-      {items.map((item) => {
-        const isExternal = item.path.startsWith("http");
-        const itemClasses = "block relative no-underline px-4 py-2 text-xs font-semibold uppercase text-white hover:opacity-100 opacity-90 hover:underline transition-all duration-200 text-left rounded-md mx-2";
+    <div className="bg-[#0A51A1] rounded-lg overflow-hidden">
+      <div className="py-2 max-h-96 overflow-y-auto">
+        {items.map((item) => {
+          const isExternal = item.path.startsWith("http");
+          const itemClasses = "block relative no-underline px-4 py-2 text-xs font-semibold uppercase text-white hover:opacity-100 opacity-90 hover:underline transition-all duration-200 text-left rounded-md mx-2";
 
-        return isExternal ? (
-          <a key={item.label} href={item.path} className={itemClasses} target="_blank" rel="noopener noreferrer" onClick={onClose}>
-            {item.label}
-          </a>
-        ) : (
-          <Link key={item.label} to={item.path} className={itemClasses} onClick={onClose}>
-            {item.label}
-          </Link>
-        );
-      })}
+          return isExternal ? (
+            <a key={item.label} href={item.path} className={itemClasses} target="_blank" rel="noopener noreferrer" onClick={onClose}>
+              {item.label}
+            </a>
+          ) : (
+            <Link key={item.label} to={item.path} className={itemClasses} onClick={onClose}>
+              {item.label}
+            </Link>
+          );
+        })}
+      </div>
     </div>
   </motion.div>
 );
@@ -147,13 +153,15 @@ const Header: React.FC = () => {
         <div className=" flex items-center justify-start gap-x-12">
           {/* Logo container */}
           <Link to="/" className="flex-shrink-0 lg:px-9">
-            {/* --- REFINEMENT: Use the imported logo variable --- */}
             <img src={mclLogo} alt="MCL Logo" className="h-16 md:h-20 w-auto object-contain" />
           </Link>
 
           {/* Navigation links container */}
           <nav className="items-center hidden gap-12 lg:flex">
             {navItems.map((item) => (
+              // --- REFINEMENT: This container is now a seamless hover target ---
+              // The onMouseEnter and onMouseLeave events now work perfectly because
+              // the child DropdownMenu is positioned directly against this container.
               <div
                 key={item.label}
                 className="relative"

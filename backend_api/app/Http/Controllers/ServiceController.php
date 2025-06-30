@@ -101,9 +101,9 @@ class ServiceController extends Controller
 
         $validator = Validator::make($request->all(), [
             'service_category' => 'required|string|max:255',
-            'service_image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'service_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'url_link' => 'nullable|url|max:255',
-            'description' => 'nullable|string',
+            'description' => 'nullable|string|max:5000',
         ]);
 
         if ($validator->fails()) {

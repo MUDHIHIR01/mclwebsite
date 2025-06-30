@@ -25,26 +25,26 @@ const Footer: React.FC = () => {
             <h3 className="text-xl font-bold mb-4">Our Brands</h3>
             {/* Kept hover:underline as it's a standard link style, not a color change */}
             <ul className="text-sm space-y-2">
-              <li><Link to="/brands/mwanaclick" className="hover:underline">MwanaClick</Link></li>
-              <li><Link to="/brands/mwananchi-newspaper" className="hover:underline">Mwananchi newspaper</Link></li>
-              <li><Link to="/brands/mwanaspoti-newspaper" className="hover:underline">Mwanaspoti newspaper</Link></li>
-              <li><Link to="/brands/the-citizen-newspaper" className="hover:underline">The Citizen newspaper</Link></li>
+              <li><Link to="/https://mwanaclick.com/" className="hover:underline">MwanaClick</Link></li>
+              <li><Link to="/https://www.mwananchi.co.tz/mw" className="hover:underline">Mwananchi newspaper</Link></li>
+              <li><Link to="/https://www.mwanaspoti.co.tz/ms" className="hover:underline">Mwanaspoti newspaper</Link></li>
+              <li><Link to="/https://www.thecitizen.co.tz/" className="hover:underline">The Citizen newspaper</Link></li>
               <li><Link to="/brands/mwananchi-courier" className="hover:underline">Mwananchi Courier Services</Link></li>
               <li><Link to="/brands/mwananchi-events" className="hover:underline">Mwananchi Events</Link></li>
               <li><Link to="/brands/habari-hub" className="hover:underline">Habari Hub</Link></li>
               <li><Link to="/brands/citizen-rising-woman" className="hover:underline">The Citizen Rising Woman</Link></li>
               <li><Link to="/brands/nation-epaper" className="hover:underline">Nation ePaper</Link></li>
-              <li><Link to="/brands/mwananchi-digital" className="hover:underline">Mwananchi Digital</Link></li>
+              <li><Link to="/https://www.youtube.com/@Mwananchidigital" className="hover:underline">Mwananchi Digital</Link></li>
             </ul>
           </div>
 
           <div>
             <h3 className="text-xl font-bold mb-4">Our Group Brands</h3>
             <ul className="text-sm space-y-2">
-              <li><Link to="/group-brands/nation-africa" className="hover:underline">Nation Africa</Link></li>
-              <li><Link to="/group-brands/business-daily-africa" className="hover:underline">Business Daily Africa</Link></li>
-              <li><Link to="/group-brands/epapers" className="hover:underline">EPapers</Link></li>
-              <li><Link to="/group-brands/monitor" className="hover:underline">Monitor</Link></li>
+              <li><Link to="/https://nation.africa/kenya" className="hover:underline">Nation Africa</Link></li>
+              <li><Link to="/https://www.businessdailyafrica.com/" className="hover:underline">Business Daily Africa</Link></li>
+              <li><Link to="/https://epaper.nationmedia.com/kenya" className="hover:underline">EPapers</Link></li>
+              <li><Link to="/https://mcl.co.tz/Monitor" className="hover:underline">Monitor</Link></li>
             </ul>
 
             <div className="mt-6">

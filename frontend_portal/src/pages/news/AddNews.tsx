@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
@@ -36,15 +36,15 @@ const AddNews: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    setFormData((prev: FormData) => ({ ...prev, [name]: value }));
+    setErrors((prev: Errors) => ({ ...prev, [name]: '' }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name } = e.target;
     const file = e.target.files?.[0] || null;
-    setFormData((prev) => ({ ...prev, [name]: file }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
+    setFormData((prev: FormData) => ({ ...prev, [name]: file }));
+    setErrors((prev: Errors) => ({ ...prev, [name]: '' }));
   };
 
   const validateForm = (): boolean => {
@@ -61,15 +61,15 @@ const AddNews: React.FC = () => {
       newErrors.category = 'Category must not exceed 255 characters';
     }
 
-    if (formData.description && formData.description.length > 1000) {
-      newErrors.description = 'Description must not exceed 1000 characters';
+    if (formData.description && formData.description.length > 100000) {
+      newErrors.description = 'Description must not exceed 100000 characters';
     }
 
     if (formData.news_img) {
       if (!['image/jpeg', 'image/png', 'image/jpg', 'image/gif'].includes(formData.news_img.type)) {
         newErrors.news_img = 'Only JPEG, PNG, JPG, or GIF files are allowed';
-      } else if (formData.news_img.size > 2 * 1024 * 1024) {
-        newErrors.news_img = 'Image size must not exceed 2MB';
+      } else if (formData.news_img.size > 20 * 1024 * 1024) {
+        newErrors.news_img = 'Image size must not exceed 5MB';
       }
     }
 
@@ -111,7 +111,7 @@ const AddNews: React.FC = () => {
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Failed to create news record';
       const backendErrors: Partial<Errors> = error.response?.data?.errors || {};
-      setErrors((prev) => ({
+      setErrors((prev: Errors) => ({
         ...prev,
         category: backendErrors.category || '',
         description: backendErrors.description || '',
@@ -167,7 +167,7 @@ const AddNews: React.FC = () => {
               rows={4}
               className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 sm:p-3 lg:p-4 text-sm sm:text-base"
               placeholder="Enter description"
-              maxLength={1000}
+              maxLength={100000}
               aria-describedby={errors.description ? 'description-error' : undefined}
             />
             {errors.description && (
@@ -195,7 +195,7 @@ const AddNews: React.FC = () => {
               </p>
             )}
             <p id="news_img-info" className="mt-1 text-xs text-gray-500">
-              Max file size: 2MB. Allowed types: JPG, PNG, GIF.
+              Max file size: 5MB. Allowed types: JPG, PNG, GIF.
             </p>
           </div>
           <div>

@@ -69,7 +69,7 @@ const DescriptionCell: React.FC<{ value: string | null }> = React.memo(({ value 
   if (!value) return <span className="text-gray-500 text-xs italic">No Description</span>;
   const truncatedText = value.length > 80 ? `${value.slice(0, 80)}...` : value;
   return (
-    <div className="text-sm text-gray-700 max-w-xs">
+    <div className="text-sm text-gray-700 max-w-[200px] break-words">
       {isExpanded ? value : truncatedText}
       {value.length > 80 && (
         <button onClick={() => setIsExpanded(!isExpanded)} className="ml-2 text-blue-500 hover:text-blue-600 text-xs font-medium">
@@ -84,7 +84,7 @@ const ImageModal: React.FC<{ imageUrl: string; onClose: () => void }> = React.me
   <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50" onClick={onClose}>
     <div className="relative bg-white rounded-lg p-4 w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
       <button onClick={onClose} className="absolute top-2 right-2 text-gray-600 hover:text-gray-800" aria-label="Close modal">
-        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="Mrt strokeWidth={2}" /></svg>
       </button>
       <img src={imageUrl} alt="Full-size preview" className="w-full h-auto max-h-[80vh] object-contain rounded" />
     </div>
@@ -192,7 +192,7 @@ const Service: React.FC = () => {
         <ToastContainer position="top-right" autoClose={3000} theme="colored" />
         {selectedImage && <ImageModal imageUrl={selectedImage} onClose={() => setSelectedImage(null)} />}
         <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <div className="flex flex-col sm:flex-row justify-between 일을 위한 충분한 공간을 제공합니다. items-center mb-6 gap-4">
                 <h2 className="text-2xl font-semibold text-gray-800">Service Management</h2>
                 <Link to="/services/add" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
@@ -229,7 +229,6 @@ const Service: React.FC = () => {
                     onChange={(e) => setPageSize(Number(e.target.value))}
                     className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
-                    {/* THIS IS THE CORRECTED LINE */}
                     {[10, 20, 30, 50].map((size) => (
                       <option key={size} value={size}>Show {size}</option>
                     ))}

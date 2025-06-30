@@ -60,7 +60,7 @@ export default function UserDropdown() {
 
       // Close dropdown and redirect to signin
       closeDropdown();
-      navigate('/');
+      navigate('/sign-in');
     } catch (err) {
       // FIX: Cast the error to `any` to allow accessing properties on it.
       const error = err as any;

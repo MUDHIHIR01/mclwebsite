@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\News;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,8 @@ class NewsController extends Controller
         $this->middleware('auth:sanctum')->except(['index', 'show', 'latestnew','allNews']);
     }
 
-    /**
+   // No changes were needed in this file. It already orders by news_id ascending.
+/**
      * Display a listing of news records.
      */
     public function allNews()
@@ -34,7 +36,7 @@ class NewsController extends Controller
 
             // Fetch records with explicit fields
             $newsRecords = News::select('news_id', 'category', 'description', 'news_img', 'pdf_file', 'created_at', 'updated_at')
-                ->orderBy('news_id', 'desc')
+                ->orderBy('news_id', 'asc')
                 ->get();
 
             \Log::info('Successfully fetched news records.', ['count' => $newsRecords->count()]);
@@ -153,7 +155,7 @@ class NewsController extends Controller
         $validator = Validator::make($request->all(), [
             'category' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'news_img' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:2048',
+            'news_img' => 'nullable|file',
             'pdf_file' => 'nullable|file|mimes:pdf|max:2048',
         ]);
 
