@@ -162,6 +162,9 @@ import  Brands  from  './pages/brands/Brands'
 import  AddBrand  from './pages/brands/AddBrand.tsx'
 import  EditBrand from './pages/brands/EditBrand.tsx'
 import  OurBrands  from  './pages/OurBrands'
+import  Events  from './pages/events/Events'
+import  AddOurEvent  from './pages/events/AddOurEvent'
+import EditOurEvent from './pages/events/EditOurEvent'
 
 // Define props for ProtectedRoute
 interface ProtectedRouteProps {
@@ -1144,6 +1147,33 @@ export default function App() {
   element={
     <ProtectedRoute>
       <EditBrand />
+    </ProtectedRoute>
+  }
+/>
+
+
+
+<Route
+  path="/our-events"
+  element={
+    <ProtectedRoute>
+      <Events />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/add/our-event"
+  element={
+    <ProtectedRoute>
+      <AddOurEvent />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/edit/our-event/:event_id"
+  element={
+    <ProtectedRoute>
+      <EditOurEvent />
     </ProtectedRoute>
   }
 />

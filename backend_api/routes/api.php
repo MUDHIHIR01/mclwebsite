@@ -49,6 +49,8 @@ use App\Http\Controllers\StayConnectedController;
 use App\Http\Controllers\EarycareHomeController;
 use App\Http\Controllers\EarlyCareersController;
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\EventController;
+
 
 // Public Routes
 Route::get('/login', function () {
@@ -516,6 +518,16 @@ Route::post('/early-careers/{early_career_id}', [EarlyCareersController::class, 
 Route::delete('/early-careers/{early_career_id}', [EarlyCareersController::class, 'destroy']);
 
 
+Route::prefix('events')->group(function () {
+    Route::get('/', [EventController::class, 'index']);
+    Route::get('/all', [EventController::class, 'allEvents']);
+    Route::get('/latest', [EventController::class, 'latestEvent']);
+    Route::get('/count', [EventController::class, 'countEvents']);
+    Route::get('/{event_id}', [EventController::class, 'show']);
+    Route::post('/', [EventController::class, 'store'])->middleware('auth:sanctum');
+    Route::post('/{event_id}/update', [EventController::class, 'update'])->middleware('auth:sanctum');
+    Route::delete('/{event_id}', [EventController::class, 'destroy'])->middleware('auth:sanctum');
+});
 
 //brands
 Route::resource('brands', BrandController::class);

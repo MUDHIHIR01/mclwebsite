@@ -228,6 +228,19 @@ const getNavItemsForRole = (roleId: number) => {
                 { name: "Sub-News", path: "/sub-news" }
       ],
     },
+
+     {
+      name: "Events",
+      icon: (
+        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white">
+          📰 {/* Newspaper icon for news */}
+        </span>
+      ),
+      subItems: [{ name: "Manage", path: "/our-events" },
+      ],
+    },
+
+    
     {
       name: "Contact",
       icon: (
