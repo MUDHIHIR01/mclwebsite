@@ -195,8 +195,8 @@ const NewsHomeSlideshow: React.FC = () => {
     return () => clearInterval(interval);
   }, [data.length]);
 
-  if (loading) return null; // Simplified loader, main loader handles this
-  if (error || data.length === 0) return null; // Hide section on error/no data
+  if (loading) return null; // Main page loader handles initial load
+  if (error || data.length === 0) return null; // Silently hide section on error/no data for cleaner UI
 
   const imagePath = getFullMediaUrl(data[currentSlide].home_img) || "https://via.placeholder.com/1200x600?text=Image+Missing";
 
@@ -391,7 +391,6 @@ const NewsSection: React.FC<{
   const [selectedNews, setSelectedNews] = useState<NewsData | null>(null); // State for the expanded card
 
   const fetchNews = useCallback(async () => {
-    // ... (fetchNews logic is unchanged)
     try {
         const response = await axiosInstance.get<NewsApiResponse>("/api/allNews");
         const newsData = response.data.news;
@@ -411,7 +410,6 @@ const NewsSection: React.FC<{
     fetchNews();
   }, [fetchNews]);
   
-  // Close expanded view on escape key press
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -423,7 +421,6 @@ const NewsSection: React.FC<{
   }, []);
 
   const filteredNews = news.filter((item) => {
-    // ... (filtering logic is unchanged)
     if (year && new Date(item.created_at).getFullYear().toString() !== year) return false;
     if (month && (new Date(item.created_at).getMonth() + 1).toString() !== month) return false;
     return true;
@@ -431,16 +428,30 @@ const NewsSection: React.FC<{
 
   const latestNewsId = filteredNews.length > 0 ? filteredNews[0].news_id : null;
 
-  if (error) { /* ... (error display is unchanged) */ }
+  if (error) {
+    return (
+        <div className="w-full py-20 flex flex-col items-center justify-center px-4 text-center">
+          <InformationCircleIcon className="w-12 h-12 mx-auto text-[#ed1c24]" />
+          <h3 className="mt-4 text-2xl font-bold text-[#003459]">Failed to Load News</h3>
+          <p className="mt-2 text-gray-600">{error}</p>
+          <button
+            onClick={fetchNews}
+            className="mt-6 flex items-center px-6 py-3 bg-[#003459] text-white font-semibold rounded-full hover:bg-[#0d7680] transition"
+          >
+            <ArrowPathIcon className="w-5 h-5 mr-2" />
+            Retry
+          </button>
+        </div>
+      );
+  }
 
   const months = Array.from({ length: 12 }, (_, i) => ({ value: (i + 1).toString(), label: new Date(0, i).toLocaleString("en-US", { month: "long" }) }));
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: currentYear - 2002 + 1 }, (_, i) => (currentYear - i).toString());
+  const years = Array.from({ length: currentYear - 2020 + 1 }, (_, i) => (currentYear - i).toString());
 
   return (
     <section className="py-16 bg-gray-100">
       <div className="max-w-7xl mx-auto px-4">
-        {/* ... (Header and filters are unchanged) */}
         <div className="text-center mb-12">
           <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-3xl sm:text-4xl font-extrabold text-[#003459]">
             Our News
@@ -449,9 +460,44 @@ const NewsSection: React.FC<{
             Stay updated with the latest stories and achievements from Mwananchi Communications Limited.
           </p>
         </div>
+        
+        {/* FILTERS UI RESTORED HERE */}
         <div className="bg-white p-4 rounded-xl shadow-md mb-12 grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Filters */}
+          <select
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="w-full p-3 border-gray-300 rounded-lg focus:ring-[#0d7680] focus:border-[#0d7680]"
+          >
+            <option value="">All Months</option>
+            {months.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+          <select
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            className="w-full p-3 border-gray-300 rounded-lg focus:ring-[#0d7680] focus:border-[#0d7680]"
+          >
+            <option value="">All Years</option>
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={() => {
+              setMonth("");
+              setYear("");
+            }}
+            className="w-full p-3 bg-[#003459] text-white rounded-lg font-semibold hover:bg-[#0d7680]"
+          >
+            Reset Filters
+          </button>
         </div>
+
         {filteredNews.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredNews.map((item) => (
@@ -473,7 +519,6 @@ const NewsSection: React.FC<{
         )}
       </div>
 
-      {/* RENDER THE EXPANDED CARD HERE */}
       <AnimatePresence>
         {selectedNews && (
             <ExpandedNewsCard news={selectedNews} onClose={() => setSelectedNews(null)} />
@@ -492,7 +537,7 @@ const NewsPage: React.FC = () => {
 
   useEffect(() => {
     if (sectionLoaded) {
-      const timer = setTimeout(() => setIsLoading(false), 500); // Small delay for animations
+      const timer = setTimeout(() => setIsLoading(false), 500);
       return () => clearTimeout(timer);
     }
   }, [sectionLoaded]);
