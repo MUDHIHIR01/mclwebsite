@@ -57,7 +57,7 @@ const getNavItemsForRole = (roleId: number): NavItem[] => {
         { name: "Join Our Talent Community", path: "/", subItems: [{ name: "Home page", path: "/stay-connected/home" },{ name: "Stay connected", path: "/stay-connected" }] },
     ]},
     { name: "News", icon: <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white">📰</span>, subItems: [{ name: "Home page", path: "/news/home" },{ name: "News", path: "/news" },{ name: "Sub-News", path: "/sub-news" }] },
-    { name: "Events", icon: <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white">📅</span>, subItems: [{ name: "Manage", path: "/our-events" }] },
+    { name: "Events", icon: <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white">📅</span>, subItems: [{ name: "Events", path: "/our-events" },{ name: "Sub Events", path: "/sub-events" }] },
     { name: "Contact", icon: <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 text-white">📞</span>, subItems: [{ name: "Home page", path: "/contact/home" },{ name: "Contact-us", path: "/contact-us" },{ name: "Contact Info", path: "/contact-us/info" }] },
   ];
 

@@ -51,6 +51,7 @@ use App\Http\Controllers\EarlyCareersController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\AboutMwananchiController;
+use App\Http\Controllers\SubEventController;
 
 
 
@@ -119,6 +120,7 @@ Route::get('/leadershipHomeSlider', [LeadershipHomeController::class, 'leadershi
       Route::get('/latestService', [ServicesHomeController::class, 'latestService']);
         Route::get('/all-events', [EventController::class, 'allEvents']);
      Route::get('/about-mwananchi/all', [AboutMwananchiController::class, 'allRecords']);
+       Route::get('/all/sub-events', [SubEventController::class, 'allEvents']);
 
 // Protected Routes
 Route::middleware(['auth:sanctum', 'token.expiration'])->group(function () {
@@ -530,11 +532,27 @@ Route::delete('/early-careers/{early_career_id}', [EarlyCareersController::class
 Route::prefix('events')->group(function () {
     Route::get('/', [EventController::class, 'index']);
     Route::get('/latest', [EventController::class, 'latestEvent']);
+    // New route for dropdown data
+    Route::get('/dropdown-data', [EventController::class, 'getDropdownData']);
     Route::get('/count', [EventController::class, 'countEvents']);
     Route::get('/{event_id}', [EventController::class, 'show']);
     Route::post('/', [EventController::class, 'store'])->middleware('auth:sanctum');
     Route::post('/{event_id}/update', [EventController::class, 'update'])->middleware('auth:sanctum');
     Route::delete('/{event_id}', [EventController::class, 'destroy'])->middleware('auth:sanctum');
+}); 
+
+
+Route::prefix('sub-events')->group(function () {
+    Route::get('/', [SubEventController::class, 'index']);
+  
+    Route::get('/count', [SubEventController::class, 'countEvents']);
+    Route::get('/latest', [SubEventController::class, 'latestEvent']);
+    Route::get('/{event_id}', [SubEventController::class, 'show']);
+  
+        Route::post('/', [SubEventController::class, 'store']);
+        Route::post('/{event_id}', [SubEventController::class, 'update']);
+        Route::delete('/{event_id}', [SubEventController::class, 'destroy']);
+
 });
 
 //brands

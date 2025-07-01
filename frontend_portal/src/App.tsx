@@ -169,6 +169,10 @@ import  EventsLayouts  from  './pages/EventsLayouts'
 import   EditAboutMwananchi  from  './pages/about/EditAboutMwananchi'
 import AddMwananchiAbout  from './pages/about/AddMwananchiAbout'
 import  AboutMwananchi   from './pages/about/AboutMwananchi.tsx'
+import  EditSubEvent  from './pages/events/EditSubEvent'
+import  AddSubEvent   from './pages/events/AddSubEvent'
+import SubEvents  from  './pages/events/SubEvents'
+import  ViewSubEvents   from './pages/ViewSubEvents'
 
 // Define props for ProtectedRoute
 interface ProtectedRouteProps {
@@ -1173,6 +1177,7 @@ export default function App() {
     </ProtectedRoute>
   }
 />
+
 <Route
   path="/edit/our-event/:event_id"
   element={
@@ -1210,7 +1215,30 @@ export default function App() {
 
 
 
-
+<Route
+  path="/sub-events"
+  element={
+    <ProtectedRoute>
+      <SubEvents />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/add/sub-event"
+  element={
+    <ProtectedRoute>
+      <AddSubEvent />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/edit/sub-event/:subevent_id"
+  element={
+    <ProtectedRoute>
+      <EditSubEvent />
+    </ProtectedRoute>
+  }
+/>
 
             <Route
               path="/calendar"
@@ -1331,6 +1359,7 @@ export default function App() {
                <Route path="/careers/stay-connected" element={< StayCoonnectedLayout />} />\
                <Route path="/our-brands" element={<OurBrands />}/>
                <Route path="/all-events" element={<EventsLayouts />}/>
+                <Route path="/events/:eventId" element={<ViewSubEvents />} />
                
               
                 

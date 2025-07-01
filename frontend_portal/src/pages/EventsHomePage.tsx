@@ -1,4 +1,7 @@
+// src/pages/EventsHomePage.tsx
+
 import React, { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -6,10 +9,11 @@ import {
   ArrowPathIcon,
   InformationCircleIcon,
   XMarkIcon,
-  PhotoIcon,
+  // PhotoIcon, // <-- REMOVED THIS LINE
   CalendarDaysIcon,
+  ArrowRightIcon,
 } from "@heroicons/react/24/outline";
-import axiosInstance from "../axios"; // Assuming your axios instance is correctly configured
+import axiosInstance from "../axios";
 import Footer from "../components/Footer";
 
 // --- INTERFACES ---
@@ -90,7 +94,6 @@ const Loader: React.FC = () => (
   </motion.div>
 );
 
-// This modal is now only for viewing images.
 const ImageModal: React.FC<{
   imageUrl: string;
   altText: string;
@@ -152,36 +155,18 @@ const EventCard: React.FC<{ event: EventData }> = ({ event }) => {
       >
         {/* Left Side: Image */}
         <div className="relative h-64 md:h-auto group">
-          {imageUrl ? (
-            <img
-              className="w-full h-full object-cover cursor-pointer"
-              src={imageUrl}
-              alt={event.event_category}
-              onClick={() => setIsModalOpen(true)} // <-- CLICK HANDLER TO OPEN MODAL
-              onError={(e) => { e.currentTarget.src = defaultImage; }}
-              loading="lazy"
-            />
-          ) : (
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                <PhotoIcon className="w-16 h-16 text-gray-400" />
-            </div>
-          )}
-           <div
-              className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none"
-           >
-              <p className="text-white font-bold text-lg">View Image</p>
-           </div>
+          <img className="w-full h-full object-cover cursor-pointer" src={imageUrl ?? defaultImage} alt={event.event_category}
+            onClick={() => setIsModalOpen(true)} onError={(e) => { e.currentTarget.src = defaultImage; }} loading="lazy" />
+          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+            <p className="text-white font-bold text-lg">View Image</p>
+          </div>
         </div>
 
         {/* Right Side: Content & Video */}
         <div className="p-6 flex flex-col">
           <h3 className="text-xl font-bold text-[#003459] mb-2">{event.event_category}</h3>
-          <div className="flex items-center text-sm text-gray-500 mb-4">
-            <CalendarDaysIcon className="w-5 h-5 mr-2 text-[#0072bc]" />
-            <span>{formatDate(event.created_at)}</span>
-          </div>
-
-          <div className="text-gray-700 text-base mb-4">
+          
+          <div className="text-gray-700 text-base mb-4 flex-grow">
             <p className="inline">
               {isLongDescription ? displayedDescription : description}
             </p>
@@ -194,32 +179,36 @@ const EventCard: React.FC<{ event: EventData }> = ({ event }) => {
               </button>
             )}
           </div>
-
+          
           {embedVideoUrl && (
-            <div className="mt-auto pt-4 border-t border-gray-200">
+            <div className="mb-4">
                 <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden shadow-inner">
-                    <iframe
-                        src={embedVideoUrl}
-                        title={event.event_category}
-                        frameBorder="0"
+                    <iframe src={embedVideoUrl} title={event.event_category} frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        className="w-full h-full"
-                    ></iframe>
+                        allowFullScreen className="w-full h-full"></iframe>
                 </div>
             </div>
           )}
+
+          <div className="mt-auto pt-4 border-t border-gray-200 flex justify-between items-center">
+            <div className="flex items-center text-sm text-gray-500">
+                <CalendarDaysIcon className="w-5 h-5 mr-2 text-[#0072bc]" />
+                <span>{formatDate(event.created_at)}</span>
+            </div>
+            <Link
+              to={`/events/${event.event_id}`}
+              title="View Sub-Events"
+              className="p-2 rounded-full hover:bg-red-100 transition-colors duration-200"
+            >
+              <ArrowRightIcon className="w-6 h-6 text-[#ed1c24]" />
+            </Link>
+          </div>
         </div>
       </motion.div>
 
-      {/* Conditionally render the image modal */}
       <AnimatePresence>
         {isModalOpen && imageUrl && (
-          <ImageModal
-            imageUrl={imageUrl}
-            altText={event.event_category}
-            onClose={() => setIsModalOpen(false)}
-          />
+          <ImageModal imageUrl={imageUrl} altText={event.event_category} onClose={() => setIsModalOpen(false)} />
         )}
       </AnimatePresence>
     </>
@@ -227,8 +216,7 @@ const EventCard: React.FC<{ event: EventData }> = ({ event }) => {
 };
 
 
-// --- MAIN PAGE SECTIONS ---
-
+// --- MAIN PAGE SECTIONS (Unchanged) ---
 const EventsSection: React.FC<{ setContentLoaded: (loaded: boolean) => void }> = ({ setContentLoaded }) => {
   const [events, setEvents] = useState<EventData[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -239,18 +227,13 @@ const EventsSection: React.FC<{ setContentLoaded: (loaded: boolean) => void }> =
     try {
       const response = await axiosInstance.get<EventsResponse>("/api/all-events");
       if (response.data && Array.isArray(response.data.events)) {
-        const sortedEvents = response.data.events.sort(
-          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
+        const sortedEvents = response.data.events.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         setEvents(sortedEvents);
-        if (sortedEvents.length === 0) {
-          setError("No events found.");
-        }
+        if (sortedEvents.length === 0) setError("No events found.");
       } else {
         throw new Error("Invalid data format from API.");
       }
     } catch (err: any) {
-      console.error("Events fetch error:", err.message);
       setError("Could not fetch events data. Please try again later.");
       toast.error("Error fetching events.");
     } finally {
@@ -258,9 +241,7 @@ const EventsSection: React.FC<{ setContentLoaded: (loaded: boolean) => void }> =
     }
   }, [setContentLoaded]);
 
-  useEffect(() => {
-    fetchEvents();
-  }, [fetchEvents]);
+  useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
   const categories = ["All", ...new Set(events.map((event) => event.event_category))];
   const filteredEvents = filter === "All" ? events : events.filter((event) => event.event_category === filter);
@@ -275,10 +256,7 @@ const EventsSection: React.FC<{ setContentLoaded: (loaded: boolean) => void }> =
         <p className="mt-2 text-lg text-gray-600 max-w-md">
           {error === "No events found." ? "There are no events to display at the moment. Check back soon!" : error}
         </p>
-        <button
-          onClick={fetchEvents}
-          className="mt-8 flex items-center px-6 py-3 bg-[#003459] text-white font-semibold rounded-full hover:bg-[#0072bc] transition-colors shadow-md"
-        >
+        <button onClick={fetchEvents} className="mt-8 flex items-center px-6 py-3 bg-[#003459] text-white font-semibold rounded-full hover:bg-[#0072bc] transition-colors shadow-md">
           <ArrowPathIcon className="w-5 h-5 mr-2" />
           Retry
         </button>
@@ -293,38 +271,24 @@ const EventsSection: React.FC<{ setContentLoaded: (loaded: boolean) => void }> =
           <h1 className="text-4xl md:text-5xl font-extrabold text-[#003459]">
             Explore Our Journey: <span className="text-[#0072bc]">Events</span> & <span className="text-[#ed1c24]">Milestones</span>
           </h1>
-          <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">
-            Discover our latest activities, partnerships, and achievements.
-          </p>
+          <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">Discover our latest activities, partnerships, and achievements.</p>
         </div>
 
         <div className="flex justify-center flex-wrap gap-3 mb-12">
           {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setFilter(category)}
+            <button key={category} onClick={() => setFilter(category)}
               className={`px-5 py-2 rounded-full font-semibold text-sm transition-all duration-300 transform hover:scale-105 ${
-                filter === category
-                  ? "bg-[#ed1c24] text-white shadow-lg"
-                  : "bg-white text-[#003459] hover:bg-gray-200 shadow-md"
-              }`}
-            >
+                filter === category ? "bg-[#ed1c24] text-white shadow-lg" : "bg-white text-[#003459] hover:bg-gray-200 shadow-md"
+              }`}>
               {category}
             </button>
           ))}
         </div>
 
         <AnimatePresence>
-          <motion.div
-            key={filter}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-10"
-          >
-            {filteredEvents.map((event) => (
-              <EventCard key={event.event_id} event={event} />
-            ))}
+          <motion.div key={filter} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {filteredEvents.map((event) => (<EventCard key={event.event_id} event={event} />))}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -332,15 +296,13 @@ const EventsSection: React.FC<{ setContentLoaded: (loaded: boolean) => void }> =
   );
 };
 
-// --- PARENT PAGE COMPONENT ---
-
+// --- PARENT PAGE COMPONENT (Unchanged) ---
 const EventsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       if (isLoading) {
-        console.warn("Loader timeout: Forcing UI to display.");
         setIsLoading(false);
       }
     }, 8000);
@@ -349,30 +311,15 @@ const EventsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">
-      <ToastContainer
-        position="top-right"
-        autoClose={4000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="colored"
-      />
+      <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false}
+        pauseOnFocusLoss draggable pauseOnHover theme="colored" />
       <AnimatePresence>{isLoading && <Loader />}</AnimatePresence>
-
       <header className="bg-[#003459] text-white p-4 shadow-md z-30">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold">Our MCL Events</h1>
-        </div>
+        <div className="max-w-7xl mx-auto"><h1 className="text-2xl font-bold">Our MCL Events</h1></div>
       </header>
-
       <main className="flex-grow">
         <EventsSection setContentLoaded={(loaded) => loaded && setIsLoading(false)} />
       </main>
-
       <Footer />
     </div>
   );

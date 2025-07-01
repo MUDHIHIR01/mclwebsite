@@ -135,6 +135,37 @@ class EventController extends Controller
         }
     }
 
+ /**
+     * Fetch event IDs and categories for dropdowns.
+     */
+  public function getDropdownData()
+{
+    try {
+        $categories = Event::select('event_category')
+            ->distinct()
+            ->pluck('event_category')
+            ->values();
+            
+        $events = Event::select('event_id', 'event_category')
+            ->orderBy('event_id', 'asc')
+            ->get()
+            ->map(function ($event) {
+                return [
+                    'event_id' => $event->event_id,
+                    'event_category' => $event->event_category,
+                ];
+            });
+
+        return response()->json([
+            'categories' => $categories,
+            'events' => $events
+        ], 200);
+    } catch (Exception $e) {
+        Log::error('Error fetching dropdown data: ' . $e->getMessage());
+        return response()->json(['error' => 'Failed to fetch dropdown data.'], 500);
+    }
+}
+
     /**
      * Display the specified event record.
      */
