@@ -30,15 +30,38 @@ interface SustainabilityData {
   sustain_pdf_file: string | null;
 }
 
+// --- Full-page Loader ---
+const Loader: React.FC = () => (
+  <motion.div
+    className="fixed inset-0 flex flex-col items-center justify-center bg-[#0A51A1] z-50"
+    initial={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 0.1 }} // Minimized fade-out duration
+  >
+    <motion.div
+      animate={{ opacity: [0.5, 1, 0.5], scale: [1, 1.05, 1] }}
+      transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+      className="mb-4"
+    >
+      <ArrowPathIcon className="w-16 h-16 text-white animate-spin" />
+    </motion.div>
+    <motion.h2
+      animate={{ opacity: [0.5, 1, 0.5] }}
+      transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+      className="text-2xl font-bold text-white"
+    >
+      Loading Sustainability...
+    </motion.h2>
+  </motion.div>
+);
+
 // --- Sustainability Home Slideshow ---
-const SustainabilityHomeSlideshow: React.FC = () => {
+const SustainabilityHomeSlideshow: React.FC<{ setLoaded: (isLoaded: boolean) => void }> = ({ setLoaded }) => {
   const [data, setData] = useState<SustainabilityHomeData[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchSustainabilityHomes = useCallback(async () => {
-    setLoading(true);
     setError(null);
     try {
       const response = await axiosInstance.get<SustainabilityHomeData[]>("/api/sust/homeSlider");
@@ -48,9 +71,9 @@ const SustainabilityHomeSlideshow: React.FC = () => {
       setError(message);
       toast.error("Error fetching sustainability sliders.");
     } finally {
-      setLoading(false);
+      setLoaded(true);
     }
-  }, []);
+  }, [setLoaded]);
 
   useEffect(() => { fetchSustainabilityHomes(); }, [fetchSustainabilityHomes]);
 
@@ -59,18 +82,6 @@ const SustainabilityHomeSlideshow: React.FC = () => {
     const interval = setInterval(() => setCurrentSlide((prev) => (prev + 1) % data.length), 5000);
     return () => clearInterval(interval);
   }, [data.length]);
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-6 bg-gray-800">
-        <div className="flex items-center gap-3 mb-6">
-          <ArrowPathIcon className="w-10 h-10 text-[#0d7680] animate-spin" />
-          <h2 className="text-3xl font-bold text-white">Loading...</h2>
-        </div>
-        <p className="text-lg text-gray-200">Fetching slider content...</p>
-      </div>
-    );
-  }
 
   if (error || data.length === 0) {
     return (
@@ -215,13 +226,11 @@ const SustainabilityCard: React.FC<{ item: SustainabilityData }> = ({ item }) =>
 };
 
 // --- Sustainability Section Component ---
-const SustainabilitySection: React.FC = () => {
+const SustainabilitySection: React.FC<{ setLoaded: (isLoaded: boolean) => void }> = ({ setLoaded }) => {
   const [sustainabilityData, setSustainabilityData] = useState<SustainabilityData[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchSustainabilityData = useCallback(async () => {
-    setLoading(true);
     setError(null);
     try {
       const response = await axiosInstance.get("/api/allSustainability");
@@ -230,19 +239,11 @@ const SustainabilitySection: React.FC = () => {
       setError("Could not fetch sustainability data.");
       toast.error("Could not fetch sustainability data.");
     } finally {
-      setLoading(false);
+      setLoaded(true);
     }
-  }, []);
+  }, [setLoaded]);
 
   useEffect(() => { fetchSustainabilityData(); }, [fetchSustainabilityData]);
-
-  if (loading) {
-    return (
-      <div className="w-full py-20 text-center">
-        <ArrowPathIcon className="w-8 h-8 mx-auto text-[#0d7680] animate-spin" />
-      </div>
-    );
-  }
 
   if (error || sustainabilityData.length === 0) {
     return (
@@ -283,18 +284,49 @@ const SustainabilitySection: React.FC = () => {
 
 // --- Main SustainabilityHomePage Component ---
 const SustainabilityHomePage: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [slideshowLoaded, setSlideshowLoaded] = useState(false);
+  const [sectionLoaded, setSectionLoaded] = useState(false);
+
+  useEffect(() => {
+    if (slideshowLoaded && sectionLoaded) {
+      setIsLoading(false);
+    }
+  }, [slideshowLoaded, sectionLoaded]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        console.warn("Loader timed out. Forcing content display.");
+        setIsLoading(false);
+      }
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">
       <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
-      <header>
-        <SustainabilityHomeSlideshow />
-      </header>
-      <main className="flex-grow">
-        <SustainabilitySection />
-      </main>
-      <footer>
-        <Footer />
-      </footer>
+      
+      <AnimatePresence>{isLoading && <Loader />}</AnimatePresence>
+
+      {!isLoading && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.1 }} // Minimized fade-in duration
+        >
+          <header>
+            <SustainabilityHomeSlideshow setLoaded={setSlideshowLoaded} />
+          </header>
+          <main className="flex-grow">
+            <SustainabilitySection setLoaded={setSectionLoaded} />
+          </main>
+          <footer>
+            <Footer />
+          </footer>
+        </motion.div>
+      )}
     </div>
   );
 };

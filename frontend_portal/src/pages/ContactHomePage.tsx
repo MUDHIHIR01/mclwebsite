@@ -62,7 +62,7 @@ const LandingLoader: React.FC = () => {
 
   return (
     <motion.div
-      className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#0d7680] to-gray-800 z-50"
+      className="fixed inset-0 flex flex-col items-center justify-center bg-[#0A51A1] z-50"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.5 } }}
     >

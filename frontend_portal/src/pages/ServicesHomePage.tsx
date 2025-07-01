@@ -13,7 +13,14 @@ import {
   LinkIcon,
 } from "@heroicons/react/24/outline";
 
-// --- Interfaces ---
+// --- UTILITY FUNCTION ---
+const getFullImageUrl = (imagePath: string | null | undefined): string | null => {
+  if (!imagePath) return null;
+  const baseURL = axiosInstance.defaults.baseURL?.replace(/\/$/, "") || "";
+  return `${baseURL}/${imagePath.replace(/^\//, "")}`;
+};
+
+// --- INTERFACES ---
 interface ServicesHomeData {
   services_home_id: number;
   heading: string;
@@ -29,7 +36,7 @@ interface ServiceData {
   url_link: string | null;
 }
 
-// --- Full-Page Landing Loader ---
+// --- FULL-PAGE LANDING LOADER ---
 const LandingLoader: React.FC = () => {
   const loaderVariants: Variants = {
     animate: {
@@ -45,7 +52,8 @@ const LandingLoader: React.FC = () => {
 
   return (
     <motion.div
-      className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#0d7680] to-gray-800 z-50"
+      // [REFACTORED] Background color updated as requested
+      className="fixed inset-0 flex flex-col items-center justify-center bg-[#0A51A1] z-50"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.5 } }}
     >
@@ -63,7 +71,7 @@ const LandingLoader: React.FC = () => {
   );
 };
 
-// --- Services Home Slideshow ---
+// --- SERVICES HOME SLIDESHOW ---
 const ServicesHomeSlideshow: React.FC = () => {
   const [data, setData] = useState<ServicesHomeData[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -75,10 +83,14 @@ const ServicesHomeSlideshow: React.FC = () => {
     setError(null);
     try {
       const response = await axiosInstance.get<ServicesHomeData[]>("/api/servicesHomeSlider");
-      setData(Array.isArray(response.data) ? response.data : []);
+      if (Array.isArray(response.data) && response.data.length > 0) {
+        setData(response.data);
+      } else {
+        setData([]);
+      }
     } catch (err: unknown) {
       setError("Failed to fetch services sliders.");
-      toast.error("Error fetching services sliders.", { position: "top-right" });
+      toast.error("Error fetching services sliders.");
     } finally {
       setLoading(false);
     }
@@ -94,27 +106,11 @@ const ServicesHomeSlideshow: React.FC = () => {
     return () => clearInterval(interval);
   }, [data.length]);
 
-  const loaderVariants: Variants = {
-    animate: {
-      opacity: [0.5, 1, 0.5],
-      transition: { repeat: Infinity, duration: 1.5, ease: "easeInOut" },
-    },
-  };
-
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-6 bg-gray-800">
-        <motion.div variants={loaderVariants} animate="animate" className="flex items-center gap-3 mb-6">
-          <ArrowPathIcon className="w-10 h-10 text-[#0d7680] animate-spin" />
-          <h2 className="text-3xl font-bold text-white">Loading...</h2>
-        </motion.div>
-        <motion.p
-          variants={loaderVariants}
-          animate="animate"
-          className="text-lg text-gray-200"
-        >
-          Fetching slider content...
-        </motion.p>
+      <div className="flex items-center justify-center min-h-[80vh] bg-gray-800">
+        <ArrowPathIcon className="w-10 h-10 text-white animate-spin mr-4" />
+        <span className="text-2xl font-semibold text-white">Loading Slideshow...</span>
       </div>
     );
   }
@@ -123,14 +119,14 @@ const ServicesHomeSlideshow: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-6 bg-gray-800">
         <div className="flex items-center gap-3 mb-6">
-          <InformationCircleIcon className="w-10 h-10 text-[#0d7680]" />
+          <InformationCircleIcon className="w-10 h-10 text-red-400" />
           <h2 className="text-3xl font-bold text-white">{error ? "Failed to Load Content" : "No Content Available"}</h2>
         </div>
-        <p className="text-lg text-gray-200">{error || "No slides were found for this section."}</p>
+        <p className="text-lg text-gray-300 mb-6">{error || "No slides were found for this section."}</p>
         {error && (
           <button
             onClick={fetchServicesHome}
-            className="mt-6 flex items-center px-6 py-3 bg-gray-800 text-white font-semibold rounded-full hover:bg-gray-700 transition"
+            className="flex items-center px-6 py-3 bg-[#0A51A1] text-white font-semibold rounded-full hover:bg-opacity-80 transition"
           >
             <ArrowPathIcon className="w-5 h-5 mr-2" />Retry
           </button>
@@ -138,13 +134,11 @@ const ServicesHomeSlideshow: React.FC = () => {
       </div>
     );
   }
-
-  const baseURL = axiosInstance.defaults.baseURL?.replace(/\/$/, "") || "";
-  const imagePath = data[currentSlide].home_img?.replace(/^\//, "");
-  const imageSrc = imagePath ? `${baseURL}/${imagePath}` : "https://via.placeholder.com/1200x600?text=Image+Missing";
+  
+  const imageSrc = getFullImageUrl(data[currentSlide].home_img);
 
   return (
-    <section className="relative min-h-[80vh] w-full overflow-hidden bg-gray-800">
+    <section className="relative min-h-[80vh] w-full overflow-hidden bg-gray-900">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentSlide}
@@ -156,7 +150,7 @@ const ServicesHomeSlideshow: React.FC = () => {
         >
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
           <img
-            src={imageSrc}
+            src={imageSrc || "https://via.placeholder.com/1200x600?text=Image+Missing"}
             alt={data[currentSlide].heading}
             className="w-full h-full object-cover"
             onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/1200x600?text=Image+Error")}
@@ -171,7 +165,7 @@ const ServicesHomeSlideshow: React.FC = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="text-3xl md:text-5xl font-bold text-[#fff1e5] mb-4"
+            className="text-3xl md:text-5xl font-bold text-white mb-4"
           >
             {data[currentSlide].heading}
           </motion.h2>
@@ -180,9 +174,9 @@ const ServicesHomeSlideshow: React.FC = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-            className="text-xl md:text-2xl font-medium text-gray-100 mb-8"
+            className="text-xl md:text-2xl font-medium text-gray-200 mb-8"
           >
-            {data[currentSlide].description || "No description available"}
+            {data[currentSlide].description || "Comprehensive solutions tailored for you."}
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -211,88 +205,64 @@ const ServicesHomeSlideshow: React.FC = () => {
   );
 };
 
-// --- Individual Service Card Component ---
+// --- INDIVIDUAL SERVICE CARD COMPONENT ---
 const ServiceCard: React.FC<{ service: ServiceData }> = ({ service }) => {
-  const [hasImageError, setHasImageError] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const imageUrl = service.service_img ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${service.service_img.replace(/^\//, "")}` : null;
-  const showPlaceholder = hasImageError || !imageUrl;
+  const imageUrl = getFullImageUrl(service.service_img);
   const isLongDescription = service.description.length > 200;
-
-  const splitDescription = (desc: string) => {
-    const paragraphs = desc.split("\n\n").filter((p) => p.trim());
-    if (paragraphs.length <= 1) return { first: desc, rest: [] };
-    const first = paragraphs[0];
-    const rest = paragraphs.slice(1).map((p) => p.split(/[.!?]\s+/).filter((s) => s.trim()));
-    return { first, rest: rest.flat() };
-  };
-
-  const { first, rest } = splitDescription(service.description);
+  
+  // [REFACTORED] Simplified description handling for better consistency
+  const paragraphs = service.description.split(/\n\s*\n/).filter(p => p.trim());
 
   return (
     <motion.div
-      className="bg-[white] shadow-lg flex flex-col"
+      className="bg-white rounded-lg shadow-xl flex flex-col overflow-hidden"
       initial={{ opacity: 0, y: 50 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      whileHover={{ y: -12 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
     >
-      <div className="relative px-4 -mt-8 md:px-8 md:-mt-10">
-        {showPlaceholder ? (
-          <div className="w-full h-64 bg-gray-100 flex items-center justify-center shadow-md">
+      <div className="relative h-64 w-full">
+        {imageUrl ? (
+          <img
+            className="w-full h-full object-cover"
+            src={imageUrl}
+            alt={service.service_category}
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
             <WrenchScrewdriverIcon className="w-16 h-16 text-gray-300" />
           </div>
-        ) : (
-          <img
-            className="w-full h-64 object-cover shadow-md"
-            src={imageUrl!}
-            alt={service.service_category}
-            onError={() => setHasImageError(true)}
-          />
         )}
-        <span className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white text-black text-xs font-bold px-3 py-1 rounded-full uppercase">
-          {service.service_category}
-        </span>
       </div>
-      <div className="p-8 flex flex-col flex-grow text-black">
-        <h3 className="uppercase text-xl sm:text-2xl font-bold relative pb-4 mb-4 text-[#33302d]">
+      <div className="p-6 flex flex-col flex-grow">
+        <h3 className="text-xl font-bold text-[#003459] mb-3">
           {service.service_category}
-          <span className="absolute bottom-0 left-0 h-1 w-1/4 bg-[#003459]"></span>
         </h3>
-        <AnimatePresence>
+        <div className="text-gray-600 text-base flex-grow overflow-hidden">
           <motion.div
-            key={`desc-${isExpanded}`}
-            initial={{ height: isLongDescription && !isExpanded ? "6rem" : "auto", opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: "6rem", opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className={`text-gray-700 text-base font-medium flex-grow ${isLongDescription && !isExpanded ? "line-clamp-4" : ""}`}
+            animate={{ height: isLongDescription && !isExpanded ? '6rem' : 'auto' }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
           >
-            <p>{first}</p>
-            {isExpanded && rest.length > 0 && (
-              <ul className="mt-2 list-disc list-inside">
-                {rest.map((point, index) => (
-                  <li key={index}>{point}</li>
-                ))}
-              </ul>
-            )}
+            {paragraphs.map((p, i) => <p key={i} className={i > 0 ? 'mt-4' : ''}>{p}</p>)}
           </motion.div>
-        </AnimatePresence>
+        </div>
         {isLongDescription && (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="mt-2 text-[#ed1c24] font-semibold hover:text-[#0a5a60]"
+            className="mt-4 text-sm font-semibold text-[#ed1c24] hover:text-[#0a5a60] self-start"
           >
-            {isExpanded ? "Read Less" : "Read More"}
+            {isExpanded ? "Show Less" : "Show More"}
           </button>
         )}
         {service.url_link && (
-          <div className="mt-6">
+          <div className="mt-auto pt-4">
             <a
               href={service.url_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-lg font-bold text-[#ed1c24] hover:text-[#0a5a60]"
+              className="inline-flex items-center gap-2 font-bold text-[#ed1c24] hover:text-[#0a5a60] transition-colors"
             >
               Learn More
               <LinkIcon className="w-5 h-5" />
@@ -304,7 +274,7 @@ const ServiceCard: React.FC<{ service: ServiceData }> = ({ service }) => {
   );
 };
 
-// --- Services Section ---
+// --- SERVICES SECTION ---
 const ServicesSection: React.FC = () => {
   const [services, setServices] = useState<ServiceData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -318,7 +288,7 @@ const ServicesSection: React.FC = () => {
       setServices(Array.isArray(response.data.services) ? response.data.services : []);
     } catch (err: unknown) {
       setError("Could not fetch services data.");
-      toast.error("Could not fetch services data.", { position: "top-right" });
+      toast.error("Could not fetch services data.");
     } finally {
       setLoading(false);
     }
@@ -328,54 +298,45 @@ const ServicesSection: React.FC = () => {
     fetchServices();
   }, [fetchServices]);
 
-  const loaderVariants: Variants = {
-    animate: {
-      opacity: [0.5, 1, 0.5],
-      transition: { repeat: Infinity, duration: 1.5, ease: "easeInOut" },
-    },
-  };
-
   if (loading) {
     return (
-      <div className="w-full py-20 text-center">
-        <motion.div variants={loaderVariants} animate="animate">
-          <ArrowPathIcon className="w-8 h-8 mx-auto text-[#0d7680] animate-spin" />
-        </motion.div>
-      </div>
+      <section className="py-20 text-center">
+        <ArrowPathIcon className="w-10 h-10 mx-auto text-[#0A51A1] animate-spin" />
+      </section>
     );
   }
 
   if (error || services.length === 0) {
     return (
-      <div className="w-full py-20 flex flex-col items-center justify-center px-4 text-center">
+      <section className="py-20 flex flex-col items-center justify-center text-center px-4">
         <InformationCircleIcon className="w-12 h-12 mx-auto text-gray-400" />
-        <h3 className="mt-4 text-2xl font-bold text-gray-800">{error ? "Failed to Load Content" : "No Content Available"}</h3>
-        <p className="mt-2 text-gray-600">{error || "There are no services to display at the moment."}</p>
+        <h3 className="mt-4 text-2xl font-bold text-gray-800">{error ? "Error Loading Services" : "No Services Found"}</h3>
+        <p className="mt-2 text-gray-600 max-w-md">{error || "There are no services to display at the moment. Please check back later."}</p>
         {error && (
           <button
             onClick={fetchServices}
-            className="mt-6 flex items-center px-6 py-3 bg-gray-800 text-white font-semibold rounded-full hover:bg-gray-700 transition"
+            className="mt-6 flex items-center px-6 py-3 bg-[#0A51A1] text-white font-semibold rounded-full hover:bg-opacity-80 transition"
           >
             <ArrowPathIcon className="w-5 h-5 mr-2" />Retry
           </button>
         )}
-      </div>
+      </section>
     );
   }
 
   return (
-    <section className="py-16">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-[#ed1c24] inline-flex items-center">
-            <WrenchScrewdriverIcon className="w-9 h-9 mr-3" />
-            Our Services
+    <section className="py-16 bg-[#f9fafb]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#003459] tracking-tight">
+            Our Professional Services
           </h2>
           <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-            Explore the range of professional services we provide to meet your needs.
+            Explore the range of expert solutions we provide to help your business thrive.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mt-12">
+        {/* [REFACTORED] Improved responsive grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
           {services.map((service) => (
             <ServiceCard key={service.service_id} service={service} />
           ))}
@@ -385,21 +346,20 @@ const ServicesSection: React.FC = () => {
   );
 };
 
-// --- Main ServicesHomePage Component ---
+// --- MAIN SERVICESHOMEPAGE COMPONENT ---
 const ServicesHomePage: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isPageLoading, setIsPageLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate combined loading state for slideshow and services
-    const timer = setTimeout(() => setIsLoading(false), 1000); // Adjust based on actual fetch time
+    const timer = setTimeout(() => setIsPageLoading(false), 1000);
     return () => clearTimeout(timer);
   }, []);
 
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">
-      <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
+      <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick draggable pauseOnHover theme="colored" />
       <AnimatePresence>
-        {isLoading && <LandingLoader />}
+        {isPageLoading && <LandingLoader />}
       </AnimatePresence>
       <header>
         <ServicesHomeSlideshow />

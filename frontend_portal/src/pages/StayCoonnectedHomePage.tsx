@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion"; // Added Variants import for loader
 import { useState, useEffect, useCallback } from "react";
 import axiosInstance from "../axios";
 import { ToastContainer, toast } from "react-toastify";
@@ -26,6 +26,40 @@ interface StayConnectedItem {
   img_file: string;
   description: string;
 }
+
+// --- Full-Page Landing Loader ---
+const LandingLoader: React.FC = () => {
+  const loaderVariants: Variants = {
+    animate: {
+      opacity: [0.5, 1, 0.5],
+      scale: [1, 1.05, 1],
+      transition: {
+        repeat: Infinity,
+        duration: 1.5,
+        ease: "easeInOut",
+      },
+    },
+  };
+
+  return (
+    <motion.div
+      className="fixed inset-0 flex flex-col items-center justify-center bg-[#0A51A1] z-50"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.5 } }}
+    >
+      <motion.div variants={loaderVariants} animate="animate" className="mb-4">
+        <ArrowPathIcon className="w-16 h-16 text-white animate-spin" />
+      </motion.div>
+      <motion.h2
+        variants={loaderVariants}
+        animate="animate"
+        className="text-2xl font-bold text-white"
+      >
+        Loading Stay Connected Page...
+      </motion.h2>
+    </motion.div>
+  );
+};
 
 // --- Stay Connected Home Slideshow ---
 const StayConnectedHomeSlideshow: React.FC = () => {
@@ -160,7 +194,7 @@ const StayConnectedHomeSlideshow: React.FC = () => {
   );
 };
 
-// --- Individual Stay Connected Card --- [MODIFIED]
+// --- Individual Stay Connected Card ---
 const StayConnectedCard: React.FC<{ item: StayConnectedItem }> = ({ item }) => {
   const [hasImageError, setHasImageError] = useState(false);
   const imageUrl = item.img_file ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${item.img_file.replace(/^\//, "")}` : null;
@@ -291,9 +325,20 @@ const StayConnectedSection: React.FC = () => {
 
 // --- Main StayConnectedPage Component ---
 const StayConnectedPage: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate combined loading state for slideshow and section
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1000); // Adjust based on actual fetch time
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">
       <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
+      <AnimatePresence>
+        {isLoading && <LandingLoader />}
+      </AnimatePresence>
       <header>
         <StayConnectedHomeSlideshow />
       </header>

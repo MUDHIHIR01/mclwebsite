@@ -36,10 +36,10 @@ interface LeadershipResponse {
 // Full-page loader component
 const Loader: React.FC = () => (
   <motion.div
-    className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#0d7680] to-gray-800 z-50"
+    className="fixed inset-0 flex flex-col items-center justify-center bg-[#0A51A1] z-50"
     initial={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    transition={{ duration: 0.5 }}
+    transition={{ duration: 0.1 }} // Minimized fade duration
   >
     <motion.div
       animate={{ opacity: [0.5, 1, 0.5], scale: [1, 1.05, 1] }}
@@ -115,7 +115,7 @@ const LeadershipHomeSlideshow: React.FC<{ setLoading: (loading: boolean) => void
       setError("Failed to fetch leadership slider data.");
       toast.error("Error fetching leadership slider data.");
     } finally {
-      setLoading(true);
+      setLoading(false);
     }
   }, [setLoading]);
 
@@ -256,7 +256,6 @@ const LeadershipCard: React.FC<{ leader: LeadershipData; index: number }> = ({ l
         transition={{ duration: 0.6, ease: "easeOut" }}
         whileHover={{ y: -8, transition: { duration: 0.2 } }}
       >
-        {/* Image container with a fixed aspect ratio to ensure all images are viewed */}
         <div className="relative aspect-w-4 aspect-h-3 bg-gray-100 flex items-center justify-center">
           <img
             className="w-full h-full object-contain object-center cursor-pointer"
@@ -275,7 +274,6 @@ const LeadershipCard: React.FC<{ leader: LeadershipData; index: number }> = ({ l
             {index + 1}. {leader.position}
           </span>
         </div>
-        {/* Content container that grows to fill remaining space, ensuring equal card height */}
         <div className="p-6 flex flex-col flex-grow">
           <h3 className="text-xl font-bold text-[#003459] mb-2">{leader.leader_name}</h3>
           <p className="text-gray-700 text-base font-medium line-clamp-4">
@@ -295,7 +293,6 @@ const LeadershipCard: React.FC<{ leader: LeadershipData; index: number }> = ({ l
     </>
   );
 };
-
 
 // Leadership section with filter buttons
 const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = ({ setLoading }) => {
@@ -327,7 +324,7 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
         }, 2000);
       }
     } finally {
-      setLoading(true);
+      setLoading(false);
     }
   }, [setLoading, retryCount]);
 
@@ -404,7 +401,6 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
             All
           </button>
         </div>
-
         <AnimatePresence mode="wait">
           <motion.div
             key={filter}
@@ -450,7 +446,6 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
   );
 };
 
-
 // Main leadership page component
 const LeadershipHomePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -466,10 +461,10 @@ const LeadershipHomePage: React.FC = () => {
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (isLoading) {
-        console.warn("Loader timeout: Forcing loader to hide after 10 seconds");
+        console.warn("Loader timeout: Forcing loader to hide after 3 seconds");
         setIsLoading(false);
       }
-    }, 10000);
+    }, 3000);
     return () => clearTimeout(timeout);
   }, [isLoading]);
 
@@ -487,7 +482,7 @@ const LeadershipHomePage: React.FC = () => {
       />
       <AnimatePresence>{isLoading && <Loader />}</AnimatePresence>
       {!isLoading && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.1 }}>
           <header>
             <LeadershipHomeSlideshow setLoading={setSlideshowLoaded} />
           </header>

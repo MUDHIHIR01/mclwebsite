@@ -16,7 +16,6 @@ interface AboutSliderData {
   home_img: string | null;
 }
 
-// New interface for the /api/about-mwananchi/all response
 interface MwananchiAboutData {
   id: number;
   category: string;
@@ -36,6 +35,7 @@ interface AboutCardData {
 
 // --- COMPONENTS ---
 
+// [REFACTORED] The loading screen now has the requested background color.
 const LandingLoader: React.FC = () => {
   const loaderVariants: Variants = {
     animate: {
@@ -51,7 +51,7 @@ const LandingLoader: React.FC = () => {
 
   return (
     <motion.div
-      className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#0d7680] to-gray-800 z-50"
+      className="fixed inset-0 flex flex-col items-center justify-center bg-[#0A51A1] z-50"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.5 } }}
     >
@@ -192,7 +192,7 @@ const AboutHeroSection: React.FC = () => {
   );
 };
 
-// --- REFACTORED DYNAMIC "ABOUT US" SECTION ---
+// --- [REFACTORED] "ABOUT US" SECTION WITH VIDEO ON LEFT AND CONTENT ON RIGHT ---
 const AboutMwananchiSection: React.FC = () => {
   const [content, setContent] = useState<MwananchiAboutData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -223,8 +223,8 @@ const AboutMwananchiSection: React.FC = () => {
 
   if (loading) {
     return (
-      <section className="py-16 bg-[#fafaf1]">
-        <div className="max-w-4xl mx-auto px-4 text-center">
+      <section className="py-20 lg:py-24 bg-[#fafaf1]">
+        <div className="max-w-7xl mx-auto px-4 text-center">
           <div className="animate-pulse">
             <div className="h-10 bg-gray-300 rounded-md w-1/3 mx-auto mb-6"></div>
             <div className="h-8 bg-gray-300 rounded-md w-1/2 mx-auto mb-4"></div>
@@ -239,7 +239,7 @@ const AboutMwananchiSection: React.FC = () => {
 
   if (error || !content) {
     return (
-      <section className="py-16 bg-[#fafaf1]">
+      <section className="py-20 lg:py-24 bg-[#fafaf1]">
         <div className="max-w-4xl mx-auto px-4 text-center text-gray-700">
           <InformationCircleIcon className="w-12 h-12 mx-auto text-red-500 mb-4" />
           <h2 className="text-2xl font-bold mb-2">Failed to Load Content</h2>
@@ -253,58 +253,69 @@ const AboutMwananchiSection: React.FC = () => {
     );
   }
 
-  // Split description by double newlines to create paragraphs
   const paragraphs = content.description.split(/\n\s*\n/);
 
   return (
-    <section className="py-16 bg-[#fafaf1]">
-      <div className="max-w-4xl mx-auto px-4 text-center">
-        <motion.h2
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="text-3xl sm:text-4xl font-bold text-[#ed1c24] mb-6"
-        >
-          About Us
-        </motion.h2>
-        <motion.h3
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-          className="text-2xl font-semibold text-[#003459] mb-4"
-        >
-          {content.category}
-        </motion.h3>
-        {paragraphs.map((paragraph, index) => (
-          <motion.p
-            key={index}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 + index * 0.2 }}
-            className="text-lg text-gray-700 leading-relaxed mt-4"
-          >
-            {paragraph}
-          </motion.p>
-        ))}
-         {content.video_link && (
-             <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: "easeOut", delay: 0.8 }}
-                className="mt-12"
-             >
-                <div className="aspect-w-16 aspect-h-9 shadow-lg rounded-lg overflow-hidden bg-black">
+    <section className="py-20 lg:py-24 bg-[#fafaf1]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          
+          {/* Left Column: Video. Only renders if video_link exists. */}
+          {content.video_link && (
+            <motion.div
+              // [MODIFIED] Height increased to 500px
+              className="w-full h-[500px]"
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            >
+              {/* [MODIFIED] Shadow removed from this div */}
+              <div className="w-full h-full rounded-lg overflow-hidden bg-black">
+                <div className="aspect-w-16 aspect-h-9 h-full">
                     <iframe
-                        src={content.video_link}
-                        title={`About ${content.category}`}
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        className="w-full h-full"
+                      src={content.video_link}
+                      title={`About ${content.category}`}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="w-full h-full"
                     ></iframe>
                 </div>
-             </motion.div>
-        )}
+              </div>
+            </motion.div>
+          )}
+          
+          {/* Right Column: Content. Spans full width and centers if no video. */}
+          <div className={!content.video_link ? 'lg:col-span-2 text-center' : 'text-left'}>
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="text-3xl sm:text-4xl font-bold text-[#ed1c24] mb-6"
+            >
+              About Us
+            </motion.h2>
+            <motion.h3
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
+              className="text-2xl font-semibold text-[#003459] mb-4"
+            >
+              {content.category}
+            </motion.h3>
+            {paragraphs.map((paragraph, index) => (
+              <motion.p
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 + index * 0.1 }}
+                className="text-lg text-gray-700 leading-relaxed mt-4"
+              >
+                {paragraph}
+              </motion.p>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -395,7 +406,7 @@ const AboutContentSection: React.FC = () => {
         </div>
         {loading ? (
           <div className="text-center mt-12">
-            <ArrowPathIcon className="w-8 h-8 mx-auto text-white animate-spin" />
+            <ArrowPathIcon className="w-8 h-8 mx-auto text-gray-800 animate-spin" />
           </div>
         ) : cards.length ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16 mt-12">
@@ -436,7 +447,7 @@ const AboutContentSection: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center mt-12 text-white">
+          <div className="text-center mt-12 text-gray-800">
             <InformationCircleIcon className="w-12 h-12 mx-auto text-gray-400" />
             <p className="mt-4 text-lg">No highlights found at this time.</p>
           </div>
@@ -469,12 +480,8 @@ const AboutPage: React.FC = () => {
         <AboutHeroSection />
       </header>
       <main className="flex-grow">
-        {/* The new dynamic section is used here */}
         <AboutMwananchiSection />
-        {/* The background of this section was not specified, so I've added a dark one for contrast. */}
-        <div className="bg-gray-800">
-           <AboutContentSection />
-        </div>
+        <AboutContentSection />
       </main>
       <footer>
         <Footer />
@@ -484,6 +491,3 @@ const AboutPage: React.FC = () => {
 };
 
 export default AboutPage;
-
-
-

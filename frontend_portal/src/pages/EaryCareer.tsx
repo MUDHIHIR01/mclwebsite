@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion"; // Added Variants import for loader
 import { useState, useEffect, useCallback } from "react";
 import axiosInstance from "../axios";
 import { ToastContainer, toast } from "react-toastify";
@@ -14,7 +14,7 @@ import {
 
 // --- Interfaces for Early Careers ---
 interface EarlyCareerHomeData {
-  earycare_id: number;
+  earycare_id: number; // Note: Typo in original code, should be earlycare_id
   heading: string;
   description: string;
   home_img: string;
@@ -27,6 +27,40 @@ interface EarlyCareer {
   video_file: string | null;
   description: string;
 }
+
+// --- Full-Page Landing Loader ---
+const LandingLoader: React.FC = () => {
+  const loaderVariants: Variants = {
+    animate: {
+      opacity: [0.5, 1, 0.5],
+      scale: [1, 1.05, 1],
+      transition: {
+        repeat: Infinity,
+        duration: 1.5,
+        ease: "easeInOut",
+      },
+    },
+  };
+
+  return (
+    <motion.div
+      className="fixed inset-0 flex flex-col items-center justify-center bg-[#0A51A1] z-50"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.5 } }}
+    >
+      <motion.div variants={loaderVariants} animate="animate" className="mb-4">
+        <ArrowPathIcon className="w-16 h-16 text-white animate-spin" />
+      </motion.div>
+      <motion.h2
+        variants={loaderVariants}
+        animate="animate"
+        className="text-2xl font-bold text-white"
+      >
+        Loading Early Careers Page...
+      </motion.h2>
+    </motion.div>
+  );
+};
 
 // --- Early Careers Home Slideshow ---
 const EarlyCareersHomeSlideshow: React.FC = () => {
@@ -285,9 +319,20 @@ const EarlyCareersSection: React.FC = () => {
 
 // --- Main EarlyCareersPage Component ---
 const EarlyCareersPage: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate combined loading state for slideshow and section
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1000); // Adjust based on actual fetch time
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">
       <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
+      <AnimatePresence>
+        {isLoading && <LandingLoader />}
+      </AnimatePresence>
       <header>
         <EarlyCareersHomeSlideshow />
       </header>
