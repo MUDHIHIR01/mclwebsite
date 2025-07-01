@@ -75,24 +75,33 @@ const getNavItemsForRole = (roleId: number) => {
       ),
       subItems: [{ name: "View Logs", path: "/user-logs" }],
     },
-     {
-      name: "Brands",
-      icon: (
-        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-orange-600 text-white">
-          ℹ️ {/* Info icon for about us */}
-        </span>
-      ),
-      subItems: [{ name: "Our Brand", path: "/brands" }],
-    },
     {
-      name: "About Us",
-      icon: (
-        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-orange-600 text-white">
-          ℹ️ {/* Info icon for about us */}
-        </span>
-      ),
-      subItems: [{ name: "Home Page", path: "/about" }],
-    },
+    name: "Brands",
+    icon: (
+      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white">
+        🏷️ {/* Tag icon for brands */}
+      </span>
+    ),
+    subItems: [{ name: "Our Brand", path: "/brands" }],
+  },
+  {
+    name: "About Mwananchi",
+    icon: (
+      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white">
+        ℹ️ {/* Info icon for about us */}
+      </span>
+    ),
+    subItems: [{ name: "Manage", path: "/about-mwananchi" }],
+  },
+  {
+    name: "AboutUs Home",
+    icon: (
+      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-600 text-white">
+        🏠 {/* Home icon for about us home */}
+      </span>
+    ),
+    subItems: [{ name: "Home Page", path: "/about" }],
+  },
     {
       name: "Company",
       icon: (

@@ -14,7 +14,7 @@ interface EventData {
   eventCategory: string;
   description: string | null;
   imgFile: string | null;
-  videoFile: string | null;
+  videoLink: string | null;
   createdAt: string;
 }
 
@@ -24,7 +24,7 @@ interface EventApiResponse {
     event_category: string;
     description: string | null;
     img_file: string | null;
-    video_file: string | null;
+    video_link: string | null;
     created_at: string;
   }[];
 }
@@ -37,11 +37,26 @@ interface ActionButtonsProps {
 
 type MediaType = 'image' | 'video';
 
-// Helper Function
+// Helper Functions
 const constructFileUrl = (filePath: string | null): string | null => {
   if (!filePath) return null;
   const baseUrl = axiosInstance.defaults.baseURL?.replace(/\/$/, '') || '';
   return `${baseUrl}/${filePath.replace(/^\//, '')}`;
+};
+
+const getYouTubeEmbedUrl = (url: string | null): string | null => {
+  if (!url) return null;
+  try {
+    // Handle both youtu.be and youtube.com URLs
+    const regex = /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const match = url.match(regex);
+    if (match && match[1]) {
+      return `https://www.youtube.com/embed/${match[1]}`;
+    }
+    return url; // Return original URL if not a YouTube link
+  } catch {
+    return url; // Fallback to original URL if parsing fails
+  }
 };
 
 // Sub-Components
@@ -122,34 +137,41 @@ const DescriptionCell: React.FC<{ value: string | null }> = ({ value }) => {
   );
 };
 
-const MediaModal: React.FC<{ url: string; type: MediaType; onClose: () => void }> = ({ url, type, onClose }) => (
-  <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50" onClick={onClose}>
-    <div className="relative bg-white rounded-lg p-4 w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
-      <button
-        onClick={onClose}
-        className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
-        aria-label="Close media modal"
-      >
-        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-      {type === 'image' ? (
-        <img
-          src={url}
-          alt="Full-size event image"
-          className="w-full h-auto max-h-[80vh] object-contain rounded"
-          onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/300x300?text=Error')}
-        />
-      ) : (
-        <video controls className="w-full h-auto max-h-[80vh] rounded">
-          <source src={url} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-      )}
+const MediaModal: React.FC<{ url: string; type: MediaType; onClose: () => void }> = ({ url, type, onClose }) => {
+  const embedUrl = type === 'video' ? getYouTubeEmbedUrl(url) : url;
+
+  return (
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="relative bg-white rounded-lg p-4 w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
+          aria-label="Close media modal"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        {type === 'image' ? (
+          <img
+            src={url}
+            alt="Full-size event image"
+            className="w-full h-auto max-h-[80vh] object-contain rounded"
+            onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/300x300?text=Error')}
+          />
+        ) : (
+          <iframe
+            src={embedUrl || url}
+            className="w-full h-[80vh] rounded"
+            title="Event video"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Main Component
 const OurEvents: React.FC = () => {
@@ -164,7 +186,7 @@ const OurEvents: React.FC = () => {
       eventCategory: event.event_category,
       description: event.description ?? null,
       imgFile: event.img_file ?? null,
-      videoFile: event.video_file ?? null,
+      videoLink: event.video_link ?? null,
       createdAt: event.created_at,
     }));
   }, []);
@@ -220,13 +242,12 @@ const OurEvents: React.FC = () => {
       },
       {
         Header: 'Video',
-        accessor: 'videoFile',
+        accessor: 'videoLink',
         Cell: ({ value }: { value: string | null }) => {
-          const videoUrl = constructFileUrl(value);
-          if (!videoUrl) return <span className="text-gray-500 text-xs">No Video</span>;
+          if (!value) return <span className="text-gray-500 text-xs">No Video</span>;
           return (
             <button
-              onClick={() => setSelectedMedia({ url: videoUrl, type: 'video' })}
+              onClick={() => setSelectedMedia({ url: value, type: 'video' })}
               className="text-blue-500 hover:text-blue-600 hover:underline text-sm font-medium"
               aria-label="View event video"
             >
@@ -331,7 +352,7 @@ const OurEvents: React.FC = () => {
           <div className="flex gap-2">
             <button
               onClick={exportToPDF}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
               aria-label="Export events to PDF"
             >
               Export PDF
@@ -368,7 +389,7 @@ const OurEvents: React.FC = () => {
                   return (
                     <tr {...row.getRowProps()} className="hover:bg-gray-50 transition-colors">
                       {row.cells.map((cell) => (
-                        <td {...cell.getCellProps()} className="px-4 py-4 align-top">
+                        <td {...cell.getCellProps()} className="px preoccupation-top">
                           {cell.render('Cell')}
                         </td>
                       ))}

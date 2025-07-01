@@ -50,6 +50,8 @@ use App\Http\Controllers\EarycareHomeController;
 use App\Http\Controllers\EarlyCareersController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\AboutMwananchiController;
+
 
 
 // Public Routes
@@ -116,6 +118,7 @@ Route::get('/leadershipHomeSlider', [LeadershipHomeController::class, 'leadershi
       Route::get('/allBrands', [BrandController::class, 'allBrands']);
       Route::get('/latestService', [ServicesHomeController::class, 'latestService']);
         Route::get('/all-events', [EventController::class, 'allEvents']);
+     Route::get('/about-mwananchi/all', [AboutMwananchiController::class, 'allRecords']);
 
 // Protected Routes
 Route::middleware(['auth:sanctum', 'token.expiration'])->group(function () {
@@ -236,7 +239,13 @@ Route::prefix('about')->group(function () {
     Route::get('/dropdown', [AboutController::class, 'getDropdownOptions']); // Dropdown options
 });
 
-
+  Route::get('/about-mwananchi', [AboutMwananchiController::class, 'index']);
+  Route::get('/about-mwananchi/count', [AboutMwananchiController::class, 'countRecords']);
+  Route::get('/about-mwananchi/latest', [AboutMwananchiController::class, 'latestRecord']);
+  Route::get('/about-mwananchi/{id}', [AboutMwananchiController::class, 'show']);
+  Route::post('/about-mwananchi', [AboutMwananchiController::class, 'store']);
+  Route::post('/about-mwananchi/{id}', [AboutMwananchiController::class, 'update']);
+  Route::delete('/about-mwananchi/{id}', [AboutMwananchiController::class, 'destroy']);
 
 
 Route::get('/leadership-homes', [LeadershipHomeController::class, 'index']);

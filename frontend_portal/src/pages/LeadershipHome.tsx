@@ -65,14 +65,14 @@ const LeaderImageModal: React.FC<{ imageUrl: string; altText: string; onClose: (
   onClose,
 }) => (
   <motion.div
-    className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+    className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
     onClick={onClose}
   >
     <motion.div
-      className="relative bg-white rounded-lg p-4 max-w-3xl w-full mx-4"
+      className="relative bg-white rounded-lg p-4 max-w-3xl w-full"
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       exit={{ scale: 0.8, opacity: 0 }}
@@ -109,7 +109,6 @@ const LeadershipHomeSlideshow: React.FC<{ setLoading: (loading: boolean) => void
   const fetchSlides = useCallback(async () => {
     try {
       const response = await axiosInstance.get<LeadershipHomeData[]>("/api/leadershipHomeSlider");
-      console.log("Slider API response:", response.data);
       setSlides(Array.isArray(response.data) ? response.data : []);
     } catch (err: any) {
       console.error("Slider fetch error:", err.message);
@@ -151,7 +150,7 @@ const LeadershipHomeSlideshow: React.FC<{ setLoading: (loading: boolean) => void
     );
   }
 
-  const imageUrl = slides[currentSlide].home_img
+  const imageUrl = slides[currentSlide]?.home_img
     ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${slides[currentSlide].home_img.replace(/^\//, "")}`
     : "https://via.placeholder.com/1200x600?text=Image+Missing";
 
@@ -241,7 +240,7 @@ const LeadershipHomeSlideshow: React.FC<{ setLoading: (loading: boolean) => void
 // Individual leader card component
 const LeadershipCard: React.FC<{ leader: LeadershipData; index: number }> = ({ leader, index }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const defaultImage = "https://via.placeholder.com/400x200?text=Default+Leader+Image";
+  const defaultImage = "https://via.placeholder.com/400x300?text=Leader+Image";
   const imageUrl = leader.leader_image
     ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${leader.leader_image.replace(/^\//, "")}`
     : defaultImage;
@@ -251,15 +250,16 @@ const LeadershipCard: React.FC<{ leader: LeadershipData; index: number }> = ({ l
   return (
     <>
       <motion.div
-        className="bg-white shadow-lg flex flex-col rounded-lg overflow-hidden"
+        className="bg-white shadow-lg flex flex-col rounded-lg overflow-hidden h-full"
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        whileHover={{ y: -8 }}
+        whileHover={{ y: -8, transition: { duration: 0.2 } }}
       >
-        <div className="relative h-80 flex items-center justify-center">
+        {/* Image container with a fixed aspect ratio to ensure all images are viewed */}
+        <div className="relative aspect-w-4 aspect-h-3 bg-gray-100 flex items-center justify-center">
           <img
-            className="w-full h-full object-contain object-center"
+            className="w-full h-full object-contain object-center cursor-pointer"
             src={imageUrl}
             alt={leader.leader_name}
             onClick={() => setIsModalOpen(true)}
@@ -275,9 +275,10 @@ const LeadershipCard: React.FC<{ leader: LeadershipData; index: number }> = ({ l
             {index + 1}. {leader.position}
           </span>
         </div>
-        <div className="p-6 flex flex-col flex-grow text-black">
+        {/* Content container that grows to fill remaining space, ensuring equal card height */}
+        <div className="p-6 flex flex-col flex-grow">
           <h3 className="text-xl font-bold text-[#003459] mb-2">{leader.leader_name}</h3>
-          <p className="text-gray-700 text-base font-medium flex-grow line-clamp-4">
+          <p className="text-gray-700 text-base font-medium line-clamp-4">
             {leader.description || "No description available"}
           </p>
         </div>
@@ -295,6 +296,7 @@ const LeadershipCard: React.FC<{ leader: LeadershipData; index: number }> = ({ l
   );
 };
 
+
 // Leadership section with filter buttons
 const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = ({ setLoading }) => {
   const [leaders, setLeaders] = useState<LeadershipData[]>([]);
@@ -305,19 +307,14 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
   const fetchLeaders = useCallback(async () => {
     try {
       const response = await axiosInstance.get<LeadershipResponse>("/api/allLeadership");
-      console.log("Leadership API response:", response.data);
       if (response.data && Array.isArray(response.data.leadership)) {
-        // Sort by leadership_id for consistent top-to-bottom order
         const sortedLeaders = response.data.leadership.sort((a, b) => a.leadership_id - b.leadership_id);
         setLeaders(sortedLeaders);
         if (sortedLeaders.length === 0) {
-          console.warn("Leadership API returned empty array");
           setError("No leadership team data available.");
         }
       } else {
-        console.error("Unexpected response format:", response.data);
-        setError("Invalid leadership data format.");
-        toast.error("Invalid leadership data format.");
+        throw new Error("Invalid leadership data format.");
       }
     } catch (err: any) {
       console.error("Leadership fetch error:", err.message);
@@ -326,7 +323,6 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
       if (retryCount < 3) {
         setTimeout(() => {
           setRetryCount((prev) => prev + 1);
-          console.log(`Retrying fetch attempt ${retryCount + 2}`);
           fetchLeaders();
         }, 2000);
       }
@@ -340,15 +336,17 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
   }, [fetchLeaders]);
 
   const filteredLeaders = filter === "All" ? leaders : leaders.filter((leader) => leader.level === filter);
+  const boardLeaders = leaders.filter((leader) => leader.level === "Board of Directors");
+  const managementLeaders = leaders.filter((leader) => leader.level === "Management");
 
-  if (error || leaders.length === 0) {
+  if (error && leaders.length === 0) {
     return (
       <div className="w-full py-20 flex flex-col items-center justify-center px-4 text-center">
         <InformationCircleIcon className="w-12 h-12 mx-auto text-gray-400" />
         <h3 className="mt-4 text-2xl font-bold text-[#003459]">
           {error ? "Failed to Load Content" : "No Content Available"}
         </h3>
-        <p className="mt-2 text-gray-600">{error || "There is no leadership team to display at the moment."}</p>
+        <p className="mt-2 text-gray-600">{error}</p>
         <button
           onClick={() => {
             setError(null);
@@ -366,7 +364,7 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
 
   return (
     <section className="py-16 bg-[#fafaf1]">
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <motion.h2
             initial={{ opacity: 0, y: 30 }}
@@ -377,14 +375,14 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
             Our Leadership
           </motion.h2>
           <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-            Meet the dedicated team guiding our company bioprospecting company forward.
+            Meet the dedicated team guiding our company forward.
           </p>
         </div>
-        <div className="flex justify-center gap-4 mb-8">
+        <div className="flex justify-center flex-wrap gap-4 mb-12">
           <button
             onClick={() => setFilter("Board of Directors")}
             className={`px-6 py-2 rounded-full font-semibold transition ${
-              filter === "Board of Directors" ? "bg-[#ed1c24] text-white" : "bg-[#003459] text-white hover:bg-[#0a5a60]"
+              filter === "Board of Directors" ? "bg-[#ed1c24] text-white shadow-lg" : "bg-[#003459] text-white hover:bg-[#0a5a60]"
             }`}
           >
             Board of Directors
@@ -392,7 +390,7 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
           <button
             onClick={() => setFilter("Management")}
             className={`px-6 py-2 rounded-full font-semibold transition ${
-              filter === "Management" ? "bg-[#ed1c24] text-white" : "bg-[#003459] text-white hover:bg-[#0a5a60]"
+              filter === "Management" ? "bg-[#ed1c24] text-white shadow-lg" : "bg-[#003459] text-white hover:bg-[#0a5a60]"
             }`}
           >
             Management
@@ -400,46 +398,58 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
           <button
             onClick={() => setFilter("All")}
             className={`px-6 py-2 rounded-full font-semibold transition ${
-              filter === "All" ? "bg-[#ed1c24] text-white" : "bg-[#003459] text-white hover:bg-[#0a5a60]"
+              filter === "All" ? "bg-[#ed1c24] text-white shadow-lg" : "bg-[#003459] text-white hover:bg-[#0a5a60]"
             }`}
           >
             All
           </button>
         </div>
-        {filter === "All" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto">
-            <div>
-              <h3 className="text-2xl font-bold text-[#003459] mb-6 text-center">Board of Directors</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                {leaders
-                  .filter((leader) => leader.level === "Board of Directors")
-                  .map((leader, index) => (
-                    <LeadershipCard key={leader.leadership_id} leader={leader} index={index} />
-                  ))}
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={filter}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5 }}
+          >
+            {filter === "All" ? (
+              <div className="space-y-16">
+                {boardLeaders.length > 0 && (
+                  <div>
+                    <h3 className="text-3xl font-bold text-[#003459] mb-8 text-center">Board of Directors</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {boardLeaders.map((leader, index) => (
+                        <LeadershipCard key={leader.leadership_id} leader={leader} index={index} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {managementLeaders.length > 0 && (
+                  <div>
+                    <h3 className="text-3xl font-bold text-[#003459] mt-16 mb-8 text-center">Management</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {managementLeaders.map((leader, index) => (
+                        <LeadershipCard key={leader.leadership_id} leader={leader} index={index} />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold text-[#003459] mb-6 text-center">Management</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                {leaders
-                  .filter((leader) => leader.level === "Management")
-                  .map((leader, index) => (
-                    <LeadershipCard key={leader.leadership_id} leader={leader} index={index} />
-                  ))}
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredLeaders.map((leader, index) => (
+                  <LeadershipCard key={leader.leadership_id} leader={leader} index={index} />
+                ))}
               </div>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl mx-auto">
-            {filteredLeaders.map((leader, index) => (
-              <LeadershipCard key={leader.leadership_id} leader={leader} index={index} />
-            ))}
-          </div>
-        )}
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </section>
   );
 };
+
 
 // Main leadership page component
 const LeadershipHomePage: React.FC = () => {
@@ -449,7 +459,6 @@ const LeadershipHomePage: React.FC = () => {
 
   useEffect(() => {
     if (slideshowLoaded && sectionLoaded) {
-      console.log("Both components loaded, hiding loader");
       setIsLoading(false);
     }
   }, [slideshowLoaded, sectionLoaded]);
@@ -467,8 +476,8 @@ const LeadershipHomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">
       <ToastContainer
-        position="top-left"
-        autoClose={3000}
+        position="top-right"
+        autoClose={4000}
         newestOnTop
         closeOnClick
         pauseOnFocusLoss
@@ -477,13 +486,17 @@ const LeadershipHomePage: React.FC = () => {
         theme="colored"
       />
       <AnimatePresence>{isLoading && <Loader />}</AnimatePresence>
-      <header>
-        <LeadershipHomeSlideshow setLoading={setSlideshowLoaded} />
-      </header>
-      <main className="flex-grow">
-        <LeadershipSection setLoading={setSectionLoaded} />
-      </main>
-      <Footer />
+      {!isLoading && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+          <header>
+            <LeadershipHomeSlideshow setLoading={setSlideshowLoaded} />
+          </header>
+          <main className="flex-grow">
+            <LeadershipSection setLoading={setSectionLoaded} />
+          </main>
+          <Footer />
+        </motion.div>
+      )}
     </div>
   );
 };

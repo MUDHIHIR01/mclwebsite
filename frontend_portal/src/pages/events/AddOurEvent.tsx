@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
@@ -8,14 +8,14 @@ interface FormData {
   event_category: string;
   description: string;
   img_file: File | null;
-  video_file: File | null;
+  video_link: string;
 }
 
 interface Errors {
   event_category: string;
   description: string;
   img_file: string;
-  video_file: string;
+  video_link: string;
 }
 
 const AddOurEvent: React.FC = () => {
@@ -24,13 +24,13 @@ const AddOurEvent: React.FC = () => {
     event_category: '',
     description: '',
     img_file: null,
-    video_file: null,
+    video_link: '',
   });
   const [errors, setErrors] = useState<Errors>({
     event_category: '',
     description: '',
     img_file: '',
-    video_file: '',
+    video_link: '',
   });
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -52,7 +52,7 @@ const AddOurEvent: React.FC = () => {
       event_category: '',
       description: '',
       img_file: '',
-      video_file: '',
+      video_link: '',
     };
 
     if (!formData.event_category.trim()) {
@@ -73,11 +73,11 @@ const AddOurEvent: React.FC = () => {
       }
     }
 
-    if (formData.video_file) {
-      if (!['video/mp4', 'video/avi', 'video/quicktime'].includes(formData.video_file.type)) {
-        newErrors.video_file = 'Only MP4, AVI, or MOV files are allowed';
-      } else if (formData.video_file.size > 10 * 1024 * 1024) {
-        newErrors.video_file = 'Video size must not exceed 10MB';
+    if (formData.video_link) {
+      try {
+        new URL(formData.video_link);
+      } catch {
+        newErrors.video_link = 'Please enter a valid URL';
       }
     }
 
@@ -97,8 +97,8 @@ const AddOurEvent: React.FC = () => {
       if (formData.img_file) {
         payload.append('img_file', formData.img_file);
       }
-      if (formData.video_file) {
-        payload.append('video_file', formData.video_file);
+      if (formData.video_link) {
+        payload.append('video_link', formData.video_link);
       }
 
       const response = await axiosInstance.post('/api/events', payload, {
@@ -116,7 +116,7 @@ const AddOurEvent: React.FC = () => {
         event_category: backendErrors.event_category || '',
         description: backendErrors.description || '',
         img_file: backendErrors.img_file || '',
-        video_file: backendErrors.video_file || '',
+        video_link: backendErrors.video_link || '',
       }));
       toast.error(errorMessage, { position: 'top-right' });
     } finally {
@@ -199,26 +199,24 @@ const AddOurEvent: React.FC = () => {
             </p>
           </div>
           <div>
-            <label htmlFor="video_file" className="block text-sm font-medium text-gray-700">
-              Video File (optional)
+            <label htmlFor="video_link" className="block text-sm font-medium text-gray-700">
+              Video Link (optional)
             </label>
             <input
-              type="file"
-              id="video_file"
-              name="video_file"
-              accept="video/mp4,video/avi,video/quicktime"
-              onChange={handleFileChange}
-              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-              aria-describedby={errors.video_file ? 'video_file-error' : 'video_file-info'}
+              type="url"
+              id="video_link"
+              name="video_link"
+              value={formData.video_link}
+              onChange={handleChange}
+              className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 sm:p-3 lg:p-4 text-sm sm:text-base"
+              placeholder="Enter video URL"
+              aria-describedby={errors.video_link ? 'video_link-error' : undefined}
             />
-            {errors.video_file && (
-              <p id="video_file-error" className="mt-1 text-sm text-red-500">
-                {errors.video_file}
+            {errors.video_link && (
+              <p id="video_link-error" className="mt-1 text-sm text-red-500">
+                {errors.video_link}
               </p>
             )}
-            <p id="video_file-info" className="mt-1 text-xs text-gray-500">
-              Max file size: 10MB. Allowed types: MP4, AVI, MOV.
-            </p>
           </div>
           <div className="flex flex-col sm:flex-row justify-end gap-4">
             <button

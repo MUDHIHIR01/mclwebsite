@@ -8,14 +8,14 @@ interface FormData {
   event_category: string;
   description: string;
   img_file: File | null;
-  video_file: File | null;
+  video_link: string;
 }
 
 interface FormErrors {
   event_category?: string;
   description?: string;
   img_file?: string;
-  video_file?: string;
+  video_link?: string;
 }
 
 const EditOurEvent: React.FC = () => {
@@ -26,10 +26,10 @@ const EditOurEvent: React.FC = () => {
     event_category: '',
     description: '',
     img_file: null,
-    video_file: null,
+    video_link: '',
   });
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  const [currentVideo, setCurrentVideo] = useState<string | null>(null);
+  const [currentVideoLink, setCurrentVideoLink] = useState<string | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -47,10 +47,10 @@ const EditOurEvent: React.FC = () => {
           event_category: eventData?.event_category || '',
           description: eventData?.description || '',
           img_file: null,
-          video_file: null,
+          video_link: eventData?.video_link || '',
         });
         setCurrentImage(eventData?.img_file || null);
-        setCurrentVideo(eventData?.video_file || null);
+        setCurrentVideoLink(eventData?.video_link || null);
       } catch (error) {
         toast.error('Failed to fetch the event record.');
         console.error("Fetch error:", error);
@@ -98,11 +98,11 @@ const EditOurEvent: React.FC = () => {
       }
     }
 
-    if (formData.video_file) {
-      if (!['video/mp4', 'video/avi', 'video/quicktime'].includes(formData.video_file.type)) {
-        newErrors.video_file = 'Only MP4, AVI, or MOV files are allowed';
-      } else if (formData.video_file.size > 10 * 1024 * 1024) {
-        newErrors.video_file = 'Video size must not exceed 10MB';
+    if (formData.video_link) {
+      try {
+        new URL(formData.video_link);
+      } catch {
+        newErrors.video_link = 'Please enter a valid URL';
       }
     }
 
@@ -124,12 +124,12 @@ const EditOurEvent: React.FC = () => {
     if (formData.img_file) {
       payload.append('img_file', formData.img_file);
     }
-    if (formData.video_file) {
-      payload.append('video_file', formData.video_file);
+    if (formData.video_link) {
+      payload.append('video_link', formData.video_link);
     }
 
     try {
-      const response = await axiosInstance.post(`/api/events/${event_id}/update`, payload, {
+      const response = await axiosInstance.post(`/api/events/${event_id}`, payload, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
@@ -154,7 +154,6 @@ const EditOurEvent: React.FC = () => {
   };
 
   const displayImageUrl = getFileUrl(currentImage);
-  const displayVideoUrl = getFileUrl(currentVideo);
 
   const inputBaseClasses = 'mt-1 block w-full rounded-md border shadow-sm p-2 sm:p-3 text-sm sm:text-base';
   const inputBorderClasses = 'border-gray-300 focus:border-blue-500 focus:ring-blue-500';
@@ -191,16 +190,15 @@ const EditOurEvent: React.FC = () => {
             <p className="mt-1 text-xs text-gray-500">Max file size: 2MB. Allowed types: JPG, PNG, GIF.</p>
           </div>
           <div>
-            <label htmlFor="video_file" className="block text-sm font-medium text-gray-700">Video File <span className="text-gray-500">(optional, replace current)</span></label>
-            {displayVideoUrl && (
+            <label htmlFor="video_link" className="block text-sm font-medium text-gray-700">Video Link <span className="text-gray-500">(optional)</span></label>
+            <input type="url" id="video_link" name="video_link" value={formData.video_link} onChange={handleChange} className={`${inputBaseClasses} ${errors.video_link ? inputErrorClasses : inputBorderClasses}`} placeholder="Enter video URL" />
+            {errors.video_link && <p className="mt-1 text-sm text-red-500">{errors.video_link}</p>}
+            {currentVideoLink && (
               <div className="my-2">
-                <p className="text-sm text-gray-600 mb-1">Current Video:</p>
-                <a href={displayVideoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 hover:underline text-sm font-medium">View Current Video</a>
+                <p className="text-sm text-gray-600 mb-1">Current Video Link:</p>
+                <a href={currentVideoLink} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 hover:underline text-sm font-medium">View Current Video</a>
               </div>
             )}
-            <input type="file" id="video_file" name="video_file" accept="video/mp4,video/avi,video/quicktime" onChange={handleFileChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-            {errors.video_file && <p className="mt-1 text-sm text-red-500">{errors.video_file}</p>}
-            <p className="mt-1 text-xs text-gray-500">Max file size: 10MB. Allowed types: MP4, AVI, MOV.</p>
           </div>
           <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
             <button type="button" onClick={() => navigate('/our-events')} className="w-full sm:w-auto px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition shadow-sm font-semibold">

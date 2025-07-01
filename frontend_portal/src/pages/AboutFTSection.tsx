@@ -7,11 +7,21 @@ import { ChevronLeftIcon, ChevronRightIcon, ArrowPathIcon, InformationCircleIcon
 import axiosInstance from "../axios";
 import Footer from "../components/Footer";
 
+// --- INTERFACES ---
+
 interface AboutSliderData {
   about_id: number;
   heading: string;
   description: string;
   home_img: string | null;
+}
+
+// New interface for the /api/about-mwananchi/all response
+interface MwananchiAboutData {
+  id: number;
+  category: string;
+  description: string;
+  video_link: string;
 }
 
 interface AboutCardData {
@@ -24,7 +34,8 @@ interface AboutCardData {
   createdAt: string;
 }
 
-// --- Full-Page Landing Loader ---
+// --- COMPONENTS ---
+
 const LandingLoader: React.FC = () => {
   const loaderVariants: Variants = {
     animate: {
@@ -181,8 +192,70 @@ const AboutHeroSection: React.FC = () => {
   );
 };
 
-// New static content section
-const AboutUsStaticSection: React.FC = () => {
+// --- REFACTORED DYNAMIC "ABOUT US" SECTION ---
+const AboutMwananchiSection: React.FC = () => {
+  const [content, setContent] = useState<MwananchiAboutData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAboutData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axiosInstance.get<{ records: MwananchiAboutData[] }>("/api/about-mwananchi/all");
+      if (response.data?.records?.length > 0) {
+        setContent(response.data.records[0]);
+      } else {
+        throw new Error("No 'About Us' content was found.");
+      }
+    } catch (err: any) {
+      const errorMessage = err.message || "Failed to fetch company information.";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAboutData();
+  }, [fetchAboutData]);
+
+  if (loading) {
+    return (
+      <section className="py-16 bg-[#fafaf1]">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <div className="animate-pulse">
+            <div className="h-10 bg-gray-300 rounded-md w-1/3 mx-auto mb-6"></div>
+            <div className="h-8 bg-gray-300 rounded-md w-1/2 mx-auto mb-4"></div>
+            <div className="h-6 bg-gray-200 rounded-md w-full mb-4"></div>
+            <div className="h-6 bg-gray-200 rounded-md w-full mb-4"></div>
+            <div className="h-6 bg-gray-200 rounded-md w-3/4 mx-auto"></div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error || !content) {
+    return (
+      <section className="py-16 bg-[#fafaf1]">
+        <div className="max-w-4xl mx-auto px-4 text-center text-gray-700">
+          <InformationCircleIcon className="w-12 h-12 mx-auto text-red-500 mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Failed to Load Content</h2>
+          <p className="mb-4">{error}</p>
+          <button onClick={fetchAboutData} className="flex items-center mx-auto px-6 py-3 bg-[#ed1c24] text-white font-semibold rounded-full hover:bg-[#c81a20] transition">
+            <ArrowPathIcon className="w-5 h-5 mr-2" />
+            Try Again
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  // Split description by double newlines to create paragraphs
+  const paragraphs = content.description.split(/\n\s*\n/);
+
   return (
     <section className="py-16 bg-[#fafaf1]">
       <div className="max-w-4xl mx-auto px-4 text-center">
@@ -200,28 +273,43 @@ const AboutUsStaticSection: React.FC = () => {
           transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
           className="text-2xl font-semibold text-[#003459] mb-4"
         >
-          Mwananchi Communications LTD
+          {content.category}
         </motion.h3>
-        <motion.p
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
-          className="text-lg text-gray-700 leading-relaxed"
-        >
-          Mwananchi Communications Limited is a subsidiary of Nation Media Group. It is the leading print media company in Tanzania with print as well as online platforms. It was established in May 1999 as a Media Communication Limited and transformed to the advertising & Public Relations agency in year 2001 and was later acquired by Nation Media Group in the year 2002. Through Newspapers, we deliver a literate and informed audience who are opinion leaders, early adopters, and heavy consumers of different brands and service.
-        </motion.p>
-        <motion.p
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut", delay: 0.6 }}
-          className="text-lg text-gray-700 leading-relaxed mt-4"
-        >
-          Our print also delivers a mass market audience  ranging from the young and upwardly mobile to the lower/middle class who are mainstay of the Tanzania economy. Our Digital platforms provide you with an urban and peri-urban audience and allow you a window into the world. It is the most effective way to reach anybody out there both local and international with an interest in the Tanzania and East Africa market.
-        </motion.p>
+        {paragraphs.map((paragraph, index) => (
+          <motion.p
+            key={index}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 + index * 0.2 }}
+            className="text-lg text-gray-700 leading-relaxed mt-4"
+          >
+            {paragraph}
+          </motion.p>
+        ))}
+         {content.video_link && (
+             <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut", delay: 0.8 }}
+                className="mt-12"
+             >
+                <div className="aspect-w-16 aspect-h-9 shadow-lg rounded-lg overflow-hidden bg-black">
+                    <iframe
+                        src={content.video_link}
+                        title={`About ${content.category}`}
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="w-full h-full"
+                    ></iframe>
+                </div>
+             </motion.div>
+        )}
       </div>
     </section>
   );
 };
+
 
 const AboutContentSection: React.FC = () => {
   const [cards, setCards] = useState<AboutCardData[]>([]);
@@ -299,7 +387,7 @@ const AboutContentSection: React.FC = () => {
   }, [fetchData]);
 
   return (
-    <section className="py-16">
+    <section className="py-16 bg-white">
       <div className="max-w-6xl mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl sm:text-4xl font-bold text-[#ed1c24]">Our Company at a Glance</h2>
@@ -314,7 +402,7 @@ const AboutContentSection: React.FC = () => {
             {cards.map((card) => (
               <motion.div
                 key={`${card.type}-${card.id}`}
-                className="bg-[white] shadow-lg flex flex-col"
+                className="bg-white shadow-lg flex flex-col"
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: "easeOut" }}
@@ -358,12 +446,13 @@ const AboutContentSection: React.FC = () => {
   );
 };
 
+// --- MAIN PAGE COMPONENT ---
+
 const AboutPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
-  // Simulate combined loading state for all sections
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000); // Adjust based on actual fetch time
+    const timer = setTimeout(() => setIsLoading(false), 1000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -380,8 +469,12 @@ const AboutPage: React.FC = () => {
         <AboutHeroSection />
       </header>
       <main className="flex-grow">
-        <AboutUsStaticSection />
-        <AboutContentSection />
+        {/* The new dynamic section is used here */}
+        <AboutMwananchiSection />
+        {/* The background of this section was not specified, so I've added a dark one for contrast. */}
+        <div className="bg-gray-800">
+           <AboutContentSection />
+        </div>
       </main>
       <footer>
         <Footer />

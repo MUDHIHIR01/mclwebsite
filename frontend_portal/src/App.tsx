@@ -166,6 +166,9 @@ import  Events  from './pages/events/Events'
 import  AddOurEvent  from './pages/events/AddOurEvent'
 import EditOurEvent from './pages/events/EditOurEvent'
 import  EventsLayouts  from  './pages/EventsLayouts'
+import   EditAboutMwananchi  from  './pages/about/EditAboutMwananchi'
+import AddMwananchiAbout  from './pages/about/AddMwananchiAbout'
+import  AboutMwananchi   from './pages/about/AboutMwananchi.tsx'
 
 // Define props for ProtectedRoute
 interface ProtectedRouteProps {
@@ -1178,6 +1181,34 @@ export default function App() {
     </ProtectedRoute>
   }
 />
+
+
+<Route
+        path="/about-mwananchi"
+        element={
+          <ProtectedRoute>
+            <AboutMwananchi />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/add/about-mwananchi"
+        element={
+          <ProtectedRoute>
+            <AddMwananchiAbout />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/edit/aboutmwanachi/:aboutmwanachi_id"
+        element={
+          <ProtectedRoute>
+            <EditAboutMwananchi />
+          </ProtectedRoute>
+        }
+      />
+
+
 
 
 

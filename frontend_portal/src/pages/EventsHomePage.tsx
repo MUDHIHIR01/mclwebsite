@@ -7,7 +7,6 @@ import {
   InformationCircleIcon,
   XMarkIcon,
   PhotoIcon,
-  PlayCircleIcon,
   CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
 import axiosInstance from "../axios"; // Assuming your axios instance is correctly configured
@@ -20,7 +19,7 @@ interface EventData {
   event_category: string;
   description: string;
   img_file: string | null;
-  video_file: string | null;
+  video_link: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -45,6 +44,30 @@ const formatDate = (dateString: string): string => {
   });
 };
 
+const getYouTubeEmbedUrl = (url: string | null): string | null => {
+  if (!url) return null;
+  let videoId = null;
+  try {
+    const urlObj = new URL(url);
+    if (urlObj.hostname === "youtu.be") {
+      videoId = urlObj.pathname.slice(1);
+    } else if (
+      urlObj.hostname === "www.youtube.com" ||
+      urlObj.hostname === "youtube.com"
+    ) {
+      videoId = urlObj.searchParams.get("v");
+    }
+  } catch (error) {
+    console.error("Invalid URL for YouTube parsing:", url);
+    return null;
+  }
+
+  if (videoId) {
+    return `https://www.youtube.com/embed/${videoId}`;
+  }
+  return null;
+};
+
 // --- UI COMPONENTS ---
 
 const Loader: React.FC = () => (
@@ -67,12 +90,12 @@ const Loader: React.FC = () => (
   </motion.div>
 );
 
-const MediaModal: React.FC<{
-  type: "image" | "video";
-  url: string;
+// This modal is now only for viewing images.
+const ImageModal: React.FC<{
+  imageUrl: string;
   altText: string;
   onClose: () => void;
-}> = ({ type, url, altText, onClose }) => (
+}> = ({ imageUrl, altText, onClose }) => (
   <motion.div
     className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
     initial={{ opacity: 0 }}
@@ -95,113 +118,114 @@ const MediaModal: React.FC<{
       >
         <XMarkIcon className="w-6 h-6" />
       </button>
-      {type === "image" ? (
-        <img
-          src={url}
-          alt={altText}
-          className="w-full h-auto max-h-[85vh] object-contain rounded"
-          onError={(e) => {
-            e.currentTarget.src = "https://via.placeholder.com/800x600?text=Image+Error";
-          }}
-        />
-      ) : (
-        <video
-          src={url}
-          controls
-          autoPlay
-          className="w-full h-auto max-h-[85vh] object-contain rounded"
-          onError={(e) => {
-            console.error("Video failed to load:", url);
-            toast.error("The video could not be played.");
-          }}
-        />
-      )}
+      <img
+        src={imageUrl}
+        alt={altText}
+        className="w-full h-auto max-h-[85vh] object-contain rounded"
+        onError={(e) => {
+          e.currentTarget.src = "https://via.placeholder.com/800x600?text=Image+Error";
+        }}
+      />
     </motion.div>
   </motion.div>
 );
 
 const EventCard: React.FC<{ event: EventData }> = ({ event }) => {
-  const [modalContent, setModalContent] = useState<{ type: 'image' | 'video'; url: string } | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const maxLength = 100; // Character limit for truncated description
-
   const imageUrl = getFullUrl(event.img_file);
-  const videoUrl = getFullUrl(event.video_file);
+  const embedVideoUrl = getYouTubeEmbedUrl(event.video_link);
   const defaultImage = "https://via.placeholder.com/600x400?text=Event+Image";
 
   const description = event.description || "No description provided.";
+  const maxLength = 150;
   const isLongDescription = description.length > maxLength;
-  const truncatedDescription = isLongDescription
-    ? `${description.slice(0, maxLength)}...`
-    : description;
+  const displayedDescription = isExpanded
+    ? description
+    : `${description.slice(0, maxLength)}...`;
 
   return (
     <>
       <motion.div
-        className="bg-white shadow-xl rounded-lg overflow-hidden flex flex-col group transition-all duration-300 hover:shadow-2xl hover:-translate-y-2"
+        className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1.5 grid grid-cols-1 md:grid-cols-2"
         layout
       >
-        <div className="relative h-56 bg-gray-200">
-          {imageUrl && (
+        {/* Left Side: Image */}
+        <div className="relative h-64 md:h-auto group">
+          {imageUrl ? (
             <img
               className="w-full h-full object-cover cursor-pointer"
               src={imageUrl}
               alt={event.event_category}
-              onClick={() => imageUrl && setModalContent({ type: 'image', url: imageUrl })}
+              onClick={() => setIsModalOpen(true)} // <-- CLICK HANDLER TO OPEN MODAL
               onError={(e) => { e.currentTarget.src = defaultImage; }}
               loading="lazy"
             />
+          ) : (
+            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                <PhotoIcon className="w-16 h-16 text-gray-400" />
+            </div>
           )}
-          {!imageUrl && <PhotoIcon className="w-16 h-16 text-gray-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />}
-          <div className="absolute top-0 left-0 bg-[#0072bc] text-white px-3 py-1 text-sm font-semibold rounded-br-lg">
-            {event.event_category}
-          </div>
+           <div
+              className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none"
+           >
+              <p className="text-white font-bold text-lg">View Image</p>
+           </div>
         </div>
 
-        <div className="p-6 flex flex-col flex-grow">
-          <p className="text-gray-700 text-base flex-grow mb-4">
-            {isExpanded ? description : truncatedDescription}
+        {/* Right Side: Content & Video */}
+        <div className="p-6 flex flex-col">
+          <h3 className="text-xl font-bold text-[#003459] mb-2">{event.event_category}</h3>
+          <div className="flex items-center text-sm text-gray-500 mb-4">
+            <CalendarDaysIcon className="w-5 h-5 mr-2 text-[#0072bc]" />
+            <span>{formatDate(event.created_at)}</span>
+          </div>
+
+          <div className="text-gray-700 text-base mb-4">
+            <p className="inline">
+              {isLongDescription ? displayedDescription : description}
+            </p>
             {isLongDescription && (
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="text-[#0072bc] font-semibold hover:text-[#003459] transition-colors ml-2"
+                className="text-[#0072bc] font-semibold hover:underline ml-1 transition-colors"
               >
                 {isExpanded ? "Read Less" : "Read More"}
               </button>
             )}
-          </p>
-          <div className="mt-auto pt-4 border-t border-gray-200 flex justify-between items-center">
-            <div className="flex items-center text-sm text-gray-500">
-              <CalendarDaysIcon className="w-5 h-5 mr-2 text-[#0072bc]" />
-              <span>{formatDate(event.created_at)}</span>
-            </div>
-            {videoUrl && (
-              <button
-                onClick={() => setModalContent({ type: 'video', url: videoUrl })}
-                className="flex items-center text-sm font-semibold text-[#ed1c24] hover:text-[#003459] transition-colors"
-                aria-label="Play video"
-              >
-                <PlayCircleIcon className="w-6 h-6 mr-1" />
-                <span>Watch Video</span>
-              </button>
-            )}
           </div>
+
+          {embedVideoUrl && (
+            <div className="mt-auto pt-4 border-t border-gray-200">
+                <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden shadow-inner">
+                    <iframe
+                        src={embedVideoUrl}
+                        title={event.event_category}
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="w-full h-full"
+                    ></iframe>
+                </div>
+            </div>
+          )}
         </div>
       </motion.div>
 
+      {/* Conditionally render the image modal */}
       <AnimatePresence>
-        {modalContent && (
-          <MediaModal
-            type={modalContent.type}
-            url={modalContent.url}
+        {isModalOpen && imageUrl && (
+          <ImageModal
+            imageUrl={imageUrl}
             altText={event.event_category}
-            onClose={() => setModalContent(null)}
+            onClose={() => setIsModalOpen(false)}
           />
         )}
       </AnimatePresence>
     </>
   );
 };
+
 
 // --- MAIN PAGE SECTIONS ---
 
@@ -265,12 +289,12 @@ const EventsSection: React.FC<{ setContentLoaded: (loaded: boolean) => void }> =
   return (
     <section className="py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
+        <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-extrabold text-[#003459]">
-            Company <span className="text-[#0072bc]">Events</span> & <span className="text-[#ed1c24]">Happenings</span>
+            Explore Our Journey: <span className="text-[#0072bc]">Events</span> & <span className="text-[#ed1c24]">Milestones</span>
           </h1>
           <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">
-            Explore our recent events.
+            Discover our latest activities, partnerships, and achievements.
           </p>
         </div>
 
@@ -296,7 +320,7 @@ const EventsSection: React.FC<{ setContentLoaded: (loaded: boolean) => void }> =
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            className="grid grid-cols-1 lg:grid-cols-2 gap-10"
           >
             {filteredEvents.map((event) => (
               <EventCard key={event.event_id} event={event} />
@@ -313,14 +337,13 @@ const EventsSection: React.FC<{ setContentLoaded: (loaded: boolean) => void }> =
 const EventsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
-  // Failsafe to hide loader after a timeout
   useEffect(() => {
     const timer = setTimeout(() => {
       if (isLoading) {
         console.warn("Loader timeout: Forcing UI to display.");
         setIsLoading(false);
       }
-    }, 8000); // 8-second timeout
+    }, 8000);
     return () => clearTimeout(timer);
   }, [isLoading]);
 
@@ -340,7 +363,6 @@ const EventsPage: React.FC = () => {
       />
       <AnimatePresence>{isLoading && <Loader />}</AnimatePresence>
 
-      {/* Header Placeholder - can be replaced with your actual Navbar */}
       <header className="bg-[#003459] text-white p-4 shadow-md z-30">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl font-bold">Our MCL Events</h1>

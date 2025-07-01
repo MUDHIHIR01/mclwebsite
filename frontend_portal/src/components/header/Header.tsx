@@ -26,6 +26,14 @@ interface MobileMenuProps {
 }
 
 // --- Constant Data ---
+// *** MODIFICATION START ***
+
+const aboutUsMenuItems: NavItem[] = [
+  { label: "What We Do", path: "/careers/what-we-do" },
+  { label: "Benefits", path: "/careers/benefits" },
+  { label: "Values", path: "/careers/values" },
+];
+
 const companyMenuItems: NavItem[] = [
   { label: "NMG-Group", path: "/company/mcl-group" },
   { label: "Leadership", path: "/company/leadership" },
@@ -36,37 +44,38 @@ const companyMenuItems: NavItem[] = [
   { label: "Our Standards", path: "/company/our-standards" },
 ];
 
+// 1. "Life At MCL Blog" is removed from here.
 const careersMenuItems: NavItem[] = [
   { label: "Vacancies", path: "https://careers.mcl.co.tz" },
-  { label: "What We Do", path: "/careers/what-we-do" },
-  { label: "Life At MCL Blog", path: "/careers/mcl-blog" },
-  { label: "Benefits", path: "/careers/benefits" },
-  { label: "Values", path: "/careers/values" },
   { label: "Early Careers", path: "/careers/early-careers" },
   { label: "Join Our Talent Community", path: "/careers/stay-connected" },
 ];
 
+// 2. A new array is created for the "News" dropdown.
+const newsMenuItems: NavItem[] = [
+  { label: "Life At MCL Blog", path: "/careers/mcl-blog" }, // The link is now here.
+];
+
+// 3. The main navItems array is updated.
 const navItems: NavItem[] = [
-  { label: "About Us", path: "/" },
+  { label: "About Us", path: "/", dropdown: aboutUsMenuItems },
   { label: "Company", path: "/company/home", dropdown: companyMenuItems },
   { label: "Services", path: "/company/services" },
   { label: "Our  Brands", path: "/our-brands" },
-  { label: "Careers", path: "/careers/what-we-do", dropdown: careersMenuItems },
-  { label: "News", path: "/company/news" },
-   { label: "Events", path: "/all-events" },
+  // The main "Careers" path is updated to a relevant internal link.
+  { label: "Careers", path: "/careers/early-careers", dropdown: careersMenuItems },
+  // "News" now has its own dropdown menu.
+  { label: "News", path: "/company/news", dropdown: newsMenuItems },
+  { label: "Events", path: "/all-events" },
   { label: "Contact", path: "/company/contact-us" },
 ];
+// *** MODIFICATION END ***
 
 const navLinkClass = "relative no-underline font-semibold text-base uppercase text-white transition-opacity duration-200 tracking-tight hover:underline hover:underline-offset-8 hover:opacity-100";
 
 
 // --- Sub-Components ---
 const DropdownMenu: React.FC<DropdownMenuProps> = ({ isOpen, items, onClose }) => (
-  // --- REFINEMENT: Key change for smooth hover ---
-  // Replaced `mt-2` with `top-full pt-2` and added `overflow-hidden`.
-  // `top-full` removes the gap between the nav link and the dropdown.
-  // `pt-2` adds the visual spacing back, but inside the hoverable area.
-  // `overflow-hidden` ensures a cleaner animation.
   <motion.div
     className={`absolute left-0 top-full pt-2 w-56 z-50 ${isOpen ? "block" : "hidden"}`}
     initial={{ opacity: 0, y: -10 }}
@@ -161,9 +170,6 @@ const Header: React.FC = () => {
           {/* Navigation links container */}
           <nav className="items-center hidden gap-12 lg:flex">
             {navItems.map((item) => (
-              // --- REFINEMENT: This container is now a seamless hover target ---
-              // The onMouseEnter and onMouseLeave events now work perfectly because
-              // the child DropdownMenu is positioned directly against this container.
               <div
                 key={item.label}
                 className="relative"
