@@ -221,6 +221,9 @@ const ContactHomeSlideshow: React.FC = () => {
 // --- Contact Card ---
 const ContactCard: React.FC<{ category: ContactCategory; contactInfos: ContactInfo[] }> = ({ category, contactInfos }) => {
   const [hasImageError, setHasImageError] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const maxLength = 100; // Character limit for truncated description
+
   const baseURL = axiosInstance.defaults.baseURL?.replace(/\/$/, "") || "";
   const imageUrl = category.img_file
     ? `${baseURL}/${category.img_file.replace(/^\//, "")}`
@@ -230,9 +233,15 @@ const ContactCard: React.FC<{ category: ContactCategory; contactInfos: ContactIn
     console.warn("axiosInstance.defaults.baseURL is not set. Using placeholder image.");
   }
 
+  const description = category.description || "No description provided.";
+  const isLongDescription = description.length > maxLength;
+  const truncatedDescription = isLongDescription
+    ? `${description.slice(0, maxLength)}...`
+    : description;
+
   return (
     <motion.div
-      className="bg-white shadow-lg flex flex-col w-full max-w-md rounded-lg"
+      className="bg-white shadow-xl flex flex-col w-full max-w-md rounded-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-2"
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
@@ -251,18 +260,28 @@ const ContactCard: React.FC<{ category: ContactCategory; contactInfos: ContactIn
             onError={() => setHasImageError(true)}
           />
         )}
-        <span className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white text-black text-xs font-bold px-3 py-1 rounded-full uppercase">
+        <span className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-[#ed1c24] text-white text-xs font-bold px-3 py-1 rounded-full uppercase">
           {category.category}
         </span>
       </div>
-      <div className="p-8 flex flex-col flex-grow text-black">
+      <div className="p-6 flex flex-col flex-grow text-gray-800">
         <h3 className="uppercase text-xl sm:text-2xl font-bold relative pb-4 mb-4 text-[#003459]">
           {category.category}
-          <span className="absolute bottom-0 left-0 h-1 w-1/4 bg>#33302d]"></span>
+          <span className="absolute bottom-0 left-0 h-1 w-1/4 bg-[#ed1c24]"></span>
         </h3>
-        <p className="text-gray-700 text-base font-medium flex-grow line-clamp-4">{category.description}</p>
+        <p className="text-gray-700 text-base font-medium flex-grow mb-4">
+          {isExpanded ? description : truncatedDescription}
+          {isLongDescription && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-[#ed1c24] font-semibold hover:text-[#003459] transition-colors ml-2"
+            >
+              {isExpanded ? "Read Less" : "Read More"}
+            </button>
+          )}
+        </p>
         {contactInfos.length > 0 ? (
-          <div className="mt-6 space-y-6">
+          <div className="mt-auto pt-4 border-t border-gray-200">
             {contactInfos.map((info) => (
               <div key={info.contact_info_id} className="p-4 border border-gray-200 rounded-lg">
                 <ul className="space-y-3 text-gray-700">

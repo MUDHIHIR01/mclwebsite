@@ -45,7 +45,6 @@ const formatDate = (dateString: string): string => {
   });
 };
 
-
 // --- UI COMPONENTS ---
 
 const Loader: React.FC = () => (
@@ -123,10 +122,18 @@ const MediaModal: React.FC<{
 
 const EventCard: React.FC<{ event: EventData }> = ({ event }) => {
   const [modalContent, setModalContent] = useState<{ type: 'image' | 'video'; url: string } | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const maxLength = 100; // Character limit for truncated description
 
   const imageUrl = getFullUrl(event.img_file);
   const videoUrl = getFullUrl(event.video_file);
   const defaultImage = "https://via.placeholder.com/600x400?text=Event+Image";
+
+  const description = event.description || "No description provided.";
+  const isLongDescription = description.length > maxLength;
+  const truncatedDescription = isLongDescription
+    ? `${description.slice(0, maxLength)}...`
+    : description;
 
   return (
     <>
@@ -136,14 +143,14 @@ const EventCard: React.FC<{ event: EventData }> = ({ event }) => {
       >
         <div className="relative h-56 bg-gray-200">
           {imageUrl && (
-             <img
-                className="w-full h-full object-cover cursor-pointer"
-                src={imageUrl}
-                alt={event.event_category}
-                onClick={() => imageUrl && setModalContent({ type: 'image', url: imageUrl })}
-                onError={(e) => { e.currentTarget.src = defaultImage; }}
-                loading="lazy"
-              />
+            <img
+              className="w-full h-full object-cover cursor-pointer"
+              src={imageUrl}
+              alt={event.event_category}
+              onClick={() => imageUrl && setModalContent({ type: 'image', url: imageUrl })}
+              onError={(e) => { e.currentTarget.src = defaultImage; }}
+              loading="lazy"
+            />
           )}
           {!imageUrl && <PhotoIcon className="w-16 h-16 text-gray-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />}
           <div className="absolute top-0 left-0 bg-[#0072bc] text-white px-3 py-1 text-sm font-semibold rounded-br-lg">
@@ -153,12 +160,20 @@ const EventCard: React.FC<{ event: EventData }> = ({ event }) => {
 
         <div className="p-6 flex flex-col flex-grow">
           <p className="text-gray-700 text-base flex-grow mb-4">
-            {event.description || "No description provided."}
+            {isExpanded ? description : truncatedDescription}
+            {isLongDescription && (
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="text-[#0072bc] font-semibold hover:text-[#003459] transition-colors ml-2"
+              >
+                {isExpanded ? "Read Less" : "Read More"}
+              </button>
+            )}
           </p>
           <div className="mt-auto pt-4 border-t border-gray-200 flex justify-between items-center">
-             <div className="flex items-center text-sm text-gray-500">
-                <CalendarDaysIcon className="w-5 h-5 mr-2 text-[#0072bc]" />
-                <span>{formatDate(event.created_at)}</span>
+            <div className="flex items-center text-sm text-gray-500">
+              <CalendarDaysIcon className="w-5 h-5 mr-2 text-[#0072bc]" />
+              <span>{formatDate(event.created_at)}</span>
             </div>
             {videoUrl && (
               <button
@@ -188,7 +203,6 @@ const EventCard: React.FC<{ event: EventData }> = ({ event }) => {
   );
 };
 
-
 // --- MAIN PAGE SECTIONS ---
 
 const EventsSection: React.FC<{ setContentLoaded: (loaded: boolean) => void }> = ({ setContentLoaded }) => {
@@ -206,7 +220,7 @@ const EventsSection: React.FC<{ setContentLoaded: (loaded: boolean) => void }> =
         );
         setEvents(sortedEvents);
         if (sortedEvents.length === 0) {
-            setError("No events found.");
+          setError("No events found.");
         }
       } else {
         throw new Error("Invalid data format from API.");
@@ -235,7 +249,7 @@ const EventsSection: React.FC<{ setContentLoaded: (loaded: boolean) => void }> =
           {error === "No events found." ? "No Events Available" : "Failed to Load Content"}
         </h3>
         <p className="mt-2 text-lg text-gray-600 max-w-md">
-            {error === "No events found." ? "There are no events to display at the moment. Check back soon!" : error}
+          {error === "No events found." ? "There are no events to display at the moment. Check back soon!" : error}
         </p>
         <button
           onClick={fetchEvents}
@@ -277,23 +291,22 @@ const EventsSection: React.FC<{ setContentLoaded: (loaded: boolean) => void }> =
         </div>
 
         <AnimatePresence>
-            <motion.div
-                key={filter}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-            >
-                {filteredEvents.map((event) => (
-                    <EventCard key={event.event_id} event={event} />
-                ))}
-            </motion.div>
+          <motion.div
+            key={filter}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          >
+            {filteredEvents.map((event) => (
+              <EventCard key={event.event_id} event={event} />
+            ))}
+          </motion.div>
         </AnimatePresence>
       </div>
     </section>
   );
 };
-
 
 // --- PARENT PAGE COMPONENT ---
 
@@ -326,18 +339,18 @@ const EventsPage: React.FC = () => {
         theme="colored"
       />
       <AnimatePresence>{isLoading && <Loader />}</AnimatePresence>
-      
+
       {/* Header Placeholder - can be replaced with your actual Navbar */}
       <header className="bg-[#003459] text-white p-4 shadow-md z-30">
         <div className="max-w-7xl mx-auto">
-            <h1 className="text-2xl font-bold">Our MCL  Events</h1>
+          <h1 className="text-2xl font-bold">Our MCL Events</h1>
         </div>
       </header>
 
       <main className="flex-grow">
         <EventsSection setContentLoaded={(loaded) => loaded && setIsLoading(false)} />
       </main>
-      
+
       <Footer />
     </div>
   );
