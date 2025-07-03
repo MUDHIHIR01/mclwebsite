@@ -10,7 +10,7 @@ import mclLogo from '../../assets/logo.png';
 interface NavItem {
   label: string;
   path: string;
-  dropdown?: Array<{ label: string; path: string }>;
+  dropdown?: Array<{ label:string; path: string }>;
 }
 
 interface DropdownMenuProps {
@@ -26,8 +26,6 @@ interface MobileMenuProps {
 }
 
 // --- Constant Data ---
-// *** MODIFICATION START ***
-
 const aboutUsMenuItems: NavItem[] = [
   { label: "What We Do", path: "/careers/what-we-do" },
   { label: "Benefits", path: "/careers/benefits" },
@@ -35,7 +33,7 @@ const aboutUsMenuItems: NavItem[] = [
 ];
 
 const companyMenuItems: NavItem[] = [
-  { label: "NMG-Group", path: "/company/mcl-group" },
+  { label: "NMG-Group", path: "https://www.nationmedia.com/" },
   { label: "Leadership", path: "/company/leadership" },
   { label: "Diversity and Inclusion", path: "/company/diversity-and-inclusion" },
   { label: "Sustainability", path: "/company/sustainability" },
@@ -44,32 +42,25 @@ const companyMenuItems: NavItem[] = [
   { label: "Our Standards", path: "/company/our-standards" },
 ];
 
-// 1. "Life At MCL Blog" is removed from here.
 const careersMenuItems: NavItem[] = [
   { label: "Vacancies", path: "https://careers.mcl.co.tz" },
-  { label: "Early Careers", path: "/careers/early-careers" },
   { label: "Join Our Talent Community", path: "/careers/stay-connected" },
 ];
 
-// 2. A new array is created for the "News" dropdown.
 const newsMenuItems: NavItem[] = [
-  { label: "Life At MCL Blog", path: "/careers/mcl-blog" }, // The link is now here.
+  { label: "Life At MCL Blog", path: "/careers/mcl-blog" },
 ];
 
-// 3. The main navItems array is updated.
 const navItems: NavItem[] = [
   { label: "About Us", path: "/", dropdown: aboutUsMenuItems },
   { label: "Company", path: "/company/home", dropdown: companyMenuItems },
   { label: "Services", path: "/company/services" },
   { label: "Our  Brands", path: "/our-brands" },
-  // The main "Careers" path is updated to a relevant internal link.
   { label: "Careers", path: "/careers/early-careers", dropdown: careersMenuItems },
-  // "News" now has its own dropdown menu.
   { label: "News", path: "/company/news", dropdown: newsMenuItems },
   { label: "Events", path: "/all-events" },
   { label: "Contact", path: "/company/contact-us" },
 ];
-// *** MODIFICATION END ***
 
 const navLinkClass = "relative no-underline font-semibold text-base uppercase text-white transition-opacity duration-200 tracking-tight hover:underline hover:underline-offset-8 hover:opacity-100";
 
@@ -176,14 +167,38 @@ const Header: React.FC = () => {
                 onMouseEnter={() => item.dropdown && setOpenDropdown(item.label)}
                 onMouseLeave={() => item.dropdown && setOpenDropdown(null)}
               >
-                <div>
+                {/* *** MODIFICATION START: Added 'relative' class for positioning the new dot *** */}
+                <div className="relative">
                   <NavLink
                     to={item.path}
                     className={({ isActive }) => `${navLinkClass} text-center ${isActive ? "opacity-100" : "opacity-80"}`}
                   >
                     {item.label}
                   </NavLink>
+                  
+                  {/* Conditionally render the animated dot for the "News" item */}
+                  {item.label === "News" && (
+                    <motion.div
+                      className="absolute -top-1 -right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full"
+                      animate={{
+                        scale: [1, 1.4, 1], // Creates the "pop" effect
+                        boxShadow: [ // Creates a pulsating glow
+                          "0 0 0 0 rgba(239, 68, 68, 0.6)", // red-500
+                          "0 0 0 5px rgba(239, 68, 68, 0)",
+                        ],
+                      }}
+                      transition={{
+                        duration: 1.8,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                      // Prevents the dot from interfering with mouse events on the link
+                      style={{ pointerEvents: 'none' }} 
+                    />
+                  )}
                 </div>
+                {/* *** MODIFICATION END *** */}
+
                 {item.dropdown && (
                   <DropdownMenu
                     isOpen={openDropdown === item.label}
