@@ -426,7 +426,7 @@ const AboutContentSection: React.FC = () => {
                     alt={card.title}
                     onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/400x200?text=Image+Error")}
                   />
-                  <span className="absolute top-4 right-6 md:right-12 bg-white text-[#003459] text-xs font-bold px-3 py-1 rounded-full uppercase">
+                  <span className="absolute top-4 right-6 md:right-12 bg-[#ed1c24] text-[white] text-xs font-bold px-3 py-1 rounded-full uppercase">
                     {card.type}
                   </span>
                 </div>

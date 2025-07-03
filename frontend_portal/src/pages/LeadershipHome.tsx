@@ -245,7 +245,7 @@ const LeadershipCard: React.FC<{ leader: LeadershipData; index: number }> = ({ l
     ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${leader.leader_image.replace(/^\//, "")}`
     : defaultImage;
 
-  const positionTagStyle = leader.level === "Board of Directors" ? "bg-[#FFD700] text-black" : "bg-[#003459] text-white";
+  const positionTagStyle = leader.level === "Board of Directors" ? "bg-[#ed1c24] text-white" : "bg-[#003459] text-white";
 
   return (
     <>
