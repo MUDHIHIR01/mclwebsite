@@ -10,6 +10,7 @@ import {
   InformationCircleIcon,
   ArrowRightIcon,
   ChevronDownIcon,
+  ArrowDownTrayIcon, // <-- ADDED: Icon for the report button
 } from "@heroicons/react/24/outline";
 import axiosInstance from "../axios";
 import Footer from "../components/Footer";
@@ -23,11 +24,13 @@ interface AboutSliderData {
   home_img: string | null;
 }
 
+// [MODIFIED] Added pdf_file to the interface to match backend capabilities
 interface MwananchiAboutData {
   id: number;
   category: string;
-  description:string;
+  description: string;
   video_link: string;
+  pdf_file: string | null; // <-- ADDED: To hold the report link
 }
 
 interface AboutCardData {
@@ -84,7 +87,6 @@ const LandingLoader: React.FC = () => {
   );
 };
 
-// [DESIGN ENHANCEMENT] Hero section with text shadow removed and a stronger gradient for a clean, readable look.
 const AboutHeroSection: React.FC = () => {
   const [data, setData] = useState<AboutSliderData[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -149,7 +151,6 @@ const AboutHeroSection: React.FC = () => {
           transition={{ duration: 1.2, ease: "easeInOut" }}
           className="absolute inset-0"
         >
-          {/* [MODIFIED] Strengthened gradient for better text contrast without a shadow */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/20 z-10" />
           <img
             src={data[currentSlide].home_img ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${data[currentSlide].home_img.replace(/^\//, "")}` : "https://via.placeholder.com/1920x1080?text=Image+Missing"}
@@ -167,7 +168,6 @@ const AboutHeroSection: React.FC = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
-            // [MODIFIED] Text shadow removed
             className="text-4xl md:text-6xl font-extrabold text-white mb-6"
           >
             {data[currentSlide].heading}
@@ -177,7 +177,6 @@ const AboutHeroSection: React.FC = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
-            // [MODIFIED] Text shadow removed
             className="text-lg md:text-xl font-normal text-gray-200 mb-10"
           >
             {data[currentSlide].description || "No description available"}
@@ -333,6 +332,23 @@ const AboutMwananchiSection: React.FC = () => {
                     </p>
                   ))}
                 </div>
+
+                {/* --- [NEW] "VIEW REPORT" BUTTON --- */}
+                {content.pdf_file && (
+                    <div className="mt-10">
+                        <a
+                            href={`${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${content.pdf_file.replace(/^\//, "")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-3 px-8 py-4 bg-[#ed1c24] text-white font-bold text-lg rounded-full shadow-lg hover:bg-red-700 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 ease-in-out"
+                        >
+                            <ArrowDownTrayIcon className="w-6 h-6" />
+                            View History
+                        </a>
+                    </div>
+                )}
+                {/* --- END OF NEW BUTTON --- */}
+
               </motion.div>
             </div>
           </div>

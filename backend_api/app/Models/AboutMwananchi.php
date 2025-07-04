@@ -11,5 +11,5 @@ class AboutMwananchi extends Model
 
     protected $table = 'about_mwananchi'; // Explicitly set the table name
 
-    protected $fillable = ['category', 'description', 'video_link'];
+    protected $fillable = ['category', 'description', 'video_link','pdf_file'];
 }

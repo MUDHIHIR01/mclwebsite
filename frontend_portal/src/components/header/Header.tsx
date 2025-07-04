@@ -38,13 +38,12 @@ const companyMenuItems: NavItem[] = [
   { label: "Diversity and Inclusion", path: "/company/diversity-and-inclusion" },
   { label: "Sustainability", path: "/company/sustainability" },
   { label: "Giving Back", path: "/company/giving-back" },
-  { label: "MCL Pink 130", path: "/company/pink-130" },
   { label: "Our Standards", path: "/company/our-standards" },
 ];
 
 const careersMenuItems: NavItem[] = [
   { label: "Vacancies", path: "https://careers.mcl.co.tz" },
-  { label: "Join Our Talent Community", path: "/careers/stay-connected" },
+  // { label: "Join Our Talent Community", path: "/careers/stay-connected" },
 ];
 
 const newsMenuItems: NavItem[] = [

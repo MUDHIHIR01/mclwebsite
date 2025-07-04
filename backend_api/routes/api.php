@@ -122,6 +122,8 @@ Route::get('/leadershipHomeSlider', [LeadershipHomeController::class, 'leadershi
      Route::get('/about-mwananchi/all', [AboutMwananchiController::class, 'allRecords']);
        Route::get('/all/sub-events', [SubEventController::class, 'allEvents']);
 
+
+       
 // Protected Routes
 Route::middleware(['auth:sanctum', 'token.expiration'])->group(function () {
     // User Routes

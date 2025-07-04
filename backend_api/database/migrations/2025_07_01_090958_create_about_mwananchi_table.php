@@ -12,6 +12,7 @@ class CreateAboutMwananchiTable extends Migration
             $table->id();
             $table->string('category', 255);
             $table->text('description')->nullable();
+             $table->text('pdf_file')->nullable();
             $table->string('video_link')->nullable();
             $table->timestamps();
         });
