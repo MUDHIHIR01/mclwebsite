@@ -119,6 +119,7 @@ Route::get('/leadershipHomeSlider', [LeadershipHomeController::class, 'leadershi
       Route::get('/allBrands', [BrandController::class, 'allBrands']);
       Route::get('/latestService', [ServicesHomeController::class, 'latestService']);
         Route::get('/all-events', [EventController::class, 'allEvents']);
+        Route::get('/latestEvent', [EventController::class, 'latestEvent']);
      Route::get('/about-mwananchi/all', [AboutMwananchiController::class, 'allRecords']);
        Route::get('/all/sub-events', [SubEventController::class, 'allEvents']);
 

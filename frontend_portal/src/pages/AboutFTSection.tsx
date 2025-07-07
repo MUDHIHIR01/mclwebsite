@@ -10,7 +10,7 @@ import {
   InformationCircleIcon,
   ArrowRightIcon,
   ChevronDownIcon,
-  ArrowDownTrayIcon, // <-- ADDED: Icon for the report button
+  ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 import axiosInstance from "../axios";
 import Footer from "../components/Footer";
@@ -24,18 +24,18 @@ interface AboutSliderData {
   home_img: string | null;
 }
 
-// [MODIFIED] Added pdf_file to the interface to match backend capabilities
 interface MwananchiAboutData {
   id: number;
   category: string;
   description: string;
   video_link: string;
-  pdf_file: string | null; // <-- ADDED: To hold the report link
+  pdf_file: string | null;
 }
 
+// [MODIFIED] Added "Events" to the card types
 interface AboutCardData {
   id: number;
-  type: "Company" | "Service" | "Careers" | "News";
+  type: "Company" | "Service" | "News" | "Events";
   title: string;
   description: string;
   imageUrl: string | null;
@@ -333,7 +333,6 @@ const AboutMwananchiSection: React.FC = () => {
                   ))}
                 </div>
 
-                {/* --- [NEW] "VIEW REPORT" BUTTON --- */}
                 {content.pdf_file && (
                     <div className="mt-10">
                         <a
@@ -347,8 +346,6 @@ const AboutMwananchiSection: React.FC = () => {
                         </a>
                     </div>
                 )}
-                {/* --- END OF NEW BUTTON --- */}
-
               </motion.div>
             </div>
           </div>
@@ -364,14 +361,15 @@ const AboutContentSection: React.FC = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [companyRes, serviceRes, careersRes, newsRes] = await Promise.allSettled([
-        axiosInstance.get("/api/latest/mcl-groups"),
+      // [MODIFIED] Added latestEvent to the fetch calls
+      const [dAndIncRes, serviceRes, newsRes, eventRes] = await Promise.allSettled([
+        axiosInstance.get("/api/d-and-inc/homeSlider"),
         axiosInstance.get("/api/latestService"),
-        axiosInstance.get("/api/latestEarlyCareer"),
         axiosInstance.get("/api/latestnew"),
+        axiosInstance.get("/api/latestEvent"),
       ]);
 
-      const createCard = (data: any, type: AboutCardData['type'], idKey: string, title: string, descKey: string, imgKey: string, link: string, dateKey: string) => {
+      const createCard = (data: any, type: AboutCardData['type'], idKey: string, title: string, descKey: string, imgKey: string, link: string, dateKey: string): AboutCardData | null => {
         if (data) {
           return {
             id: data[idKey], type, title, description: data[descKey], imageUrl: data[imgKey], linkUrl: link, createdAt: data[dateKey]
@@ -379,12 +377,19 @@ const AboutContentSection: React.FC = () => {
         }
         return null;
       };
-
+      
       const potentialCards = [
-        companyRes.status === "fulfilled" && createCard(companyRes.value.data.data, "Company", "mcl_id", "Our Company", "description", "image_file", "/company/home", "created_at"),
+        // Card 1: "Company" card with Diversity & Inclusion content
+        dAndIncRes.status === "fulfilled" && dAndIncRes.value.data && dAndIncRes.value.data.length > 0 && createCard(dAndIncRes.value.data[0], "Company", "dhome_id", dAndIncRes.value.data[0].heading, "description", "home_img", "/d-and-inc", "created_at"),
+
+        // Card 2: Service card
         serviceRes.status === "fulfilled" && createCard(serviceRes.value.data, "Service", "services_home_id", serviceRes.value.data.heading || "Our Services", "description", "home_img", "/company/services", "created_at"),
-        careersRes.status === "fulfilled" && createCard(careersRes.value.data.early_career, "Careers", "early_career_id", "Careers", "description", "img_file", "/careers/what-we-do", "created_at"),
+        
+        // Card 3: News card
         newsRes.status === "fulfilled" && createCard(newsRes.value.data.news, "News", "news_id", "Latest News", "description", "news_img", "/company/news", "created_at"),
+        
+        // Card 4: [NEW] Events card, replacing the old "Careers" card
+        eventRes.status === "fulfilled" && createCard(eventRes.value.data.event, "Events", "event_id", eventRes.value.data.event.event_category, "description", "img_file", "/all-events", "created_at"),
       ];
       
       setCards(potentialCards.filter(Boolean) as AboutCardData[]);
@@ -422,7 +427,7 @@ const AboutContentSection: React.FC = () => {
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0A51A1] tracking-tight">Discover More About Us</h2>
           <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto">
-            Explore the core pillars of our organization, from our services and company culture to career opportunities and the latest news.
+            Explore the core pillars of our organization, from our latest events and services to our company culture and the latest news.
           </p>
         </div>
         {loading ? (

@@ -232,12 +232,10 @@ const ContentCardSection: React.FC<{ data: CardData[]; loading: boolean; error: 
 
 // --- Endpoint Configuration ---
 const contentEndpoints = [
-  { url: "/api/sliders", cardTitle: "MCL-Group", idKey: "mcl_home_id", imgKey: "mcl_home_img", link: "/company/mcl-group", extractor: (res: any) => res.data.data },
   { url: "/api/leadershipHomeSlider", cardTitle: "Leadership", idKey: "leadership_home_id", imgKey: "home_img", link: "/company/leadership", extractor: (res: any) => res.data },
   { url: "/api/d-and-inc/homeSlider", cardTitle: "Diversity & Inclusion", idKey: "dhome_id", imgKey: "home_img", link: "/diversity-and-inclusion", extractor: (res: any) => res.data },
   { url: "/api/sust/homeSlider", cardTitle: "Sustainability", idKey: "sustainability_home_id", imgKey: "home_img", link: "/company/sustainability", extractor: (res: any) => res.data },
   { url: "/api/giving-back/slider", cardTitle: "Giving Back", idKey: "giving_back_id", imgKey: "home_img", link: "/company/giving-back", extractor: (res: any) => res.data },
-  { url: "/api/pink130Sliders", cardTitle: "MCL Pink 130", idKey: "ft_pink_id", imgKey: "home_img", link: "/company/pink-130", extractor: (res: any) => res.data?.ft_pink_130_homes },
   { url: "/api/ourStandardHomeSlider", cardTitle: "Our Standards", idKey: "id", imgKey: "home_img", link: "/company/our-standards", extractor: (res: any) => res.data?.data?.our_standard_homes },
 ];
 

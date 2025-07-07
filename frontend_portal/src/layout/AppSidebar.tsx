@@ -52,7 +52,7 @@ const getNavItemsForRole = (roleId: number): NavItem[] => {
     { name: "Careers", icon: <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-600 text-white">💼</span>, subItems: [
         { name: "Life at Mcl Blog", path: "", subItems: [{ name: "Home page", path: "/blog/home" },{ name: "Blogs", path: "/blogs" },{ name: "Sub-Blogs", path: "/sub-blogs" }] },
         { name: "What We Do", path: "", subItems: [{ name: "Home page", path: "/what-we-do" },{ name: "Categories", path: "/we-do" },{ name: "Sub-Categories", path: "/subcategories/we-do" }] },
-        { name: "Early Careers", path: "/careers/early-careers", subItems: [{ name: "Home page", path: "/earycare/home" },{ name: "Eary careers", path: "/early-careers" }] },
+        { name: "Early Careers", path: "", subItems: [{ name: "Home page", path: "/earycare/home" },{ name: "Eary careers", path: "/early-careers" }] },
         { name: "Values", path: "/careers/values", subItems: [{ name: "Home page", path: "/value/home" },{ name: "Values", path: "/values" }] },
         { name: "Benefits", path: "/benefits/home", subItems: [{ name: "Home page", path: "/benefits/home" },{ name: "Benefits", path: "/benefits" }] },
         { name: "Join Our Talent Community", path: "/", subItems: [{ name: "Home page", path: "/stay-connected/home" },{ name: "Stay connected", path: "/stay-connected" }] },
