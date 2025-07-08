@@ -1,5 +1,3 @@
-// src/pages/EventsHomePage.tsx
-
 import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,7 +7,6 @@ import {
   ArrowPathIcon,
   InformationCircleIcon,
   XMarkIcon,
-  // PhotoIcon, // <-- REMOVED THIS LINE
   CalendarDaysIcon,
   ArrowRightIcon,
 } from "@heroicons/react/24/outline";
@@ -17,7 +14,6 @@ import axiosInstance from "../axios";
 import Footer from "../components/Footer";
 
 // --- INTERFACES ---
-
 interface EventData {
   event_id: number;
   event_category: string;
@@ -33,7 +29,6 @@ interface EventsResponse {
 }
 
 // --- UTILITY FUNCTIONS ---
-
 const getFullUrl = (path: string | null): string | null => {
   if (!path) return null;
   const baseUrl = axiosInstance.defaults.baseURL?.replace(/\/$/, "") || "";
@@ -73,7 +68,6 @@ const getYouTubeEmbedUrl = (url: string | null): string | null => {
 };
 
 // --- UI COMPONENTS ---
-
 const Loader: React.FC = () => (
   <motion.div
     className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#003459] to-[#0072bc] z-50"
@@ -155,10 +149,20 @@ const EventCard: React.FC<{ event: EventData }> = ({ event }) => {
       >
         {/* Left Side: Image */}
         <div className="relative h-64 md:h-auto group">
-          <img className="w-full h-full object-cover cursor-pointer" src={imageUrl ?? defaultImage} alt={event.event_category}
-            onClick={() => setIsModalOpen(true)} onError={(e) => { e.currentTarget.src = defaultImage; }} loading="lazy" />
+          <img
+            className="w-full h-full object-cover cursor-pointer"
+            src={imageUrl ?? defaultImage}
+            alt={event.event_category}
+            onClick={() => setIsModalOpen(true)}
+            onError={(e) => {
+              e.currentTarget.src = defaultImage;
+            }}
+            loading="lazy"
+          />
           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-            <p className="text-white font-bold text-lg">View Image</p>
+            <p
+
+ className="text-white font-bold text-lg">View Image</p>
           </div>
         </div>
 
@@ -182,18 +186,23 @@ const EventCard: React.FC<{ event: EventData }> = ({ event }) => {
           
           {embedVideoUrl && (
             <div className="mb-4">
-                <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden shadow-inner">
-                    <iframe src={embedVideoUrl} title={event.event_category} frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen className="w-full h-full"></iframe>
-                </div>
+              <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden shadow-inner">
+                <iframe
+                  src={embedVideoUrl}
+                  title={event.event_category}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full"
+                ></iframe>
+              </div>
             </div>
           )}
 
           <div className="mt-auto pt-4 border-t border-gray-200 flex justify-between items-center">
             <div className="flex items-center text-sm text-gray-500">
-                <CalendarDaysIcon className="w-5 h-5 mr-2 text-[#0072bc]" />
-                <span>{formatDate(event.created_at)}</span>
+              <CalendarDaysIcon className="w-5 h-5 mr-2 text-[#0072bc]" />
+              <span>{formatDate(event.created_at)}</span>
             </div>
             <Link
               to={`/events/${event.event_id}`}
@@ -208,16 +217,25 @@ const EventCard: React.FC<{ event: EventData }> = ({ event }) => {
 
       <AnimatePresence>
         {isModalOpen && imageUrl && (
-          <ImageModal imageUrl={imageUrl} altText={event.event_category} onClose={() => setIsModalOpen(false)} />
+          <ImageModal
+            imageUrl={imageUrl}
+            altText={event.event_category}
+            onClose={() => setIsModalOpen(false)}
+          />
         )}
       </AnimatePresence>
     </>
   );
 };
 
-
-// --- MAIN PAGE SECTIONS (Unchanged) ---
-const EventsSection: React.FC<{ setContentLoaded: (loaded: boolean) => void }> = ({ setContentLoaded }) => {
+// --- MAIN PAGE SECTIONS ---
+const EventsSection: React.FC<{
+  setContentLoaded: (loaded: boolean) => void;
+  currentPage: number;
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
+  itemsPerPage: number;
+  setItemsPerPage: React.Dispatch<React.SetStateAction<number>>;
+}> = ({ setContentLoaded, currentPage, setCurrentPage, itemsPerPage, setItemsPerPage }) => {
   const [events, setEvents] = useState<EventData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("All");
@@ -227,7 +245,9 @@ const EventsSection: React.FC<{ setContentLoaded: (loaded: boolean) => void }> =
     try {
       const response = await axiosInstance.get<EventsResponse>("/api/all-events");
       if (response.data && Array.isArray(response.data.events)) {
-        const sortedEvents = response.data.events.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        const sortedEvents = response.data.events.sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
         setEvents(sortedEvents);
         if (sortedEvents.length === 0) setError("No events found.");
       } else {
@@ -241,10 +261,14 @@ const EventsSection: React.FC<{ setContentLoaded: (loaded: boolean) => void }> =
     }
   }, [setContentLoaded]);
 
-  useEffect(() => { fetchEvents(); }, [fetchEvents]);
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
   const categories = ["All", ...new Set(events.map((event) => event.event_category))];
   const filteredEvents = filter === "All" ? events : events.filter((event) => event.event_category === filter);
+  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
+  const paginatedEvents = filteredEvents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   if (error) {
     return (
@@ -256,7 +280,10 @@ const EventsSection: React.FC<{ setContentLoaded: (loaded: boolean) => void }> =
         <p className="mt-2 text-lg text-gray-600 max-w-md">
           {error === "No events found." ? "There are no events to display at the moment. Check back soon!" : error}
         </p>
-        <button onClick={fetchEvents} className="mt-8 flex items-center px-6 py-3 bg-[#003459] text-white font-semibold rounded-full hover:bg-[#0072bc] transition-colors shadow-md">
+        <button
+          onClick={fetchEvents}
+          className="mt-8 flex items-center px-6 py-3 bg-[#003459] text-white font-semibold rounded-full hover:bg-[#0072bc] transition-colors shadow-md"
+        >
           <ArrowPathIcon className="w-5 h-5 mr-2" />
           Retry
         </button>
@@ -269,36 +296,116 @@ const EventsSection: React.FC<{ setContentLoaded: (loaded: boolean) => void }> =
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-extrabold text-[#003459]">
-            Explore Our Journey: <span className="text-[#0072bc]">Events</span> & <span className="text-[#ed1c24]">Milestones</span>
+            Explore Our Journey: <span className="text-[#0072bc]">Events</span> &{" "}
+            <span className="text-[#ed1c24]">Milestones</span>
           </h1>
-          <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">Discover our latest activities, partnerships, and achievements.</p>
+          <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">
+            Discover our latest activities, partnerships, and achievements.
+          </p>
         </div>
 
-        <div className="flex justify-center flex-wrap gap-3 mb-12">
-          {categories.map((category) => (
-            <button key={category} onClick={() => setFilter(category)}
-              className={`px-5 py-2 rounded-full font-semibold text-sm transition-all duration-300 transform hover:scale-105 ${
-                filter === category ? "bg-[#ed1c24] text-white shadow-lg" : "bg-white text-[#003459] hover:bg-gray-200 shadow-md"
-              }`}>
-              {category}
-            </button>
-          ))}
+        <div className="flex flex-wrap gap-3 mb-12 justify-between items-center">
+          <div className="flex flex-wrap gap-3">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => {
+                  setFilter(category);
+                  setCurrentPage(1);
+                }}
+                className={`px-5 py-2 rounded-full font-semibold text-sm transition-all duration-300 transform hover:scale-105 ${
+                  filter === category
+                    ? "bg-[#ed1c24] text-white shadow-lg"
+                    : "bg-white text-[#003459] hover:bg-gray-200 shadow-md"
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+          <select
+            value={itemsPerPage}
+            onChange={(e) => {
+              setItemsPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+            className="p-2 border border-gray-300 rounded-md"
+          >
+            <option value={10}>10 per page</option>
+            <option value={20}>20 per page</option>
+            <option value={50}>50 per page</option>
+          </select>
         </div>
 
         <AnimatePresence>
-          <motion.div key={filter} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            {filteredEvents.map((event) => (<EventCard key={event.event_id} event={event} />))}
+          <motion.div
+            key={filter}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-10"
+          >
+            {paginatedEvents.length > 0 ? (
+              paginatedEvents.map((event) => <EventCard key={event.event_id} event={event} />)
+            ) : (
+              <div className="col-span-full text-center py-16">
+                <CalendarDaysIcon className="w-16 h-16 mx-auto text-gray-600" />
+                <h3 className="mt-4 text-xl font-bold text-[#003459]">No Events Found</h3>
+                <p className="text-gray-500 mt-2">No events match your current filter. Try selecting a different category.</p>
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
+
+        {paginatedEvents.length > 0 && (
+          <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="text-gray-600">
+              Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+              {Math.min(currentPage * itemsPerPage, filteredEvents.length)} of {filteredEvents.length} events
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage((prev: number) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 bg-[#003459] text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <div className="flex gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-4 py-2 rounded-md ${
+                      page === currentPage
+                        ? "bg-[#0A51A1] text-white"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setCurrentPage((prev: number) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 bg-[#003459] text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
 };
 
-// --- PARENT PAGE COMPONENT (Unchanged) ---
+// --- PARENT PAGE COMPONENT ---
 const EventsPage: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -311,14 +418,32 @@ const EventsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">
-      <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false}
-        pauseOnFocusLoss draggable pauseOnHover theme="colored" />
+      <ToastContainer
+        position="top-right"
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
       <AnimatePresence>{isLoading && <Loader />}</AnimatePresence>
       <header className="bg-[#003459] text-white p-4 shadow-md z-30">
-        <div className="max-w-7xl mx-auto"><h1 className="text-2xl font-bold">Our MCL Events</h1></div>
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-2xl font-bold">Our MCL Events</h1>
+        </div>
       </header>
       <main className="flex-grow">
-        <EventsSection setContentLoaded={(loaded) => loaded && setIsLoading(false)} />
+        <EventsSection
+          setContentLoaded={(loaded) => loaded && setIsLoading(false)}
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+          itemsPerPage={itemsPerPage}
+          setItemsPerPage={setItemsPerPage}
+        />
       </main>
       <Footer />
     </div>

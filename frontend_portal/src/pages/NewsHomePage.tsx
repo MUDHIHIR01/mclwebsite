@@ -133,7 +133,7 @@ const NewsHomeSlideshow: React.FC = () => {
           </motion.h2>
           <motion.p
             key={`p-${currentSlide}`}
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
             className="text-xl text-gray-200 mb-8"
@@ -169,7 +169,7 @@ const NewsHomeSlideshow: React.FC = () => {
 
 // --- INDIVIDUAL NEWS CARD (SMALL) ---
 const NewsCard: React.FC<{ news: NewsData; onCardClick: (news: NewsData) => void }> = ({ news, onCardClick }) => {
-  const mediaUrl = getFullMediaUrl(news.news_img); // Fixed typo
+  const mediaUrl = getFullMediaUrl(news.news_img);
 
   return (
     <motion.div
@@ -207,9 +207,9 @@ const ExpandedNewsCard: React.FC<{ news: NewsData; onClose: () => void }> = ({ n
     .map((p, i) => <p key={i} className="mb-4">{p}</p>);
 
   useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
+    const handleEscape = (event: KeyboardEvent) => event.key === "Escape" && onClose();
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
   }, [onClose]);
 
   return (
@@ -268,13 +268,19 @@ const NewsSection: React.FC<{
     year: string;
     setYear: (y: string) => void;
   };
-}> = ({ news, onSelectNews, filters }) => {
+  currentPage: number;
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
+  itemsPerPage: number;
+  setItemsPerPage: React.Dispatch<React.SetStateAction<number>>;
+}> = ({ news, onSelectNews, filters, currentPage, setCurrentPage, itemsPerPage, setItemsPerPage }) => {
   const months = Array.from({ length: 12 }, (_, i) => ({
     value: (i + 1).toString(),
     label: new Date(0, i).toLocaleString("en-US", { month: "long" }),
   }));
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 15 }, (_, i) => (currentYear - i).toString());
+  const totalPages = Math.ceil(news.length / itemsPerPage);
+  const paginatedNews = news.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <section className="py-16 bg-[#f0f2f5]">
@@ -285,26 +291,98 @@ const NewsSection: React.FC<{
             Stay updated with the latest stories and achievements from our company.
           </p>
         </div>
-        <div className="bg-white p-4 rounded-xl shadow-md mb-12 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-          <select value={filters.year} onChange={(e) => filters.setYear(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md">
+        <div className="bg-white p-4 rounded-xl shadow-md mb-12 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+          <select
+            value={filters.year}
+            onChange={(e) => filters.setYear(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-md"
+          >
             <option value="">All Years</option>
-            {years.map(y => <option key={y} value={y}>{y}</option>)}
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
           </select>
-          <select value={filters.month} onChange={(e) => filters.setMonth(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md">
+          <select
+            value={filters.month}
+            onChange={(e) => filters.setMonth(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-md"
+          >
             <option value="">All Months</option>
-            {months.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+            {months.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
           </select>
-          <button onClick={() => { filters.setYear(''); filters.setMonth(''); }} className="w-full p-2 bg-gray-200 text-gray-700 font-semibold rounded-md hover:bg-gray-300">
+          <select
+            value={itemsPerPage}
+            onChange={(e) => {
+              setItemsPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+            className="w-full p-2 border border-gray-300 rounded-md"
+          >
+            <option value={10}>10 per page</option>
+            <option value={20}>20 per page</option>
+            <option value={50}>50 per page</option>
+          </select>
+          <button
+            onClick={() => {
+              filters.setYear("");
+              filters.setMonth("");
+              setCurrentPage(1);
+            }}
+            className="w-full p-2 bg-gray-200 text-gray-700 font-semibold rounded-md hover:bg-gray-300"
+          >
             Clear Filters
           </button>
         </div>
 
-        {news.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {news.map((item) => (
-              <NewsCard key={item.news_id} news={item} onCardClick={onSelectNews} />
-            ))}
-          </div>
+        {paginatedNews.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {paginatedNews.map((item) => (
+                <NewsCard key={item.news_id} news={item} onCardClick={onSelectNews} />
+              ))}
+            </div>
+            <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div className="text-gray-600">
+                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, news.length)} of{" "}
+                {news.length} news
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentPage((prev: number) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 bg-[#003459] text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <div className="flex gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-4 py-2 rounded-md ${
+                        page === currentPage ? "bg-[#0A51A1] text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setCurrentPage((prev: number) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 bg-[#003459] text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </>
         ) : (
           <div className="text-center py-16">
             <CalendarDaysIcon className="w-16 h-16 mx-auto text-gray-600" />
@@ -319,13 +397,14 @@ const NewsSection: React.FC<{
 
 // --- MAIN NEWS PAGE COMPONENT ---
 const NewsPage: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [allNews, setAllNews] = useState<NewsData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selectedNews, setSelectedNews] = useState<NewsData | null>(null);
-  
-  const [month, setMonth] = useState("");
-  const [year, setYear] = useState("");
+  const [month, setMonth] = useState<string>("");
+  const [year, setYear] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
 
   const fetchNews = useCallback(async () => {
     setIsLoading(true);
@@ -356,13 +435,18 @@ const NewsPage: React.FC = () => {
 
   if (error && !isLoading) {
     return (
-        <div className="h-screen flex flex-col items-center justify-center text-center p-4">
-            <InformationCircleIcon className="w-16 h-16 text-red-500"/>
-            <h2 className="mt-4 text-2xl font-bold">An Error Occurred</h2>
-            <p className="mt-2 text-gray-600">{error}</p>
-            <button onClick={fetchNews} className="mt-6 px-6 py-2 bg-[#0A51A1] text-white font-semibold rounded-md">Retry</button>
-        </div>
-    )
+      <div className="h-screen flex flex-col items-center justify-center text-center p-4">
+        <InformationCircleIcon className="w-16 h-16 text-red-500" />
+        <h2 className="mt-4 text-2xl font-bold">An Error Occurred</h2>
+        <p className="mt-2 text-gray-600">{error}</p>
+        <button
+          onClick={fetchNews}
+          className="mt-6 px-6 py-2 bg-[#0A51A1] text-white font-semibold rounded-md"
+        >
+          Retry
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -380,6 +464,10 @@ const NewsPage: React.FC = () => {
               news={filteredNews}
               onSelectNews={setSelectedNews}
               filters={{ month, setMonth, year, setYear }}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+              setItemsPerPage={setItemsPerPage}
             />
           </main>
           <footer>
