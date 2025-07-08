@@ -242,7 +242,7 @@ const AboutHeroSection: React.FC = () => {
                   <span ref={countUpRef} className="text-2xl font-bold text-[#ed1c24] font-inter" />
                 )}
               </CountUp>
-              <p className="text-xs text-[#003459] font-inter mt-1 max-w-[150px]">{sub.category}</p>
+              <p className="text-xs text-[white] font-inter mt-1 max-w-[150px]">{sub.category}</p>
             </div>
           </motion.div>
         ))}
