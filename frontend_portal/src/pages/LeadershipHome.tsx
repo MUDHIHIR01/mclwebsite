@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Transition } from "framer-motion";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ArrowPathIcon, InformationCircleIcon, XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
@@ -10,7 +10,6 @@ import Footer from "../components/Footer";
 interface LeadershipHomeData {
   leadership_home_id: number;
   heading: string;
-  description: string | null;
   home_img: string | null;
   created_at: string;
   updated_at: string;
@@ -22,7 +21,6 @@ interface LeadershipData {
   position: string;
   leader_name: string;
   leader_image: string | null;
-  description: string | null;
   level: "Board of Directors" | "Management";
   created_at: string;
   updated_at: string;
@@ -33,24 +31,49 @@ interface LeadershipResponse {
   leadership: LeadershipData[];
 }
 
+// Constants
+const LOADER_TRANSITION: Transition = { duration: 0.1 };
+const LOADER_ICON_ANIMATION = {
+  animate: { opacity: [0.5, 1, 0.5], scale: [1, 1.05, 1] },
+  transition: { repeat: Infinity, duration: 1.5, ease: "easeInOut" as const },
+};
+const LOADER_TEXT_ANIMATION = {
+  animate: { opacity: [0.5, 1, 0.5] },
+  transition: { repeat: Infinity, duration: 1.5, ease: "easeInOut" as const },
+};
+const MODAL_TRANSITION: Transition = { duration: 0.3, ease: "easeOut" };
+const SLIDE_TRANSITION: Transition = { duration: 0.8, ease: "easeInOut" };
+const TEXT_FADE_IN_TRANSITION: Transition = { duration: 0.6, ease: "easeOut" };
+const CARD_TRANSITION: Transition = { duration: 0.6, ease: "easeOut" };
+const CARD_HOVER_TRANSITION = { y: -8, transition: { duration: 0.2 } };
+const FILTER_SECTION_TRANSITION: Transition = { duration: 0.5 };
+const COLORS = {
+  primary: "#003459",
+  secondary: "#ed1c24",
+  accent: "#fff1e5",
+  background: "#fafaf1",
+  textPrimary: "#003459",
+  textLight: "#fff",
+  textDark: "#333",
+  grayLight: "#f3f4f6",
+};
+
 // Full-page loader component
 const Loader: React.FC = () => (
   <motion.div
     className="fixed inset-0 flex flex-col items-center justify-center bg-[#0A51A1] z-50"
     initial={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    transition={{ duration: 0.1 }} // Minimized fade duration
+    transition={LOADER_TRANSITION}
   >
     <motion.div
-      animate={{ opacity: [0.5, 1, 0.5], scale: [1, 1.05, 1] }}
-      transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+      {...LOADER_ICON_ANIMATION}
       className="mb-4"
     >
       <ArrowPathIcon className="w-16 h-16 text-white animate-spin" />
     </motion.div>
     <motion.h2
-      animate={{ opacity: [0.5, 1, 0.5] }}
-      transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+      {...LOADER_TEXT_ANIMATION}
       className="text-2xl font-bold text-white"
     >
       Loading Leadership...
@@ -76,7 +99,7 @@ const LeaderImageModal: React.FC<{ imageUrl: string; altText: string; onClose: (
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       exit={{ scale: 0.8, opacity: 0 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      transition={MODAL_TRANSITION}
       onClick={(e) => e.stopPropagation()}
     >
       <button
@@ -163,7 +186,7 @@ const LeadershipHomeSlideshow: React.FC<{ setLoading: (loading: boolean) => void
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
+            transition={SLIDE_TRANSITION}
             className="absolute inset-0"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
@@ -186,20 +209,11 @@ const LeadershipHomeSlideshow: React.FC<{ setLoading: (loading: boolean) => void
               key={`h2-${currentSlide}`}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              className="text-3xl md:text-5xl font-bold text-[#fff1e5] mb-4"
+              transition={TEXT_FADE_IN_TRANSITION}
+              className="text-3xl md:text-5xl font-bold text-white mb-8"
             >
               {slides[currentSlide].heading}
             </motion.h2>
-            <motion.p
-              key={`p-${currentSlide}`}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-              className="text-xl md:text-2xl font-medium text-gray-100 mb-8"
-            >
-              {slides[currentSlide].description || "No description available"}
-            </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -208,14 +222,14 @@ const LeadershipHomeSlideshow: React.FC<{ setLoading: (loading: boolean) => void
             >
               <button
                 onClick={() => setCurrentSlide((p) => (p - 1 + slides.length) % slides.length)}
-                className="p-3 bg-[#003459] text-white rounded-full hover:bg-black/70 transition"
+                className={`p-3 bg-[${COLORS.primary}] text-white rounded-full hover:bg-black/70 transition`}
                 aria-label="Previous slide"
               >
                 <ChevronLeftIcon className="w-6 h-6" />
               </button>
               <button
                 onClick={() => setCurrentSlide((p) => (p + 1) % slides.length)}
-                className="p-3 bg-[#003459] text-white rounded-full hover:bg-black/70 transition"
+                className={`p-3 bg-[${COLORS.primary}] text-white rounded-full hover:bg-black/70 transition`}
                 aria-label="Next slide"
               >
                 <ChevronRightIcon className="w-6 h-6" />
@@ -245,16 +259,14 @@ const LeadershipCard: React.FC<{ leader: LeadershipData; index: number }> = ({ l
     ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${leader.leader_image.replace(/^\//, "")}`
     : defaultImage;
 
-  const positionTagStyle = leader.level === "Board of Directors" ? "bg-[#ed1c24] text-white" : "bg-[#003459] text-white";
-
   return (
     <>
       <motion.div
         className="bg-white shadow-lg flex flex-col rounded-lg overflow-hidden h-full"
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        whileHover={{ y: -8, transition: { duration: 0.2 } }}
+        transition={CARD_TRANSITION}
+        whileHover={CARD_HOVER_TRANSITION}
       >
         <div className="relative aspect-w-4 aspect-h-3 bg-gray-100 flex items-center justify-center">
           <img
@@ -268,17 +280,10 @@ const LeadershipCard: React.FC<{ leader: LeadershipData; index: number }> = ({ l
             }}
             loading="lazy"
           />
-          <span
-            className={`absolute top-4 left-4 text-xs font-bold px-3 py-1 rounded-full uppercase ${positionTagStyle}`}
-          >
-            {index + 1}. {leader.position}
-          </span>
         </div>
-        <div className="p-6 flex flex-col flex-grow">
-          <h3 className="text-xl font-bold text-[#003459] mb-2">{leader.leader_name}</h3>
-          <p className="text-gray-700 text-base font-medium line-clamp-4">
-            {leader.description || "No description available"}
-          </p>
+        <div className="p-6 flex flex-col flex-grow text-center">
+          <p className={`text-md font-semibold text-[${COLORS.secondary}] mb-2`}>{index + 1}. {leader.position}</p>
+          <h3 className={`text-xl font-bold text-[${COLORS.primary}]`}>{leader.leader_name}</h3>
         </div>
       </motion.div>
       <AnimatePresence>
@@ -340,7 +345,7 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
     return (
       <div className="w-full py-20 flex flex-col items-center justify-center px-4 text-center">
         <InformationCircleIcon className="w-12 h-12 mx-auto text-gray-400" />
-        <h3 className="mt-4 text-2xl font-bold text-[#003459]">
+        <h3 className={`mt-4 text-2xl font-bold text-[${COLORS.primary}]`}>
           {error ? "Failed to Load Content" : "No Content Available"}
         </h3>
         <p className="mt-2 text-gray-600">{error}</p>
@@ -350,7 +355,7 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
             setRetryCount(0);
             fetchLeaders();
           }}
-          className="mt-6 flex items-center px-6 py-3 bg-[#003459] text-white font-semibold rounded-full hover:bg-[#0a5a60] transition"
+          className={`mt-6 flex items-center px-6 py-3 bg-[${COLORS.primary}] text-white font-semibold rounded-full hover:bg-[#0a5a60] transition`}
         >
           <ArrowPathIcon className="w-5 h-5 mr-2" />
           Retry
@@ -360,14 +365,14 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
   }
 
   return (
-    <section className="py-16 bg-[#fafaf1]">
+    <section className={`py-16 bg-[${COLORS.background}]`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <motion.h2
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="text-3xl sm:text-4xl font-bold text-[#ed1c24]"
+            transition={TEXT_FADE_IN_TRANSITION}
+            className={`text-3xl sm:text-4xl font-bold text-[${COLORS.secondary}]`}
           >
             Our Leadership
           </motion.h2>
@@ -379,7 +384,7 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
           <button
             onClick={() => setFilter("Board of Directors")}
             className={`px-6 py-2 rounded-full font-semibold transition ${
-              filter === "Board of Directors" ? "bg-[#ed1c24] text-white shadow-lg" : "bg-[#003459] text-white hover:bg-[#0a5a60]"
+              filter === "Board of Directors" ? `bg-[${COLORS.secondary}] text-white shadow-lg` : `bg-[${COLORS.primary}] text-white hover:bg-[#0a5a60]`
             }`}
           >
             Board of Directors
@@ -387,7 +392,7 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
           <button
             onClick={() => setFilter("Management")}
             className={`px-6 py-2 rounded-full font-semibold transition ${
-              filter === "Management" ? "bg-[#ed1c24] text-white shadow-lg" : "bg-[#003459] text-white hover:bg-[#0a5a60]"
+              filter === "Management" ? `bg-[${COLORS.secondary}] text-white shadow-lg` : `bg-[${COLORS.primary}] text-white hover:bg-[#0a5a60]`
             }`}
           >
             Management
@@ -395,7 +400,7 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
           <button
             onClick={() => setFilter("All")}
             className={`px-6 py-2 rounded-full font-semibold transition ${
-              filter === "All" ? "bg-[#ed1c24] text-white shadow-lg" : "bg-[#003459] text-white hover:bg-[#0a5a60]"
+              filter === "All" ? `bg-[${COLORS.secondary}] text-white shadow-lg` : `bg-[${COLORS.primary}] text-white hover:bg-[#0a5a60]`
             }`}
           >
             All
@@ -407,13 +412,13 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
+            transition={FILTER_SECTION_TRANSITION}
           >
             {filter === "All" ? (
               <div className="space-y-16">
                 {boardLeaders.length > 0 && (
                   <div>
-                    <h3 className="text-3xl font-bold text-[#003459] mb-8 text-center">Board of Directors</h3>
+                    <h3 className={`text-3xl font-bold text-[${COLORS.primary}] mb-8 text-center`}>Board of Directors</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                       {boardLeaders.map((leader, index) => (
                         <LeadershipCard key={leader.leadership_id} leader={leader} index={index} />
@@ -423,7 +428,7 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
                 )}
                 {managementLeaders.length > 0 && (
                   <div>
-                    <h3 className="text-3xl font-bold text-[#003459] mt-16 mb-8 text-center">Management</h3>
+                    <h3 className={`text-3xl font-bold text-[${COLORS.primary}] mt-16 mb-8 text-center`}>Management</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                       {managementLeaders.map((leader, index) => (
                         <LeadershipCard key={leader.leadership_id} leader={leader} index={index} />
