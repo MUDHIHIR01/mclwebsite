@@ -14,7 +14,7 @@ import {
   LinkIcon,
 } from "@heroicons/react/24/outline";
 
-// --- INTERFACES ---
+// --- INTERFaces ---
 interface SustainabilityHomeData {
   sustainability_home_id: number;
   heading: string;
@@ -174,8 +174,18 @@ const SustainabilityHomeSlideshow: React.FC<{ setLoaded: (isLoaded: boolean) => 
 
 // --- Individual Sustainability Card Component ---
 const SustainabilityCard: React.FC<{ item: SustainabilityData }> = ({ item }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const toggleReadMore = useCallback(() => {
+    setIsExpanded((prev) => !prev);
+  }, []);
+
+  // Show "Read More" button only if the description is long enough to be truncated.
+  const needsReadMore = item.description.length > 200;
+
   return (
     <motion.div
+      layout
       key={item.sustain_id}
       className="bg-[white] shadow-lg flex flex-col"
       initial={{ opacity: 0, y: 50 }}
@@ -196,7 +206,22 @@ const SustainabilityCard: React.FC<{ item: SustainabilityData }> = ({ item }) =>
           {item.sustain_category}
           <span className="absolute bottom-0 left-0 h-1 w-1/4 bg-[#33302d]"></span>
         </h3>
-        <p className="text-gray-700 text-base font-medium flex-grow line-clamp-4">{item.description}</p>
+        <div className="flex-grow">
+          <motion.p
+            layout
+            className={`text-gray-700 text-base font-medium ${!isExpanded && needsReadMore ? "line-clamp-4" : ""}`}
+          >
+            {item.description}
+          </motion.p>
+        </div>
+        {needsReadMore && (
+          <button
+            onClick={toggleReadMore}
+            className="text-[#ed1c24] font-bold text-sm mt-2 self-start hover:underline focus:outline-none"
+          >
+            {isExpanded ? "Read Less" : "Read More"}
+          </button>
+        )}
         <div className="mt-6">
           {item.sustain_pdf_file ? (
             <a
