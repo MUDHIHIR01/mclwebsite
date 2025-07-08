@@ -221,7 +221,7 @@ const ValueCard: React.FC<{ value: Value }> = ({ value }) => {
             onError={() => setHasImageError(true)}
           />
         )}
-        <span className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white text-black text-xs font-bold px-3 py-1 rounded-full uppercase">
+        <span className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-[#ed1c24] text-white text-xs font-bold px-3 py-1 rounded-full uppercase">
           {value.category}
         </span>
       </div>

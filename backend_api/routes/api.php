@@ -52,7 +52,7 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\AboutMwananchiController;
 use App\Http\Controllers\SubEventController;
-
+use App\Http\Controllers\SubscriptionController;
 
 
 // Public Routes
@@ -122,6 +122,7 @@ Route::get('/leadershipHomeSlider', [LeadershipHomeController::class, 'leadershi
         Route::get('/latestEvent', [EventController::class, 'latestEvent']);
      Route::get('/about-mwananchi/all', [AboutMwananchiController::class, 'allRecords']);
        Route::get('/all/sub-events', [SubEventController::class, 'allEvents']);
+       Route::get('/allsubscriptions', [SubscriptionController::class, 'allsubscriptions']);
 
 
        
@@ -544,6 +545,14 @@ Route::prefix('events')->group(function () {
     Route::delete('/{event_id}', [EventController::class, 'destroy'])->middleware('auth:sanctum');
 }); 
 
+
+// Subscription API Routes
+Route::apiResource('subscriptions', SubscriptionController::class);
+
+// Since the frontend code you provided for 'edit' uses a POST to a custom '/update' URL,
+// let's add that for compatibility. The apiResource 'update' is more standard (PUT/PATCH).
+// You can use either, but this makes the provided React code work without changes.
+Route::post('subscriptions/{subscription_id}/update', [SubscriptionController::class, 'update']);
 
 Route::prefix('sub-events')->group(function () {
     Route::get('/', [SubEventController::class, 'index']);

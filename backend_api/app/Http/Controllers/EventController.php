@@ -93,7 +93,7 @@ class EventController extends Controller
     {
         try {
             $latestEvent = Event::select($this->getSelectableFields())
-                ->orderBy('created_at', 'desc')
+                ->orderBy('created_at', 'asc')
                 ->first();
 
             if (!$latestEvent) {

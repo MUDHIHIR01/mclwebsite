@@ -173,6 +173,9 @@ import  EditSubEvent  from './pages/events/EditSubEvent'
 import  AddSubEvent   from './pages/events/AddSubEvent'
 import SubEvents  from  './pages/events/SubEvents'
 import  ViewSubEvents   from './pages/ViewSubEvents'
+import  Subscriptions  from './pages/subscriptions/Subscriptions'
+import  AddSubscription  from './pages/subscriptions/AddSubscription'
+import  EditSubscription  from  './pages/subscriptions/EditSubscription'
 
 // Define props for ProtectedRoute
 interface ProtectedRouteProps {
@@ -1213,6 +1216,33 @@ export default function App() {
         }
       />
 
+
+
+
+  <Route
+          path="/subscriptions"
+          element={
+            <ProtectedRoute>
+              <Subscriptions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/add/subscription"
+          element={
+            <ProtectedRoute>
+              <AddSubscription />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/edit/subscription/:subscription_id"
+          element={
+            <ProtectedRoute>
+              <EditSubscription />
+            </ProtectedRoute>
+          }
+        />
 
 
 <Route
