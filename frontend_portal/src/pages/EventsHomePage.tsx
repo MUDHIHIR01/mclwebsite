@@ -120,7 +120,8 @@ const ImageModal: React.FC<{
         alt={altText}
         className="w-full h-auto max-h-[85vh] object-contain rounded"
         onError={(e) => {
-          e.currentTarget.src = "https://via.placeholder.com/800x600?text=Image+Error";
+          e.currentTarget.src =
+            "https://via.placeholder.com/800x600?text=Image+Error";
         }}
       />
     </motion.div>
@@ -132,7 +133,8 @@ const EventCard: React.FC<{ event: EventData }> = ({ event }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const imageUrl = getFullUrl(event.img_file);
   const embedVideoUrl = getYouTubeEmbedUrl(event.video_link);
-  const defaultImage = "https://via.placeholder.com/600x400?text=Event+Image";
+  const fallbackImageOnError =
+    "https://via.placeholder.com/600x400?text=Image+Load+Error";
 
   const description = event.description || "No description provided.";
   const maxLength = 150;
@@ -147,29 +149,52 @@ const EventCard: React.FC<{ event: EventData }> = ({ event }) => {
         className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1.5 grid grid-cols-1 md:grid-cols-2"
         layout
       >
-        {/* Left Side: Image */}
-        <div className="relative h-64 md:h-auto group">
-          <img
-            className="w-full h-full object-cover cursor-pointer"
-            src={imageUrl ?? defaultImage}
-            alt={event.event_category}
-            onClick={() => setIsModalOpen(true)}
-            onError={(e) => {
-              e.currentTarget.src = defaultImage;
-            }}
-            loading="lazy"
-          />
-          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-            <p
-
- className="text-white font-bold text-lg">View Image</p>
+        {/* Left Side: Conditionally render Image or a Placeholder */}
+        {imageUrl ? (
+          <div className="relative h-64 md:h-auto group">
+            <img
+              className="w-full h-full object-cover cursor-pointer"
+              src={imageUrl}
+              alt={event.event_category}
+              onClick={() => setIsModalOpen(true)}
+              onError={(e) => {
+                e.currentTarget.src = fallbackImageOnError;
+              }}
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+              <p className="text-white font-bold text-lg">View Image</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex h-64 md:h-auto items-center justify-center bg-gray-100 border-r border-gray-200">
+            <div className="text-center text-gray-400 p-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="mx-auto h-16 w-16"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <p className="mt-2 text-sm font-semibold">N/A</p>
+              <p className="text-xs">No image provided</p>
+            </div>
+          </div>
+        )}
 
         {/* Right Side: Content & Video */}
         <div className="p-6 flex flex-col">
-          <h3 className="text-xl font-bold text-[#003459] mb-2">{event.event_category}</h3>
-          
+          <h3 className="text-xl font-bold text-[#003459] mb-2">
+            {event.event_category}
+          </h3>
+
           <div className="text-gray-700 text-base mb-4 flex-grow">
             <p className="inline">
               {isLongDescription ? displayedDescription : description}
@@ -183,7 +208,7 @@ const EventCard: React.FC<{ event: EventData }> = ({ event }) => {
               </button>
             )}
           </div>
-          
+
           {embedVideoUrl && (
             <div className="mb-4">
               <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden shadow-inner">
@@ -235,7 +260,13 @@ const EventsSection: React.FC<{
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
   itemsPerPage: number;
   setItemsPerPage: React.Dispatch<React.SetStateAction<number>>;
-}> = ({ setContentLoaded, currentPage, setCurrentPage, itemsPerPage, setItemsPerPage }) => {
+}> = ({
+  setContentLoaded,
+  currentPage,
+  setCurrentPage,
+  itemsPerPage,
+  setItemsPerPage,
+}) => {
   const [events, setEvents] = useState<EventData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("All");
@@ -243,10 +274,12 @@ const EventsSection: React.FC<{
   const fetchEvents = useCallback(async () => {
     setError(null);
     try {
-      const response = await axiosInstance.get<EventsResponse>("/api/all-events");
+      const response =
+        await axiosInstance.get<EventsResponse>("/api/all-events");
       if (response.data && Array.isArray(response.data.events)) {
         const sortedEvents = response.data.events.sort(
-          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
         setEvents(sortedEvents);
         if (sortedEvents.length === 0) setError("No events found.");
@@ -265,20 +298,33 @@ const EventsSection: React.FC<{
     fetchEvents();
   }, [fetchEvents]);
 
-  const categories = ["All", ...new Set(events.map((event) => event.event_category))];
-  const filteredEvents = filter === "All" ? events : events.filter((event) => event.event_category === filter);
+  const categories = [
+    "All",
+    ...new Set(events.map((event) => event.event_category)),
+  ];
+  const filteredEvents =
+    filter === "All"
+      ? events
+      : events.filter((event) => event.event_category === filter);
   const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
-  const paginatedEvents = filteredEvents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedEvents = filteredEvents.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   if (error) {
     return (
       <div className="w-full py-24 flex flex-col items-center justify-center px-4 text-center bg-gray-50">
         <InformationCircleIcon className="w-16 h-16 mx-auto text-[#ed1c24]" />
         <h3 className="mt-4 text-3xl font-bold text-[#003459]">
-          {error === "No events found." ? "No Events Available" : "Failed to Load Content"}
+          {error === "No events found."
+            ? "No Events Available"
+            : "Failed to Load Content"}
         </h3>
         <p className="mt-2 text-lg text-gray-600 max-w-md">
-          {error === "No events found." ? "There are no events to display at the moment. Check back soon!" : error}
+          {error === "No events found."
+            ? "There are no events to display at the moment. Check back soon!"
+            : error}
         </p>
         <button
           onClick={fetchEvents}
@@ -296,8 +342,8 @@ const EventsSection: React.FC<{
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-extrabold text-[#003459]">
-            Explore Our Journey: <span className="text-[#0072bc]">Events</span> &{" "}
-            <span className="text-[#ed1c24]">Milestones</span>
+            Explore Our Journey: <span className="text-[#0072bc]">Events</span>{" "}
+            & <span className="text-[#ed1c24]">Milestones</span>
           </h1>
           <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">
             Discover our latest activities, partnerships, and achievements.
@@ -346,12 +392,19 @@ const EventsSection: React.FC<{
             className="grid grid-cols-1 lg:grid-cols-2 gap-10"
           >
             {paginatedEvents.length > 0 ? (
-              paginatedEvents.map((event) => <EventCard key={event.event_id} event={event} />)
+              paginatedEvents.map((event) => (
+                <EventCard key={event.event_id} event={event} />
+              ))
             ) : (
               <div className="col-span-full text-center py-16">
                 <CalendarDaysIcon className="w-16 h-16 mx-auto text-gray-600" />
-                <h3 className="mt-4 text-xl font-bold text-[#003459]">No Events Found</h3>
-                <p className="text-gray-500 mt-2">No events match your current filter. Try selecting a different category.</p>
+                <h3 className="mt-4 text-xl font-bold text-[#003459]">
+                  No Events Found
+                </h3>
+                <p className="text-gray-500 mt-2">
+                  No events match your current filter. Try selecting a different
+                  category.
+                </p>
               </div>
             )}
           </motion.div>
@@ -361,33 +414,45 @@ const EventsSection: React.FC<{
           <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="text-gray-600">
               Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-              {Math.min(currentPage * itemsPerPage, filteredEvents.length)} of {filteredEvents.length} events
+              {Math.min(
+                currentPage * itemsPerPage,
+                filteredEvents.length
+              )}{" "}
+              of {filteredEvents.length} events
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => setCurrentPage((prev: number) => Math.max(prev - 1, 1))}
+                onClick={() =>
+                  setCurrentPage((prev: number) => Math.max(prev - 1, 1))
+                }
                 disabled={currentPage === 1}
                 className="px-4 py-2 bg-[#003459] text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
               <div className="flex gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-4 py-2 rounded-md ${
-                      page === currentPage
-                        ? "bg-[#0A51A1] text-white"
-                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-4 py-2 rounded-md ${
+                        page === currentPage
+                          ? "bg-[#0A51A1] text-white"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  )
+                )}
               </div>
               <button
-                onClick={() => setCurrentPage((prev: number) => Math.min(prev + 1, totalPages))}
+                onClick={() =>
+                  setCurrentPage((prev: number) =>
+                    Math.min(prev + 1, totalPages)
+                  )
+                }
                 disabled={currentPage === totalPages}
                 className="px-4 py-2 bg-[#003459] text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
