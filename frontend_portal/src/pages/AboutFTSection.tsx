@@ -71,7 +71,7 @@ const LandingLoader: React.FC = () => {
       animate="visible"
       exit="exit"
       className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-blue-900 to-blue-600 z-50"
-    >
+      >
       <motion.div variants={itemVariants} className="mb-4">
         <ArrowPathIcon className="w-16 h-16 text-white animate-spin" />
       </motion.div>
@@ -315,6 +315,7 @@ const AboutMwananchiSection: React.FC = () => {
         <div className="max-w-4xl mx-auto px-4 text-center text-gray-700">
           <InformationCircleIcon className="w-12 h-12 mx-auto text-red-500 mb-4" />
           <h2 className="text-3xl font-bold mb-2 text-gray-800 font-inter">Failed to Load Content</h2>
+          <p className="mb-6 tag">Failed to Load Content</p>
           <p className="mb-6 text-lg font-inter">{error}</p>
           <button
             onClick={fetchAboutData}
@@ -391,6 +392,65 @@ const AboutMwananchiSection: React.FC = () => {
               )}
             </motion.div>
           </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const VisionMissionValuesSection: React.FC = () => {
+  return (
+    <section className="py-16 sm:py-20 lg:py-28 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-blue-900 tracking-tight font-inter">
+            Our Vision, Mission, and Values
+          </h2>
+          <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto font-inter">
+            Discover the guiding principles that drive our organization towards excellence and positive impact.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <motion.div
+            className="bg-white/80 backdrop-blur-md rounded-2xl border border-gray-200/50 p-6 transition-all duration-300 hover:shadow-xl"
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+          >
+            <h3 className="text-xl font-bold text-gray-800 font-inter">Our Vision</h3>
+            <p className="mt-3 text-gray-600 text-base leading-relaxed font-inter">
+              To be the leading digital multimedia company in Tanzania.
+            </p>
+          </motion.div>
+          <motion.div
+            className="bg-white/80 backdrop-blur-md rounded-2xl border border-gray-200/50 p-6 transition-all duration-300 hover:shadow-xl"
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
+          >
+            <h3 className="text-xl font-bold text-gray-800 font-inter">Our Mission</h3>
+            <p className="mt-3 text-gray-600 text-base leading-relaxed font-inter">
+              To enrich the lives of people and empower them to promote positive change in society through superior media.
+            </p>
+          </motion.div>
+          <motion.div
+            className="bg-white/80 backdrop-blur-md rounded-2xl border border-gray-200/50 p-6 transition-all duration-300 hover:shadow-xl"
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.7, ease: "easeOut", delay: 0.4 }}
+          >
+            <h3 className="text-xl font-bold text-gray-800 font-inter">Our Values</h3>
+            <ul className="mt-3 text-gray-600 text-base leading-relaxed font-inter list-disc list-inside">
+              <li>Consumer Focus</li>
+              <li>We Are a Team</li>
+              <li>Integrity & Trust</li>
+              <li>Continuous Improvement & Innovation</li>
+              <li>Drive for Performance</li>
+            </ul>
+          </motion.div>
         </div>
       </div>
     </section>
@@ -600,6 +660,7 @@ const AboutFTSection: React.FC = () => {
           </header>
           <main className="flex-grow">
             <AboutMwananchiSection />
+            <VisionMissionValuesSection />
             <AboutContentSection />
           </main>
           <footer>
