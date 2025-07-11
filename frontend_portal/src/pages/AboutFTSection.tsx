@@ -322,7 +322,7 @@ const SubscriptionCountersSection: React.FC = () => {
               key={`${sub.subscription_id}-${index}`}
               className="relative flex flex-col justify-end items-center bg-white rounded-2xl shadow-lg w-64 pt-20 pb-8 px-6 flex-shrink-0 border-4 border-solid border-[#003459]"
             >
-              <div className="absolute top-0, -translate-y-1/2 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full overflow-hidden bg-white p-2 shadow-xl border-4 border-white z-10">
+              <div className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full overflow-hidden bg-white p-2 shadow-xl border-4 border-white z-10">
                 <img
                   src={`${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${sub.logo_img_file.replace(/^\//, "")}`}
                   alt={sub.category}
