@@ -123,7 +123,8 @@ Route::get('/leadershipHomeSlider', [LeadershipHomeController::class, 'leadershi
      Route::get('/about-mwananchi/all', [AboutMwananchiController::class, 'allRecords']);
        Route::get('/all/sub-events', [SubEventController::class, 'allEvents']);
        Route::get('/allsubscriptions', [SubscriptionController::class, 'allsubscriptions']);
-
+        Route::get('/latestbrand', [BrandController::class, 'latestbrand']);
+       
 
        
 // Protected Routes

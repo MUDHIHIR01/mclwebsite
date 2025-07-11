@@ -175,10 +175,10 @@ const OurBrands: React.FC = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-4xl md:text-5xl font-extrabold text-[#003459]">
-                Our Family of <span className="text-[#0072bc]">Brands</span>
+                 <span className="text-[#0072bc]">Brands</span>
               </motion.h1>
               <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">
-                Discover the diverse portfolio of brands we've built, each with a unique mission and a commitment to quality.
+            
               </motion.p>
             </div>
 

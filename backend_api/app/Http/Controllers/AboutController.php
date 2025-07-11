@@ -56,7 +56,7 @@ class AboutController extends Controller
         $validator = Validator::make($request->all(), [
             'description' => 'nullable|string',
             'heading' => 'nullable|string|max:255',
-            'home_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Max 2MB
+            'home_img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:16048', // Max 2MB
         ]);
 
         if ($validator->fails()) {

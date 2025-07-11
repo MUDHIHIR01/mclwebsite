@@ -1,5 +1,4 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-// FIX: Removed unused imports. Only the hooks are needed here.
 import { useTable, useGlobalFilter, usePagination, Row, Column, CellProps } from 'react-table';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -9,7 +8,7 @@ import axiosInstance from '../../axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// FIX: Augment react-table types with the correct generic parameter <D extends object>
+// Augment react-table types
 declare module 'react-table' {
   export interface TableOptions<D extends object>
     extends UsePaginationOptions<D>,
@@ -24,13 +23,12 @@ declare module 'react-table' {
       UseGlobalFiltersState<D> {}
 }
 
-// --- Rest of the file remains the same ---
-
 // About data interface
 interface AboutData {
   about_id: number;
   heading: string;
-  description: string;
+  // FIX: Allow description to be null to match potential API response
+  description: string | null;
   home_img: string | null;
   created_at: string;
   updated_at?: string;
@@ -86,10 +84,14 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ aboutId, onDeletionSucces
   );
 };
 
-// Description cell component with read more
-const DescriptionCell: React.FC<{ value: string }> = ({ value }) => {
+// FIX: Description cell component handles null values to prevent runtime errors.
+const DescriptionCell: React.FC<{ value: string | null }> = ({ value }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const maxLength = 100; // Adjust as needed
+  const maxLength = 100;
+
+  if (!value) {
+    return <span className="text-gray-500 text-xs">No Description</span>;
+  }
 
   const truncatedText = value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
 
@@ -171,7 +173,8 @@ export default function About() {
       {
         Header: 'Description',
         accessor: 'description',
-        Cell: ({ value }: CellProps<AboutData, string>) => <DescriptionCell value={value} />,
+        // FIX: Updated CellProps generic to allow null
+        Cell: ({ value }: CellProps<AboutData, string | null>) => <DescriptionCell value={value} />,
       },
       {
         Header: 'Image',
@@ -241,7 +244,7 @@ export default function About() {
       body: data.map((row, index) => [
         index + 1,
         row.heading,
-        row.description,
+        row.description || 'N/A', // Handle null description for PDF
         new Date(row.created_at).toLocaleDateString(),
       ]),
     });
@@ -254,7 +257,7 @@ export default function About() {
       data.map((row, index) => ({
         '#': index + 1,
         Heading: row.heading,
-        Description: row.description,
+        Description: row.description || 'N/A', // Handle null description for Excel
         'Created At': new Date(row.created_at).toLocaleDateString(),
       }))
     );
@@ -314,27 +317,41 @@ export default function About() {
         <div className="overflow-x-auto">
           <table {...getTableProps()} className="w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
             <thead className="bg-gray-50">
-              {headerGroups.map((headerGroup) => (
-                <tr {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map((column) => (
-                    <th {...column.getHeaderProps()} className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {column.render('Header')}
-                    </th>
-                  ))}
-                </tr>
-              ))}
+              {headerGroups.map((headerGroup) => {
+                const { key: headerGroupKey, ...restHeaderGroupProps } = headerGroup.getHeaderGroupProps();
+                return (
+                  // FIX: Pass key prop directly to avoid spread warning
+                  <tr key={headerGroupKey} {...restHeaderGroupProps}>
+                    {headerGroup.headers.map((column) => {
+                      const { key: columnKey, ...restColumnProps } = column.getHeaderProps();
+                      return (
+                        // FIX: Pass key prop directly to avoid spread warning
+                        <th key={columnKey} {...restColumnProps} className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          {column.render('Header')}
+                        </th>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
             </thead>
             <tbody {...getTableBodyProps()} className="divide-y divide-gray-200">
               {page.length > 0 ? (
                 page.map((row: Row<AboutData>) => {
                   prepareRow(row);
+                  const { key: rowKey, ...restRowProps } = row.getRowProps();
                   return (
-                    <tr {...row.getRowProps()} className="hover:bg-gray-50 transition-colors">
-                      {row.cells.map((cell) => (
-                        <td {...cell.getCellProps()} className="px-2 sm:px-4 py-4 text-sm text-gray-700">
-                          {cell.render('Cell')}
-                        </td>
-                      ))}
+                    // FIX: Pass key prop directly to avoid spread warning
+                    <tr key={rowKey} {...restRowProps} className="hover:bg-gray-50 transition-colors">
+                      {row.cells.map((cell) => {
+                        const { key: cellKey, ...restCellProps } = cell.getCellProps();
+                        return (
+                          // FIX: Pass key prop directly to avoid spread warning
+                          <td key={cellKey} {...restCellProps} className="px-2 sm:px-4 py-4 text-sm text-gray-700">
+                            {cell.render('Cell')}
+                          </td>
+                        );
+                      })}
                     </tr>
                   );
                 })

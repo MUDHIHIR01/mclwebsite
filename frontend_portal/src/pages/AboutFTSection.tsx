@@ -10,7 +10,6 @@ import {
   InformationCircleIcon,
   ArrowRightIcon,
   ChevronDownIcon,
-  ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 import CountUp from "react-countup";
 import axiosInstance from "../axios";
@@ -34,7 +33,7 @@ interface MwananchiAboutData {
 
 interface AboutCardData {
   id: number;
-  type: "Company" | "Service" | "News" | "Events";
+  type: "Company" | "Service" | "News" | "Events" | "Brand";
   title: string;
   description: string;
   imageUrl: string | null;
@@ -47,6 +46,15 @@ interface SubscriptionData {
   category: string;
   total_viewers: number;
   logo_img_file: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ValueData {
+  value_id: number;
+  category: string;
+  img_file: string;
+  description: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -71,7 +79,7 @@ const LandingLoader: React.FC = () => {
       animate="visible"
       exit="exit"
       className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-blue-900 to-blue-600 z-50"
-      >
+    >
       <motion.div variants={itemVariants} className="mb-4">
         <ArrowPathIcon className="w-16 h-16 text-white animate-spin" />
       </motion.div>
@@ -84,7 +92,6 @@ const LandingLoader: React.FC = () => {
 
 const AboutHeroSection: React.FC = () => {
   const [data, setData] = useState<AboutSliderData[]>([]);
-  const [subscriptions, setSubscriptions] = useState<SubscriptionData[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -93,15 +100,11 @@ const AboutHeroSection: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [sliderResponse, subscriptionResponse] = await Promise.all([
-        axiosInstance.get<AboutSliderData[]>("/api/slider-imgs"),
-        axiosInstance.get<{ data: SubscriptionData[] }>("/api/allsubscriptions"),
-      ]);
+      const sliderResponse = await axiosInstance.get<AboutSliderData[]>("/api/slider-imgs");
       setData(Array.isArray(sliderResponse.data) ? sliderResponse.data : []);
-      setSubscriptions(Array.isArray(subscriptionResponse.data.data) ? subscriptionResponse.data.data : []);
     } catch (err: any) {
-      setError("Failed to fetch sliders or subscriptions");
-      toast.error("Failed to fetch content.");
+      setError("Failed to fetch hero content.");
+      toast.error("Failed to fetch hero content.");
     } finally {
       setLoading(false);
     }
@@ -156,7 +159,7 @@ const AboutHeroSection: React.FC = () => {
           transition={{ duration: 1.2, ease: "easeInOut" }}
           className="absolute inset-0"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent z-10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10" />
           <img
             src={data[currentSlide].home_img ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${data[currentSlide].home_img.replace(/^\//, "")}` : "https://via.placeholder.com/1920x1080?text=Image+Missing"}
             alt={data[currentSlide].heading}
@@ -166,95 +169,185 @@ const AboutHeroSection: React.FC = () => {
           />
         </motion.div>
       </AnimatePresence>
-      <div className="relative z-20 flex flex-col justify-center h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="max-w-2xl">
-          <motion.h1
-            key={`h1-${currentSlide}`}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-            className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-6 font-inter"
-          >
-            {data[currentSlide].heading}
-          </motion.h1>
-          <motion.p
-            key={`p-${currentSlide}`}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
-            className="text-lg sm:text-xl font-normal text-gray-200 mb-10 font-inter"
-          >
-            {data[currentSlide].description || "No description available"}
-          </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: "easeOut", delay: 0.4 }}
-            className="flex gap-4"
-          >
-            <button
-              onClick={() => setCurrentSlide((prev) => (prev - 1 + data.length) % data.length)}
-              className="p-3 bg-white/20 text-white rounded-full backdrop-blur-md border border-white/30 hover:bg-white/30 transition-all duration-300"
-              aria-label="Previous slide"
+
+      <div className="relative z-20 flex flex-col h-full justify-end pb-20 sm:pb-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className="max-w-3xl">
+            <motion.h1
+              key={`h1-${currentSlide}`}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+              className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-6 font-inter"
             >
-              <ChevronLeftIcon className="w-7 h-7" />
-            </button>
-            <button
-              onClick={() => setCurrentSlide((prev) => (prev + 1) % data.length)}
-              className="p-3 bg-white/20 text-white rounded-full backdrop-blur-md border border-white/30 hover:bg-white/30 transition-all duration-300"
-              aria-label="Next slide"
+              {data[currentSlide].heading}
+            </motion.h1>
+            <motion.p
+              key={`p-${currentSlide}`}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
+              className="text-lg sm:text-xl font-normal text-gray-200 mb-6 font-inter"
             >
-              <ChevronRightIcon className="w-7 h-7" />
-            </button>
-          </motion.div>
+              {data[currentSlide].description || "No description available"}
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut", delay: 0.4 }}
+              className="flex gap-4 mb-12"
+            >
+              <button
+                onClick={() => setCurrentSlide((prev) => (prev - 1 + data.length) % data.length)}
+                className="p-3 bg-white/20 text-white rounded-full backdrop-blur-md border border-white/30 hover:bg-white/30 transition-all duration-300"
+                aria-label="Previous slide"
+              >
+                <ChevronLeftIcon className="w-7 h-7" />
+              </button>
+              <button
+                onClick={() => setCurrentSlide((prev) => (prev + 1) % data.length)}
+                className="p-3 bg-white/20 text-white rounded-full backdrop-blur-md border border-white/30 hover:bg-white/30 transition-all duration-300"
+                aria-label="Next slide"
+              >
+                <ChevronRightIcon className="w-7 h-7" />
+              </button>
+            </motion.div>
+          </div>
         </div>
       </div>
-      {/* Subscription Data Display */}
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.5, duration: 0.8 }}
-        className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex flex-col sm:flex-row gap-4 sm:gap-8 max-w-4xl mx-auto px-4"
-      >
-        {subscriptions.map((sub) => (
-          <motion.div
-            key={sub.subscription_id}
-            className="flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-lg p-3 border border-white/20"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 * sub.subscription_id }}
-          >
-            <img
-              src={`${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${sub.logo_img_file.replace(/^\//, "")}`}
-              alt={sub.category}
-              className="w-12 h-12 object-contain"
-              onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/48x48?text=Logo")}
-              loading="lazy"
-            />
-            <div className="text-center">
-              <CountUp
-                start={1}
-                end={sub.total_viewers}
-                duration={2}
-                formattingFn={(value) => `${new Intl.NumberFormat('en-US').format(Math.floor(value))}+`}
-              >
-                {({ countUpRef }: { countUpRef: React.RefObject<HTMLSpanElement> }) => (
-                  <span ref={countUpRef} className="text-2xl font-bold text-[#ed1c24] font-inter" />
-                )}
-              </CountUp>
-              <p className="text-xs text-[white] font-inter mt-1 max-w-[150px]">{sub.category}</p>
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.5, duration: 1 }}
-        className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20"
+        transition={{ delay: 1.5, duration: 1, ease: "easeOut" }}
+        className="absolute bottom-4 left-1/2 -translate-x-1/2 z-40"
       >
         <ChevronDownIcon className="w-8 h-8 text-white animate-bounce" />
       </motion.div>
+    </section>
+  );
+};
+
+const SubscriptionCountersSection: React.FC = () => {
+  const [subscriptions, setSubscriptions] = useState<SubscriptionData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSubscriptions = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axiosInstance.get<{ data: SubscriptionData[] }>("/api/allsubscriptions");
+      setSubscriptions(Array.isArray(response.data.data) ? response.data.data : []);
+    } catch (err: any) {
+      setError("Failed to load our audience numbers.");
+      toast.error("Failed to load audience data.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSubscriptions();
+  }, [fetchSubscriptions]);
+
+  if (loading) {
+    return (
+      <section className="py-20 bg-blue-900">
+        <div className="flex justify-center items-center">
+          <ArrowPathIcon className="w-8 h-8 animate-spin text-white mr-3" />
+          <span className="text-xl font-semibold text-white font-inter">Loading Our Reach...</span>
+        </div>
+      </section>
+    );
+  }
+
+  if (error || !subscriptions.length) {
+    return (
+      <section className="py-20 bg-blue-900">
+        <div className="max-w-4xl mx-auto px-4 text-center text-white">
+          <InformationCircleIcon className="w-12 h-12 mx-auto text-red-400 mb-4" />
+          <h2 className="text-3xl font-bold mb-2 font-inter">Content Unavailable</h2>
+          <p className="mb-6 text-lg text-blue-200 font-inter">{error || "Audience data could not be retrieved at this time."}</p>
+          <button
+            onClick={fetchSubscriptions}
+            className="flex items-center mx-auto px-6 py-3 bg-gradient-to-r from-red-600 to-red-400 text-white font-semibold rounded-full hover:from-red-700 hover:to-red-500 transition-all duration-300 font-inter"
+          >
+            <ArrowPathIcon className="w-5 h-5 mr-2" />
+            Retry
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  const marqueeDuration = subscriptions.length * 6;
+
+  return (
+    <section className="py-16 sm:py-20 lg:py-28 bg-[#0A51A1] overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+        >
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight font-inter">
+            Our Reach Across Platforms
+          </h2>
+          <p className="mt-4 text-lg text-blue-200 max-w-2xl mx-auto font-inter">
+            
+          </p>
+        </motion.div>
+      </div>
+
+      <div className="relative">
+        <div className="absolute top-0 bottom-0 left-0 w-24 bg-gradient-to-r from-[#0A51A1] to-transparent z-10 pointer-events-none"></div>
+        <div className="absolute top-0 bottom-0 right-0 w-24 bg-gradient-to-l from-[#0A51A1] to-transparent z-10 pointer-events-none"></div>
+
+        <motion.div
+          className="flex gap-8"
+          animate={{
+            x: ["0%", "-50%"],
+            transition: {
+              ease: "linear",
+              duration: marqueeDuration,
+              repeat: Infinity,
+            },
+          }}
+        >
+          {[...subscriptions, ...subscriptions].map((sub, index) => (
+            <div
+              key={`${sub.subscription_id}-${index}`}
+              className="relative flex flex-col justify-end items-center bg-white rounded-2xl shadow-lg w-64 pt-20 pb-8 px-6 flex-shrink-0 border-4 border-solid border-[#003459]"
+            >
+              <div className="absolute top-0, -translate-y-1/2 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full overflow-hidden bg-white p-2 shadow-xl border-4 border-white z-10">
+                <img
+                  src={`${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${sub.logo_img_file.replace(/^\//, "")}`}
+                  alt={sub.category}
+                  className="w-full h-full object-contain rounded-full"
+                  onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/128x128?text=Logo")}
+                  loading="lazy"
+                />
+              </div>
+              <div className="flex flex-col items-center text-center">
+                <CountUp
+                  start={1}
+                  end={sub.total_viewers}
+                  duration={2.5}
+                  formattingFn={(value) => `${new Intl.NumberFormat('en-US').format(Math.floor(value))}+`}
+                >
+                  {({ countUpRef }: { countUpRef: React.RefObject<HTMLSpanElement> }) => (
+                    <span ref={countUpRef} className="text-4xl font-bold text-[#ed1c24] font-inter" />
+                  )}
+                </CountUp>
+                <p className="text-md font-bold text-gray-700 font-inter mt-2">{sub.category}</p>
+              </div>
+            </div>
+          ))}
+        </motion.div>
+      </div>
     </section>
   );
 };
@@ -315,7 +408,6 @@ const AboutMwananchiSection: React.FC = () => {
         <div className="max-w-4xl mx-auto px-4 text-center text-gray-700">
           <InformationCircleIcon className="w-12 h-12 mx-auto text-red-500 mb-4" />
           <h2 className="text-3xl font-bold mb-2 text-gray-800 font-inter">Failed to Load Content</h2>
-          <p className="mb-6 tag">Failed to Load Content</p>
           <p className="mb-6 text-lg font-inter">{error}</p>
           <button
             onClick={fetchAboutData}
@@ -335,10 +427,30 @@ const AboutMwananchiSection: React.FC = () => {
     <section className="py-16 sm:py-20 lg:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.5 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+          >
+            <h2 className="text-base font-semibold text-red-600 uppercase tracking-wider font-inter">
+              About Mwananchi
+            </h2>
+            <h3 className="mt-2 text-3xl sm:text-4xl font-extrabold text-blue-900 tracking-tight font-inter">
+              {content.category}
+            </h3>
+            <div className="mt-8 space-y-6">
+              {paragraphs.map((paragraph, index) => (
+                <p key={index} className="text-lg text-gray-600 leading-relaxed font-inter">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+          </motion.div>
           {content.video_link && (
             <motion.div
               className="w-full h-[400px] sm:h-[500px]"
-              initial={{ opacity: 0, x: -50 }}
+              initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.7, ease: "easeOut" }}
@@ -357,41 +469,6 @@ const AboutMwananchiSection: React.FC = () => {
               </div>
             </motion.div>
           )}
-          <div className={!content.video_link ? "lg:col-span-2 text-center" : ""}>
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.5 }}
-              transition={{ duration: 0.7, ease: "easeOut" }}
-            >
-              <h2 className="text-base font-semibold text-red-600 uppercase tracking-wider font-inter">
-                About Mwananchi
-              </h2>
-              <h3 className="mt-2 text-3xl sm:text-4xl font-extrabold text-blue-900 tracking-tight font-inter">
-                {content.category}
-              </h3>
-              <div className="mt-8 space-y-6">
-                {paragraphs.map((paragraph, index) => (
-                  <p key={index} className="text-lg text-gray-600 leading-relaxed font-inter">
-                    {paragraph}
-                  </p>
-                ))}
-              </div>
-              {content.pdf_file && (
-                <div className="mt-10">
-                  <a
-                    href={`${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${content.pdf_file.replace(/^\//, "")}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-red-600 to-red-400 text-white font-bold text-lg rounded-full shadow-lg hover:from-red-700 hover:to-red-500 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 font-inter"
-                  >
-                    <ArrowDownTrayIcon className="w-6 h-6" />
-                    View History
-                  </a>
-                </div>
-              )}
-            </motion.div>
-          </div>
         </div>
       </div>
     </section>
@@ -404,15 +481,15 @@ const VisionMissionValuesSection: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-extrabold text-blue-900 tracking-tight font-inter">
-            Our Vision, Mission, and Values
+            Our Vision and Mission
           </h2>
           <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto font-inter">
-            Discover the guiding principles that drive our organization towards excellence and positive impact.
+          
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <motion.div
-            className="bg-white/80 backdrop-blur-md rounded-2xl border border-gray-200/50 p-6 transition-all duration-300 hover:shadow-xl"
+            className="bg-white/80 backdrop-blur-md rounded-2xl border-4 border-solid border-[#003459] p-6 transition-all duration-300 hover:shadow-xl"
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.4 }}
@@ -424,7 +501,7 @@ const VisionMissionValuesSection: React.FC = () => {
             </p>
           </motion.div>
           <motion.div
-            className="bg-white/80 backdrop-blur-md rounded-2xl border border-gray-200/50 p-6 transition-all duration-300 hover:shadow-xl"
+            className="bg-white/80 backdrop-blur-md rounded-2xl border-4 border-solid border-[#003459] p-6 transition-all duration-300 hover:shadow-xl"
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.4 }}
@@ -435,22 +512,96 @@ const VisionMissionValuesSection: React.FC = () => {
               To enrich the lives of people and empower them to promote positive change in society through superior media.
             </p>
           </motion.div>
-          <motion.div
-            className="bg-white/80 backdrop-blur-md rounded-2xl border border-gray-200/50 p-6 transition-all duration-300 hover:shadow-xl"
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.7, ease: "easeOut", delay: 0.4 }}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const OurValuesSection: React.FC = () => {
+  const [values, setValues] = useState<ValueData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchValues = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axiosInstance.get<{ values: ValueData[] }>("/api/values/all");
+      setValues(Array.isArray(response.data.values) ? response.data.values : []);
+    } catch (err: any) {
+      setError("Failed to fetch values");
+      toast.error("Failed to fetch values.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchValues();
+  }, [fetchValues]);
+
+  if (loading) {
+    return (
+      <section className="py-16 sm:py-20 lg:py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <ArrowPathIcon className="w-10 h-10 mx-auto text-blue-900 animate-spin" />
+          <p className="mt-4 text-gray-600 font-inter">Loading Values...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (error || !values.length) {
+    return (
+      <section className="py-16 sm:py-20 lg:py-28 bg-white">
+        <div className="max-w-4xl mx-auto px-4 text-center text-gray-700">
+          <InformationCircleIcon className="w-12 h-12 mx-auto text-red-500 mb-4" />
+          <h2 className="text-3xl font-bold mb-2 text-gray-800 font-inter">Failed to Load Values</h2>
+          <p className="mb-6 text-lg font-inter">{error || "No values found at this time."}</p>
+          <button
+            onClick={fetchValues}
+            className="flex items-center mx-auto px-6 py-3 bg-gradient-to-r from-red-600 to-red-400 text-white font-semibold rounded-full hover:from-red-700 hover:to-red-500 transition-all duration-300 font-inter"
           >
-            <h3 className="text-xl font-bold text-gray-800 font-inter">Our Values</h3>
-            <ul className="mt-3 text-gray-600 text-base leading-relaxed font-inter list-disc list-inside">
-              <li>Consumer Focus</li>
-              <li>We Are a Team</li>
-              <li>Integrity & Trust</li>
-              <li>Continuous Improvement & Innovation</li>
-              <li>Drive for Performance</li>
-            </ul>
-          </motion.div>
+            <ArrowPathIcon className="w-5 h-5 mr-2" />
+            Retry
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="py-16 sm:py-20 lg:py-28 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-blue-900 tracking-tight font-inter">
+            Our Core Values
+          </h2>
+          <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto font-inter">
+           
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
+          {values.map((value, index) => (
+            <motion.div
+              key={value.value_id}
+              className="flex flex-col items-center text-center bg-gray-50 rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-4 border-solid border-[#003459]"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 * index }}
+            >
+              <img
+                src={`${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${value.img_file.replace(/^\//, "")}`}
+                alt={value.category}
+                className="w-24 h-24 object-contain mb-4"
+                onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/150x150?text=Icon")}
+                loading="lazy"
+              />
+              <h3 className="text-lg font-bold text-blue-900 font-inter">{value.category}</h3>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>
@@ -464,9 +615,8 @@ const AboutContentSection: React.FC = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [dAndIncRes, serviceRes, newsRes, eventRes] = await Promise.allSettled([
-        axiosInstance.get("/api/d-and-inc/homeSlider"),
-        axiosInstance.get("/api/latestService"),
+      const [brandRes, newsRes, eventRes] = await Promise.allSettled([
+        axiosInstance.get("/api/latestbrand"),
         axiosInstance.get("/api/latestnew"),
         axiosInstance.get("/api/latestEvent"),
       ]);
@@ -496,28 +646,15 @@ const AboutContentSection: React.FC = () => {
       };
 
       const potentialCards = [
-        dAndIncRes.status === "fulfilled" &&
-          dAndIncRes.value.data &&
-          dAndIncRes.value.data.length > 0 &&
+        brandRes.status === "fulfilled" &&
           createCard(
-            dAndIncRes.value.data[0],
-            "Company",
-            "dhome_id",
-            dAndIncRes.value.data[0].heading,
+            brandRes.value.data,
+            "Brand",
+            "brand_id",
+            brandRes.value.data.category || "Our Brand",
             "description",
-            "home_img",
-            "/company/diversity-and-inclusion",
-            "created_at"
-          ),
-        serviceRes.status === "fulfilled" &&
-          createCard(
-            serviceRes.value.data,
-            "Service",
-            "services_home_id",
-            serviceRes.value.data.heading || "Our Services",
-            "description",
-            "home_img",
-            "/company/services",
+            "brand_img",
+            "/our-brands",
             "created_at"
           ),
         newsRes.status === "fulfilled" &&
@@ -573,7 +710,7 @@ const AboutContentSection: React.FC = () => {
             Discover More About Us
           </h2>
           <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto font-inter">
-            Explore the core pillars of our organization, from our latest events and services to our company culture and the latest news.
+            
           </p>
         </div>
         {loading ? (
@@ -582,11 +719,11 @@ const AboutContentSection: React.FC = () => {
             <p className="mt-4 text-gray-600 font-inter">Loading Highlights...</p>
           </div>
         ) : cards.length ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {cards.map((card) => (
               <motion.div
                 key={`${card.type}-${card.id}`}
-                className="group relative flex flex-col bg-white/80 backdrop-blur-md rounded-2xl border border-gray-200/50 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2"
+                className="group relative flex flex-col bg-white/80 backdrop-blur-md rounded-2xl border-4 border-solid border-[#003459] overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2"
                 variants={cardVariants}
                 initial="offscreen"
                 whileInView="onscreen"
@@ -661,6 +798,8 @@ const AboutFTSection: React.FC = () => {
           <main className="flex-grow">
             <AboutMwananchiSection />
             <VisionMissionValuesSection />
+            <OurValuesSection />
+            <SubscriptionCountersSection />
             <AboutContentSection />
           </main>
           <footer>

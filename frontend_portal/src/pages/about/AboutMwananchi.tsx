@@ -298,7 +298,7 @@ const AboutMwananchi: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table {...getTableProps()} className="w-full border border-gray-200 rounded-lg">
+          <table {...getTableProps()} className="w-full border border-solid border-[#0A51A1] rounded-lg">
             <thead className="bg-gray-50">
               {headerGroups.map((headerGroup) => (
                 <tr {...headerGroup.getHeaderGroupProps()}>

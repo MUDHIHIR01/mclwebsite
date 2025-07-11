@@ -27,18 +27,14 @@ interface MobileMenuProps {
 
 // --- Constant Data ---
 const aboutUsMenuItems: NavItem[] = [
-  { label: "What We Do", path: "/careers/what-we-do" },
-  { label: "Benefits", path: "/careers/benefits" },
-  { label: "Values", path: "/careers/values" },
+  
 ];
 
 const companyMenuItems: NavItem[] = [
+   { label: "Leadership", path: "/company/leadership" },
+    { label: "Sustainability", path: "/company/sustainability" },
   { label: "NMG-Group", path: "https://www.nationmedia.com/" },
-  { label: "Leadership", path: "/company/leadership" },
-  { label: "Diversity and Inclusion", path: "/company/diversity-and-inclusion" },
-  { label: "Sustainability", path: "/company/sustainability" },
-  { label: "Giving Back", path: "/company/giving-back" },
-  { label: "Our Standards", path: "/company/our-standards" },
+ 
 ];
 
 const careersMenuItems: NavItem[] = [
@@ -53,11 +49,11 @@ const newsMenuItems: NavItem[] = [
 const navItems: NavItem[] = [
   { label: "About Us", path: "/", dropdown: aboutUsMenuItems },
   { label: "Company", path: "/company/home", dropdown: companyMenuItems },
-  { label: "Services", path: "/company/services" },
-  { label: "Our  Brands", path: "/our-brands" },
-  { label: "Careers", path: "/careers/early-careers", dropdown: careersMenuItems },
-  { label: "News", path: "/company/news", dropdown: newsMenuItems },
+  // { label: "Services", path: "/company/services" },
+   { label: "Our  Brands", path: "/our-brands" },
+   { label: "News", path: "/company/news", dropdown: newsMenuItems },
   { label: "Events", path: "/all-events" },
+  { label: "Careers", path: "/careers/early-careers", dropdown: careersMenuItems },
   { label: "Contact", path: "/company/contact-us" },
 ];
 

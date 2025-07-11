@@ -56,21 +56,21 @@ class EventController extends Controller
         }
     }
 
-    /**
-     * Display all event records in ascending order.
-     */
-    public function allEvents()
-    {
-        try {
-            $eventRecords = Event::select($this->getSelectableFields())
-                ->orderBy('event_id', 'asc')
-                ->get();
-            return response()->json(['events' => $eventRecords], 200);
-        } catch (Exception $e) {
-            Log::error('Error fetching all event records: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to fetch all event records.'], 500);
-        }
+   /**
+ * Display all event records in ascending order.
+ */
+public function allEvents()
+{
+    try {
+        $eventRecords = Event::select($this->getSelectableFields())
+            ->orderBy('event_id', 'asc')
+            ->get();
+        return response()->json(['events' => $eventRecords], 200);
+    } catch (Exception $e) {
+        Log::error('Error fetching all event records: ' . $e->getMessage());
+        return response()->json(['error' => 'Failed to fetch all event records.'], 500);
     }
+}
 
     /**
      * Count the total number of event records.

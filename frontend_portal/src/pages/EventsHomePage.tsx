@@ -278,8 +278,7 @@ const EventsSection: React.FC<{
         await axiosInstance.get<EventsResponse>("/api/all-events");
       if (response.data && Array.isArray(response.data.events)) {
         const sortedEvents = response.data.events.sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          (a, b) => a.event_id - b.event_id
         );
         setEvents(sortedEvents);
         if (sortedEvents.length === 0) setError("No events found.");
@@ -342,11 +341,10 @@ const EventsSection: React.FC<{
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-extrabold text-[#003459]">
-            Explore Our Journey: <span className="text-[#0072bc]">Events</span>{" "}
-            & <span className="text-[#ed1c24]">Milestones</span>
+            FLAGSHIP EVENTS
           </h1>
-          <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">
-            Discover our latest activities, partnerships, and achievements.
+          <p className="mt-4 text-lg text-[#ed1c24] font-semibold max-w-3xl mx-auto">
+            Driving National Dialogue & Engagement
           </p>
         </div>
 

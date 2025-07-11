@@ -13,7 +13,7 @@ class BrandController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:sanctum')->except(['index', 'show', 'allBrands']);
+        $this->middleware('auth:sanctum')->except(['index', 'show', 'allBrands','latestbrand']);
     }
 
     public function index()
@@ -27,6 +27,38 @@ class BrandController extends Controller
             \Log::error('Error fetching brands: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Failed to fetch brands',
+                'details' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+        /**
+     * Fetch the latest brand.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function latestbrand()
+    {
+        \Log::info('Fetching the latest brand');
+        try {
+            // Use the latest() helper to order by 'created_at' descending
+            // and first() to get only one record.
+            // You could also use latest('brand_id') to be consistent with your index method.
+            $brand = Brand::latest()->first();
+
+            // Check if any brand exists in the database
+            if (!$brand) {
+                \Log::warning('No brands found in the database.');
+                return response()->json(['message' => 'No brands found'], Response::HTTP_NOT_FOUND);
+            }
+
+            \Log::info('Latest brand found', ['brand' => $brand->toArray()]);
+            return response()->json($brand, Response::HTTP_OK);
+
+        } catch (Exception $e) {
+            \Log::error('Error fetching latest brand: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Failed to fetch the latest brand',
                 'details' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
