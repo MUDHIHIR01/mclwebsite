@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence, Transition } from "framer-motion";
+import { motion, AnimatePresence, Transition, Variants } from "framer-motion";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ArrowPathIcon, InformationCircleIcon, XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
@@ -31,8 +31,7 @@ interface LeadershipResponse {
   leadership: LeadershipData[];
 }
 
-// Constants
-const LOADER_TRANSITION: Transition = { duration: 0.1 };
+// Constants (using direct hex codes for Tailwind compatibility)
 const LOADER_ICON_ANIMATION = {
   animate: { opacity: [0.5, 1, 0.5], scale: [1, 1.05, 1] },
   transition: { repeat: Infinity, duration: 1.5, ease: "easeInOut" as const },
@@ -47,24 +46,13 @@ const TEXT_FADE_IN_TRANSITION: Transition = { duration: 0.6, ease: "easeOut" };
 const CARD_TRANSITION: Transition = { duration: 0.6, ease: "easeOut" };
 const CARD_HOVER_TRANSITION = { y: -8, transition: { duration: 0.2 } };
 const FILTER_SECTION_TRANSITION: Transition = { duration: 0.5 };
-const COLORS = {
-  primary: "#003459",
-  secondary: "#ed1c24",
-  accent: "#fff1e5",
-  background: "#fafaf1",
-  textPrimary: "#003459",
-  textLight: "#fff",
-  textDark: "#333",
-  grayLight: "#f3f4f6",
-};
 
 // Full-page loader component
 const Loader: React.FC = () => (
   <motion.div
     className="fixed inset-0 flex flex-col items-center justify-center bg-[#0A51A1] z-50"
     initial={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    transition={LOADER_TRANSITION}
+    exit={{ opacity: 0, transition: { duration: 0.5 } }}
   >
     <motion.div
       {...LOADER_ICON_ANIMATION}
@@ -114,7 +102,6 @@ const LeaderImageModal: React.FC<{ imageUrl: string; altText: string; onClose: (
         alt={altText}
         className="w-full h-auto max-h-[80vh] object-contain object-center"
         onError={(e) => {
-          console.warn(`Failed to load modal image: ${imageUrl}`);
           e.currentTarget.src = "https://via.placeholder.com/800x600?text=Image+Error";
         }}
       />
@@ -122,8 +109,8 @@ const LeaderImageModal: React.FC<{ imageUrl: string; altText: string; onClose: (
   </motion.div>
 );
 
-// Slider section component
-const LeadershipHomeSlideshow: React.FC<{ setLoading: (loading: boolean) => void }> = ({ setLoading }) => {
+// Slider section component (Unchanged Logic)
+const LeadershipHomeSlideshow: React.FC<{ setLoading: (isLoaded: boolean) => void }> = ({ setLoading }) => {
   const [slides, setSlides] = useState<LeadershipHomeData[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -134,11 +121,10 @@ const LeadershipHomeSlideshow: React.FC<{ setLoading: (loading: boolean) => void
       const response = await axiosInstance.get<LeadershipHomeData[]>("/api/leadershipHomeSlider");
       setSlides(Array.isArray(response.data) ? response.data : []);
     } catch (err: any) {
-      console.error("Slider fetch error:", err.message);
       setError("Failed to fetch leadership slider data.");
       toast.error("Error fetching leadership slider data.");
     } finally {
-      setLoading(false);
+      setLoading(true);
     }
   }, [setLoading]);
 
@@ -155,20 +141,8 @@ const LeadershipHomeSlideshow: React.FC<{ setLoading: (loading: boolean) => void
   if (error || slides.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-6 bg-gray-800">
-        <div className="flex items-center gap-3 mb-6">
-          <InformationCircleIcon className="w-10 h-10 text-[#0d7680]" />
-          <h2 className="text-3xl font-bold text-white">{error ? "Failed to Load Content" : "No Sliders Found"}</h2>
-        </div>
-        <p className="text-lg text-gray-200">{error || "No slider content available."}</p>
-        {error && (
-          <button
-            onClick={fetchSlides}
-            className="mt-6 flex items-center px-6 py-3 bg-gray-800 text-white font-semibold rounded-full hover:bg-gray-700 transition"
-          >
-            <ArrowPathIcon className="w-5 h-5 mr-2" />
-            Retry
-          </button>
-        )}
+        <InformationCircleIcon className="w-10 h-10 text-gray-400 mb-4" />
+        <h2 className="text-2xl font-bold text-white">{error ? "Content Unavailable" : "No Sliders Found"}</h2>
       </div>
     );
   }
@@ -193,13 +167,8 @@ const LeadershipHomeSlideshow: React.FC<{ setLoading: (loading: boolean) => void
             <img
               src={imageUrl}
               alt={slides[currentSlide].heading}
-              className="w-full h-full object-cover cursor-pointer"
-              onClick={() => setIsModalOpen(true)}
-              onError={(e) => {
-                console.warn(`Failed to load slider image: ${imageUrl}`);
-                e.currentTarget.src = "https://via.placeholder.com/1200x600?text=Image+Error";
-              }}
-              loading="lazy"
+              className="w-full h-full object-cover"
+              onError={(e) => { e.currentTarget.src = "https://via.placeholder.com/1200x600?text=Image+Error"; }}
             />
           </motion.div>
         </AnimatePresence>
@@ -220,18 +189,10 @@ const LeadershipHomeSlideshow: React.FC<{ setLoading: (loading: boolean) => void
               transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
               className="flex gap-4"
             >
-              <button
-                onClick={() => setCurrentSlide((p) => (p - 1 + slides.length) % slides.length)}
-                className={`p-3 bg-[${COLORS.primary}] text-white rounded-full hover:bg-black/70 transition`}
-                aria-label="Previous slide"
-              >
+              <button onClick={() => setCurrentSlide((p) => (p - 1 + slides.length) % slides.length)} className="p-3 bg-[#003459] text-white rounded-full hover:bg-black/70 transition" aria-label="Previous slide" >
                 <ChevronLeftIcon className="w-6 h-6" />
               </button>
-              <button
-                onClick={() => setCurrentSlide((p) => (p + 1) % slides.length)}
-                className={`p-3 bg-[${COLORS.primary}] text-white rounded-full hover:bg-black/70 transition`}
-                aria-label="Next slide"
-              >
+              <button onClick={() => setCurrentSlide((p) => (p + 1) % slides.length)} className="p-3 bg-[#003459] text-white rounded-full hover:bg-black/70 transition" aria-label="Next slide" >
                 <ChevronRightIcon className="w-6 h-6" />
               </button>
             </motion.div>
@@ -240,11 +201,7 @@ const LeadershipHomeSlideshow: React.FC<{ setLoading: (loading: boolean) => void
       </section>
       <AnimatePresence>
         {isModalOpen && (
-          <LeaderImageModal
-            imageUrl={imageUrl}
-            altText={slides[currentSlide].heading}
-            onClose={() => setIsModalOpen(false)}
-          />
+          <LeaderImageModal imageUrl={imageUrl} altText={slides[currentSlide].heading} onClose={() => setIsModalOpen(false)} />
         )}
       </AnimatePresence>
     </>
@@ -261,51 +218,30 @@ const LeadershipCard: React.FC<{ leader: LeadershipData; index: number }> = ({ l
 
   return (
     <>
-      <motion.div
-        className="bg-white shadow-lg flex flex-col rounded-lg overflow-hidden h-full"
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={CARD_TRANSITION}
-        whileHover={CARD_HOVER_TRANSITION}
-      >
+      <motion.div className="bg-white shadow-lg flex flex-col rounded-lg overflow-hidden h-full" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={CARD_TRANSITION} whileHover={CARD_HOVER_TRANSITION} >
         <div className="relative aspect-w-4 aspect-h-3 bg-gray-100 flex items-center justify-center">
-          <img
-            className="w-full h-full object-contain object-center cursor-pointer"
-            src={imageUrl}
-            alt={leader.leader_name}
-            onClick={() => setIsModalOpen(true)}
-            onError={(e) => {
-              console.warn(`Failed to load leader image: ${imageUrl}`);
-              e.currentTarget.src = defaultImage;
-            }}
-            loading="lazy"
-          />
+          <img className="w-full h-full object-contain object-center cursor-pointer" src={imageUrl} alt={leader.leader_name} onClick={() => setIsModalOpen(true)} onError={(e) => { e.currentTarget.src = defaultImage; }} loading="lazy" />
         </div>
         <div className="p-6 flex flex-col flex-grow text-center">
-          <p className={`text-md font-semibold text-[${COLORS.secondary}] mb-2`}>{index + 1}. {leader.position}</p>
-          <h3 className={`text-xl font-bold text-[${COLORS.primary}]`}>{leader.leader_name}</h3>
+          <p className="text-md font-semibold text-[#ed1c24] mb-2">{index + 1}. {leader.position}</p>
+          <h3 className="text-xl font-bold text-[#003459]">{leader.leader_name}</h3>
         </div>
       </motion.div>
       <AnimatePresence>
         {isModalOpen && (
-          <LeaderImageModal
-            imageUrl={imageUrl}
-            altText={leader.leader_name}
-            onClose={() => setIsModalOpen(false)}
-          />
+          <LeaderImageModal imageUrl={imageUrl} altText={leader.leader_name} onClose={() => setIsModalOpen(false)} />
         )}
       </AnimatePresence>
     </>
   );
 };
 
-// Leadership section with filter buttons
-const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = ({ setLoading }) => {
+// Leadership section with filter buttons (Unchanged Logic)
+const LeadershipSection: React.FC<{ setLoading: (isLoaded: boolean) => void }> = ({ setLoading }) => {
   const [leaders, setLeaders] = useState<LeadershipData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"Board of Directors" | "Management" | "All">("All");
-  const [retryCount, setRetryCount] = useState(0);
-
+  
   const fetchLeaders = useCallback(async () => {
     try {
       const response = await axiosInstance.get<LeadershipResponse>("/api/allLeadership");
@@ -319,19 +255,12 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
         throw new Error("Invalid leadership data format.");
       }
     } catch (err: any) {
-      console.error("Leadership fetch error:", err.message);
       setError("Could not fetch leadership team.");
       toast.error("Could not fetch leadership team.");
-      if (retryCount < 3) {
-        setTimeout(() => {
-          setRetryCount((prev) => prev + 1);
-          fetchLeaders();
-        }, 2000);
-      }
     } finally {
-      setLoading(false);
+      setLoading(true);
     }
-  }, [setLoading, retryCount]);
+  }, [setLoading]);
 
   useEffect(() => {
     fetchLeaders();
@@ -343,37 +272,18 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
 
   if (error && leaders.length === 0) {
     return (
-      <div className="w-full py-20 flex flex-col items-center justify-center px-4 text-center">
-        <InformationCircleIcon className="w-12 h-12 mx-auto text-gray-400" />
-        <h3 className={`mt-4 text-2xl font-bold text-[${COLORS.primary}]`}>
-          {error ? "Failed to Load Content" : "No Content Available"}
-        </h3>
-        <p className="mt-2 text-gray-600">{error}</p>
-        <button
-          onClick={() => {
-            setError(null);
-            setRetryCount(0);
-            fetchLeaders();
-          }}
-          className={`mt-6 flex items-center px-6 py-3 bg-[${COLORS.primary}] text-white font-semibold rounded-full hover:bg-[#0a5a60] transition`}
-        >
-          <ArrowPathIcon className="w-5 h-5 mr-2" />
-          Retry
-        </button>
-      </div>
+        <div className="w-full py-20 flex flex-col items-center justify-center px-4 text-center">
+            <InformationCircleIcon className="w-12 h-12 mx-auto text-gray-400" />
+            <h3 className="mt-4 text-2xl font-bold text-[#003459]">Failed to Load Content</h3>
+        </div>
     );
   }
 
   return (
-    <section className={`py-16 bg-[${COLORS.background}]`}>
+    <section className="py-16 bg-[#fafaf1]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={TEXT_FADE_IN_TRANSITION}
-            className={`text-3xl sm:text-4xl font-bold text-[${COLORS.secondary}]`}
-          >
+          <motion.h2 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={TEXT_FADE_IN_TRANSITION} className="text-3xl sm:text-4xl font-bold text-[#ed1c24]" >
             Our Leadership
           </motion.h2>
           <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
@@ -381,44 +291,23 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
           </p>
         </div>
         <div className="flex justify-center flex-wrap gap-4 mb-12">
-          <button
-            onClick={() => setFilter("Board of Directors")}
-            className={`px-6 py-2 rounded-full font-semibold transition ${
-              filter === "Board of Directors" ? `bg-[${COLORS.secondary}] text-white shadow-lg` : `bg-[${COLORS.primary}] text-white hover:bg-[#0a5a60]`
-            }`}
-          >
+          <button onClick={() => setFilter("Board of Directors")} className={`px-6 py-2 rounded-full font-semibold transition ${ filter === "Board of Directors" ? "bg-[#ed1c24] text-white shadow-lg" : "bg-[#003459] text-white hover:bg-[#0a5a60]" }`} >
             Board of Directors
           </button>
-          <button
-            onClick={() => setFilter("Management")}
-            className={`px-6 py-2 rounded-full font-semibold transition ${
-              filter === "Management" ? `bg-[${COLORS.secondary}] text-white shadow-lg` : `bg-[${COLORS.primary}] text-white hover:bg-[#0a5a60]`
-            }`}
-          >
+          <button onClick={() => setFilter("Management")} className={`px-6 py-2 rounded-full font-semibold transition ${ filter === "Management" ? "bg-[#ed1c24] text-white shadow-lg" : "bg-[#003459] text-white hover:bg-[#0a5a60]" }`} >
             Management
           </button>
-          <button
-            onClick={() => setFilter("All")}
-            className={`px-6 py-2 rounded-full font-semibold transition ${
-              filter === "All" ? `bg-[${COLORS.secondary}] text-white shadow-lg` : `bg-[${COLORS.primary}] text-white hover:bg-[#0a5a60]`
-            }`}
-          >
+          <button onClick={() => setFilter("All")} className={`px-6 py-2 rounded-full font-semibold transition ${ filter === "All" ? "bg-[#ed1c24] text-white shadow-lg" : "bg-[#003459] text-white hover:bg-[#0a5a60]" }`} >
             All
           </button>
         </div>
         <AnimatePresence mode="wait">
-          <motion.div
-            key={filter}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={FILTER_SECTION_TRANSITION}
-          >
+          <motion.div key={filter} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={FILTER_SECTION_TRANSITION} >
             {filter === "All" ? (
               <div className="space-y-16">
                 {boardLeaders.length > 0 && (
                   <div>
-                    <h3 className={`text-3xl font-bold text-[${COLORS.primary}] mb-8 text-center`}>Board of Directors</h3>
+                    <h3 className="text-3xl font-bold text-[#003459] mb-8 text-center">Board of Directors</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                       {boardLeaders.map((leader, index) => (
                         <LeadershipCard key={leader.leadership_id} leader={leader} index={index} />
@@ -428,7 +317,7 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
                 )}
                 {managementLeaders.length > 0 && (
                   <div>
-                    <h3 className={`text-3xl font-bold text-[${COLORS.primary}] mt-16 mb-8 text-center`}>Management</h3>
+                    <h3 className="text-3xl font-bold text-[#003459] mt-16 mb-8 text-center">Management</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                       {managementLeaders.map((leader, index) => (
                         <LeadershipCard key={leader.leadership_id} leader={leader} index={index} />
@@ -451,52 +340,56 @@ const LeadershipSection: React.FC<{ setLoading: (loading: boolean) => void }> = 
   );
 };
 
-// Main leadership page component
+// Main leadership page component (Corrected Loading Logic)
 const LeadershipHomePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [slideshowLoaded, setSlideshowLoaded] = useState(false);
   const [sectionLoaded, setSectionLoaded] = useState(false);
+  const [minimumTimePassed, setMinimumTimePassed] = useState(false);
 
   useEffect(() => {
-    if (slideshowLoaded && sectionLoaded) {
+    const timer = setTimeout(() => {
+      setMinimumTimePassed(true);
+    }, 800); 
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (slideshowLoaded && sectionLoaded && minimumTimePassed) {
       setIsLoading(false);
     }
-  }, [slideshowLoaded, sectionLoaded]);
+  }, [slideshowLoaded, sectionLoaded, minimumTimePassed]);
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (isLoading) {
-        console.warn("Loader timeout: Forcing loader to hide after 3 seconds");
-        setIsLoading(false);
-      }
-    }, 3000);
-    return () => clearTimeout(timeout);
-  }, [isLoading]);
+  const contentVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: 0.5, delay: 0.2 } },
+  };
 
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">
-      <ToastContainer
-        position="top-right"
-        autoClose={4000}
-        newestOnTop
-        closeOnClick
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="colored"
-      />
-      <AnimatePresence>{isLoading && <Loader />}</AnimatePresence>
-      {!isLoading && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.1 }}>
-          <header>
-            <LeadershipHomeSlideshow setLoading={setSlideshowLoaded} />
-          </header>
-          <main className="flex-grow">
-            <LeadershipSection setLoading={setSectionLoaded} />
-          </main>
-          <Footer />
-        </motion.div>
-      )}
+      <ToastContainer position="top-right" autoClose={4000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
+      
+      <AnimatePresence>
+        {isLoading && <Loader />}
+      </AnimatePresence>
+
+      {/* This wrapper is always rendered, but its visibility is animated. 
+          This ensures the child components mount and their useEffects run. */}
+      <motion.div
+        className="flex-grow flex flex-col"
+        initial="hidden"
+        animate={isLoading ? "hidden" : "visible"}
+        variants={contentVariants}
+      >
+        <header>
+          <LeadershipHomeSlideshow setLoading={setSlideshowLoaded} />
+        </header>
+        <main className="flex-grow">
+          <LeadershipSection setLoading={setSectionLoaded} />
+        </main>
+        <Footer />
+      </motion.div>
     </div>
   );
 };

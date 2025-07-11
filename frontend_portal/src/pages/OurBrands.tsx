@@ -3,7 +3,6 @@ import { motion, AnimatePresence, Variants } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-// [REFINED] Removed the unused 'CubeTransparentIcon' to resolve the TS6133 error.
 import { ArrowPathIcon, InformationCircleIcon, ArrowUpRightIcon, InboxIcon } from "@heroicons/react/24/outline";
 import axiosInstance from "../axios";
 import Header from "../components/header/Header";
@@ -28,7 +27,6 @@ const getFullUrl = (path: string | null): string => {
 
 const Loader: React.FC = () => (
   <motion.div
-    // [REFACTORED] Background color updated as requested
     className="fixed inset-0 flex flex-col items-center justify-center bg-[#0A51A1] z-50"
     initial={{ opacity: 1 }}
     exit={{ opacity: 0 }}
@@ -55,7 +53,6 @@ const ErrorState: React.FC<{ title: string; message: string; onRetry: () => void
   </div>
 );
 
-// [REFACTORED] This now handles paragraphs from a CMS more reliably
 const FormattedDescription: React.FC<{ text: string }> = ({ text }) => {
   const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim());
   return (
@@ -93,22 +90,22 @@ const BrandCard: React.FC<{ brand: BrandData; variants: Variants }> = ({ brand, 
         <motion.div layout="position" className="text-gray-600 text-base mb-4 flex-grow">
           {isLongDescription && !isExpanded ? <p>{`${description.substring(0, TRUNCATE_LENGTH)}...`}</p> : <FormattedDescription text={description} />}
         </motion.div>
-        {isLongDescription && (
-          <button onClick={() => setIsExpanded(!isExpanded)} className="text-sm font-semibold text-[#0072bc] hover:text-[#003459] self-start mb-4 transition-colors">
-            {isExpanded ? "Show Less" : "Show More"}
-          </button>
-        )}
-        <div className="mt-auto pt-4 border-t border-gray-100">
+        {(!isLongDescription || isExpanded) && (
           <Link
             to={targetUrl}
             target={isExternalLink ? "_blank" : "_self"}
             rel={isExternalLink ? "noopener noreferrer" : ""}
             className="inline-flex items-center gap-2 text-lg font-semibold text-[#ed1c24] group-hover:text-[#003459] transition-colors"
           >
-            View More
+            Read More
             <ArrowUpRightIcon className="w-5 h-5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
           </Link>
-        </div>
+        )}
+        {isLongDescription && (
+          <button onClick={() => setIsExpanded(!isExpanded)} className="text-sm font-semibold text-[#0072bc] hover:text-[#003459] self-start mt-4 transition-colors">
+            {isExpanded ? "Show Less" : "Show More"}
+          </button>
+        )}
       </div>
     </motion.div>
   );
@@ -126,7 +123,6 @@ const OurBrands: React.FC = () => {
     setError(null);
     try {
       const response = await axiosInstance.get<{ brands: BrandData[] } | BrandData[]>("/api/allBrands");
-      // Handle both { brands: [...] } and [...] formats
       const brandsData = 'brands' in response.data ? response.data.brands : response.data;
       if (Array.isArray(brandsData)) {
         setBrands(brandsData);
@@ -137,7 +133,6 @@ const OurBrands: React.FC = () => {
       setError("Failed to fetch brands. Please check your connection and try again.");
       toast.error("Failed to fetch brands.");
     } finally {
-      // Add a small delay to prevent loader flashing on fast connections
       setTimeout(() => setLoading(false), 300);
     }
   }, []);
@@ -149,7 +144,6 @@ const OurBrands: React.FC = () => {
   const categories = ['All', ...Array.from(new Set(brands.map((brand) => brand.category)))];
   const filteredBrands = activeFilter === 'All' ? brands : brands.filter((brand) => brand.category === activeFilter);
 
-  // [REFACTORED] Animation variants for the grid and cards
   const gridVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
@@ -175,10 +169,10 @@ const OurBrands: React.FC = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-4xl md:text-5xl font-extrabold text-[#003459]">
-                 <span className="text-[#0072bc]">Brands</span>
+                Our <span className="text-[#0072bc]">Brands</span>
               </motion.h1>
               <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">
-            
+                
               </motion.p>
             </div>
 
@@ -217,9 +211,9 @@ const OurBrands: React.FC = () => {
                         ))
                       ) : (
                         <motion.div
-                            initial={{opacity: 0}}
-                            animate={{opacity: 1}}
-                            className="col-span-full mt-8 flex flex-col items-center justify-center text-center p-10 bg-white rounded-lg shadow-md"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="col-span-full mt-8 flex flex-col items-center justify-center text-center p-10 bg-white rounded-lg shadow-md"
                         >
                           <InboxIcon className="w-12 h-12 text-gray-400 mb-4" />
                           <h3 className="text-2xl font-bold text-[#003459]">No Brands in this Category</h3>

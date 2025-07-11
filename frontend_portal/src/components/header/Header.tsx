@@ -48,12 +48,12 @@ const newsMenuItems: NavItem[] = [
 
 const navItems: NavItem[] = [
   { label: "About Us", path: "/", dropdown: aboutUsMenuItems },
-  { label: "Company", path: "/company/home", dropdown: companyMenuItems },
+  { label: "Company", path: "", dropdown: companyMenuItems },
   // { label: "Services", path: "/company/services" },
    { label: "Our  Brands", path: "/our-brands" },
    { label: "News", path: "/company/news", dropdown: newsMenuItems },
   { label: "Events", path: "/all-events" },
-  { label: "Careers", path: "/careers/early-careers", dropdown: careersMenuItems },
+  { label: "Careers", path: "", dropdown: careersMenuItems },
   { label: "Contact", path: "/company/contact-us" },
 ];
 

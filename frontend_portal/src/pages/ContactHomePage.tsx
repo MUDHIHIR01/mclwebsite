@@ -1,5 +1,5 @@
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import axiosInstance from "../axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -46,65 +46,35 @@ interface ContactInfo {
   };
 }
 
-// --- Full-Page Landing Loader ---
-const LandingLoader: React.FC = () => {
-  const loaderVariants: Variants = {
-    animate: {
-      opacity: [0.5, 1, 0.5],
-      scale: [1, 1.05, 1],
-      transition: {
-        repeat: Infinity,
-        duration: 1.5,
-        ease: "easeInOut",
-      },
-    },
-  };
+// --- COMPONENTS ---
 
-  return (
+// Full-Page Landing Loader
+const LandingLoader: React.FC = () => (
+  <motion.div
+    className="fixed inset-0 flex flex-col items-center justify-center bg-[#0A51A1] z-50"
+    initial={{ opacity: 1 }}
+    exit={{ opacity: 0, transition: { duration: 0.5 } }}
+  >
     <motion.div
-      className="fixed inset-0 flex flex-col items-center justify-center bg-[#0A51A1] z-50"
-      initial={{ opacity: 1 }}
-      exit={{ opacity: 0, transition: { duration: 0.5 } }}
+      animate={{ rotate: 360 }}
+      transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
     >
-      <motion.div variants={loaderVariants} animate="animate" className="mb-4">
-        <ArrowPathIcon className="w-16 h-16 text-white animate-spin" />
-      </motion.div>
-      <motion.h2
-        variants={loaderVariants}
-        animate="animate"
-        className="text-2xl font-bold text-white"
-      >
-        Loading Contact Page...
-      </motion.h2>
+      <ArrowPathIcon className="w-16 h-16 text-white" />
     </motion.div>
-  );
-};
+    <motion.h2
+      className="text-2xl font-bold text-white mt-4"
+      initial={{ opacity: 0.5 }}
+      animate={{ opacity: [0.5, 1, 0.5] }}
+      transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+    >
+      Loading Contact Page...
+    </motion.h2>
+  </motion.div>
+);
 
-// --- Contact Home Slideshow ---
-const ContactHomeSlideshow: React.FC = () => {
-  const [data, setData] = useState<ContactHomeData[]>([]);
+// Simplified Contact Home Slideshow (receives data as props)
+const ContactHomeSlideshow: React.FC<{ data: ContactHomeData[] }> = ({ data }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchContactHomes = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await axiosInstance.get<ContactHomeData[]>("/api/contactHomeSlider");
-      setData(Array.isArray(response.data) ? response.data : []);
-    } catch (err: any) {
-      const message = "Failed to fetch sliders: " + (err.response?.data?.message || err.message);
-      setError(message);
-      toast.error("Error fetching home sliders.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchContactHomes();
-  }, [fetchContactHomes]);
 
   useEffect(() => {
     if (data.length <= 1) return;
@@ -112,103 +82,47 @@ const ContactHomeSlideshow: React.FC = () => {
     return () => clearInterval(interval);
   }, [data.length]);
 
-  if (loading) {
+  if (data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-6 bg-gray-800">
-        <div className="flex items-center gap-3 mb-6">
-          <ArrowPathIcon className="w-10 h-10 text-[#0d7680] animate-spin" />
-          <h2 className="text-3xl font-bold text-white">Loading...</h2>
-        </div>
-        <p className="text-lg text-gray-200">Fetching slider content...</p>
+        <InformationCircleIcon className="w-10 h-10 text-gray-400 mb-4" />
+        <h2 className="text-2xl font-bold text-white">Content Not Available</h2>
       </div>
     );
   }
 
-  if (error || data.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-6 bg-gray-800">
-        <div className="flex items-center gap-3 mb-6">
-          <InformationCircleIcon className="w-10 h-10 text-[#0d7680]" />
-          <h2 className="text-3xl font-bold text-white">{error ? "An Error Occurred" : "No Content Found"}</h2>
-        </div>
-        <p className="text-lg text-gray-200">{error || "Content for this section could not be loaded."}</p>
-        {error && (
-          <button
-            onClick={fetchContactHomes}
-            className="mt-6 flex items-center px-6 py-3 bg-gray-800 text-white font-semibold rounded-full hover:bg-gray-700 transition"
-          >
-            <ArrowPathIcon className="w-5 h-5 mr-2" />
-            Try Again
-          </button>
-        )}
-      </div>
-    );
-  }
-
+  const activeSlide = data[currentSlide];
   const baseURL = axiosInstance.defaults.baseURL?.replace(/\/$/, "") || "";
-  const imagePath = data[currentSlide].home_img
-    ? `${baseURL}/${data[currentSlide].home_img.replace(/^\//, "")}`
-    : "https://via.placeholder.com/1200x600?text=Image+Missing";
+  const imagePath = activeSlide.home_img ? `${baseURL}/${activeSlide.home_img.replace(/^\//, "")}` : "https://via.placeholder.com/1200x600?text=Image+Missing";
 
   return (
     <section className="relative min-h-[80vh] w-full overflow-hidden bg-gray-800">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentSlide}
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
+          exit={{ opacity: 0, scale: 0.98 }}
           transition={{ duration: 0.8, ease: "easeInOut" }}
           className="absolute inset-0"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
-          <img
-            src={imagePath}
-            alt={data[currentSlide].heading}
-            className="w-full h-full object-cover"
-            onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/1200x600?text=Image+Error")}
-            loading="lazy"
-          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent z-10" />
+          <img src={imagePath} alt={activeSlide.heading} className="w-full h-full object-cover" onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/1200x600?text=Image+Error")} loading="eager" />
         </motion.div>
       </AnimatePresence>
-      <div className="relative z-20 flex flex-col justify-center min-h-[80vh] max-w-6xl mx-auto px-4 md:px-8">
-        <div className="max-w-xl">
-          <motion.h2
-            key={`h2-${currentSlide}`}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="text-3xl md:text-5xl font-bold text-[#fff1e5] mb-4"
-          >
-            {data[currentSlide].heading}
+      <div className="relative z-20 flex flex-col justify-center min-h-[80vh] max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl">
+          <motion.h2 key={`h2-${currentSlide}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: "easeOut" }} className="text-4xl md:text-5xl font-extrabold text-white mb-4">
+            {activeSlide.heading}
           </motion.h2>
-          <motion.p
-            key={`p-${currentSlide}`}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-            className="text-xl md:text-2xl font-medium text-gray-100 mb-8"
-          >
-            {data[currentSlide].description || "No description available"}
+          <motion.p key={`p-${currentSlide}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }} className="text-lg md:text-xl text-gray-200 mb-8">
+            {activeSlide.description || "We're here to help. Reach out to us through any of the channels below."}
           </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
-            className="flex gap-4"
-          >
-            <button
-              onClick={() => setCurrentSlide((p) => (p - 1 + data.length) % data.length)}
-              className="p-3 bg-[#003459] text-white rounded-full hover:bg-black/70 transition"
-              aria-label="Previous slide"
-            >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }} className="flex gap-4">
+            <button onClick={() => setCurrentSlide((p) => (p - 1 + data.length) % data.length)} className="p-3 bg-white/20 text-white rounded-full hover:bg-white/30 transition-colors backdrop-blur-sm" aria-label="Previous slide">
               <ChevronLeftIcon className="w-6 h-6" />
             </button>
-            <button
-              onClick={() => setCurrentSlide((p) => (p + 1) % data.length)}
-              className="p-3 bg-[#003459] text-white rounded-full hover:bg-black/70 transition"
-              aria-label="Next slide"
-            >
+            <button onClick={() => setCurrentSlide((p) => (p + 1) % data.length)} className="p-3 bg-white/20 text-white rounded-full hover:bg-white/30 transition-colors backdrop-blur-sm" aria-label="Next slide">
               <ChevronRightIcon className="w-6 h-6" />
             </button>
           </motion.div>
@@ -218,176 +132,80 @@ const ContactHomeSlideshow: React.FC = () => {
   );
 };
 
-// --- Contact Card ---
+// Simplified Contact Card (receives data as props, with requested change)
 const ContactCard: React.FC<{ category: ContactCategory; contactInfos: ContactInfo[] }> = ({ category, contactInfos }) => {
-  const [hasImageError, setHasImageError] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const maxLength = 100; // Character limit for truncated description
-
+  const maxLength = 120;
+  // Safely check if the description exists and its length
+  const isLongDescription = category.description && category.description.length > maxLength;
+  
   const baseURL = axiosInstance.defaults.baseURL?.replace(/\/$/, "") || "";
-  const imageUrl = category.img_file
-    ? `${baseURL}/${category.img_file.replace(/^\//, "")}`
-    : "https://via.placeholder.com/400x300?text=Image+Missing";
-
-  if (!axiosInstance.defaults.baseURL) {
-    console.warn("axiosInstance.defaults.baseURL is not set. Using placeholder image.");
-  }
-
-  const description = category.description || "No description provided.";
-  const isLongDescription = description.length > maxLength;
-  const truncatedDescription = isLongDescription
-    ? `${description.slice(0, maxLength)}...`
-    : description;
+  const imageUrl = category.img_file ? `${baseURL}/${category.img_file.replace(/^\//, "")}` : "";
 
   return (
     <motion.div
-      className="bg-white shadow-xl flex flex-col w-full max-w-md rounded-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-2"
+      className="bg-white shadow-lg rounded-lg overflow-hidden flex flex-col transition-all duration-300 hover:shadow-2xl hover:-translate-y-2"
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      whileHover={{ y: -12 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
     >
-      <div className="relative px-4 -mt-8 md:px-8 md:-mt-10">
-        {hasImageError || !category.img_file ? (
-          <div className="w-full h-64 bg-gray-100 flex items-center justify-center shadow-md rounded-t-lg">
-            <InformationCircleIcon className="w-16 h-16 text-[#0d7680]" />
-          </div>
-        ) : (
-          <img
-            className="w-full h-64 object-cover shadow-md rounded-t-lg"
-            src={imageUrl}
-            alt={category.category}
-            onError={() => setHasImageError(true)}
-          />
+        {imageUrl && (
+            <div className="h-56 w-full">
+                <img className="w-full h-full object-cover" src={imageUrl} alt={category.category} />
+            </div>
         )}
-        <span className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-[#ed1c24] text-white text-xs font-bold px-3 py-1 rounded-full uppercase">
-          {category.category}
-        </span>
-      </div>
-      <div className="p-6 flex flex-col flex-grow text-gray-800">
-        <h3 className="uppercase text-xl sm:text-2xl font-bold relative pb-4 mb-4 text-[#003459]">
-          {category.category}
-          <span className="absolute bottom-0 left-0 h-1 w-1/4 bg-[#ed1c24]"></span>
-        </h3>
-        <p className="text-gray-700 text-base font-medium flex-grow mb-4">
-          {isExpanded ? description : truncatedDescription}
-          {isLongDescription && (
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="text-[#ed1c24] font-semibold hover:text-[#003459] transition-colors ml-2"
-            >
-              {isExpanded ? "Read Less" : "Read More"}
-            </button>
-          )}
-        </p>
+      <div className="p-6 flex flex-col flex-grow">
+        <h3 className="uppercase text-xl font-bold text-[#003459] mb-3 tracking-wide">{category.category}</h3>
+        
+        {/* --- CHANGE IS HERE: Conditionally render description block --- */}
+        {category.description && (
+          <div className="mb-4">
+            <p className={`text-gray-600 text-base leading-relaxed ${!isExpanded && isLongDescription ? 'line-clamp-4' : ''}`}>
+              {category.description}
+            </p>
+            {isLongDescription && (
+              <button onClick={() => setIsExpanded(!isExpanded)} className="text-[#ed1c24] font-semibold hover:text-[#003459] transition-colors self-start mt-2">
+                {isExpanded ? "Read Less" : "Read More"}
+              </button>
+            )}
+          </div>
+        )}
+        
         {contactInfos.length > 0 ? (
-          <div className="mt-auto pt-4 border-t border-gray-200">
+          <div className="mt-auto pt-4 border-t border-gray-200 space-y-4">
             {contactInfos.map((info) => (
-              <div key={info.contact_info_id} className="p-4 border border-gray-200 rounded-lg">
-                <ul className="space-y-3 text-gray-700">
-                  <li className="flex items-start">
-                    <PhoneIcon className="w-5 h-5 mr-3 text-[#ed1c24] mt-1 flex-shrink-0" />
-                    <span>{info.phone_one}{info.phone_two && ` / ${info.phone_two}`}</span>
-                  </li>
-                  <li className="flex items-start">
-                    <EnvelopeIcon className="w-5 h-5 mr-3 text-[#ed1c24] mt-1 flex-shrink-0" />
-                    <a href={`mailto:${info.email_address}`} className="hover:text-[#0d7680] break-all">
-                      {info.email_address}
-                    </a>
-                  </li>
-                  {info.webmail_address && (
-                    <li className="flex items-start">
-                      <EnvelopeIcon className="w-5 h-5 mr-3 text-[#ed1c24] mt-1 flex-shrink-0" />
-                      <a href={`mailto:${info.webmail_address}`} className="hover:text-[#0d7680] break-all">
-                        {info.webmail_address}
-                      </a>
-                    </li>
-                  )}
-                  <li className="flex items-start">
-                    <MapPinIcon className="w-5 h-5 mr-3 text-[#ed1c24] mt-1 flex-shrink-0" />
-                    <span>{info.location}</span>
-                  </li>
-                  {info.contact_us.url_link && (
-                    <li className="flex items-start">
-                      <LinkIcon className="w-5 h-5 mr-3 text-[#ed1c24] mt-1 flex-shrink-0" />
-                      <a
-                        href={info.contact_us.url_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:text-[#003459]"
-                      >
-                        Visit Website
-                      </a>
-                    </li>
-                  )}
-                </ul>
-              </div>
+              <ul key={info.contact_info_id} className="space-y-3 text-gray-700">
+                <li className="flex items-center"><PhoneIcon className="w-5 h-5 mr-3 text-[#ed1c24]" /><span>{info.phone_one}{info.phone_two && ` / ${info.phone_two}`}</span></li>
+                <li className="flex items-center"><EnvelopeIcon className="w-5 h-5 mr-3 text-[#ed1c24]" /><a href={`mailto:${info.email_address}`} className="hover:text-[#003459] break-all">{info.email_address}</a></li>
+                {info.webmail_address && <li className="flex items-center"><EnvelopeIcon className="w-5 h-5 mr-3 text-[#ed1c24]" /><a href={`mailto:${info.webmail_address}`} className="hover:text-[#003459] break-all">{info.webmail_address}</a></li>}
+                <li className="flex items-start"><MapPinIcon className="w-5 h-5 mr-3 text-[#ed1c24] mt-1 flex-shrink-0" /><span>{info.location}</span></li>
+                {info.contact_us.url_link && <li className="flex items-center"><LinkIcon className="w-5 h-5 mr-3 text-[#ed1c24]" /><a href={info.contact_us.url_link} target="_blank" rel="noopener noreferrer" className="hover:text-[#003459]">Visit Website</a></li>}
+              </ul>
             ))}
           </div>
-        ) : (
-          <div className="mt-6 text-center py-4">
-            <p className="text-gray-500">No detailed contact information available for this category.</p>
-          </div>
-        )}
+        ) : <p className="text-gray-500 mt-auto pt-4 border-t border-gray-200">No contact details available.</p>}
       </div>
     </motion.div>
   );
 };
 
-// --- Contact Section ---
-const ContactSection: React.FC = () => {
-  const [categories, setCategories] = useState<ContactCategory[]>([]);
-  const [allContactInfos, setAllContactInfos] = useState<ContactInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const [categoriesRes, contactInfosRes] = await Promise.allSettled([
-        axiosInstance.get<{ contacts: ContactCategory[] }>("/api/allContactUs"),
-        axiosInstance.get<{ contact_infos: ContactInfo[] }>("/api/contactInfo"),
-      ]);
-
-      if (categoriesRes.status === "fulfilled" && categoriesRes.value.data?.contacts) {
-        setCategories(categoriesRes.value.data.contacts);
-      } else {
-        toast.error("Failed to fetch contact categories.");
-      }
-
-      if (contactInfosRes.status === "fulfilled" && contactInfosRes.value.data?.contact_infos) {
-        setAllContactInfos(contactInfosRes.value.data.contact_infos);
-      } else {
-        console.warn("Could not pre-fetch contact details.");
-      }
-    } catch (err) {
-      toast.error("An error occurred while fetching contact data.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
+// Simplified Contact Section (receives data as props)
+const ContactSection: React.FC<{ categories: ContactCategory[]; allContactInfos: ContactInfo[] }> = ({ categories, allContactInfos }) => {
   return (
-    <section className="bg-gray-100 py-16 sm:py-24">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-[#ed1c24] inline-flex items-center">
-            <ChatBubbleLeftRightIcon className="w-9 h-9 mr-3 text-[#0d7680]" />
+    <section className="bg-gray-50 py-16 sm:py-20 lg:py-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <motion.h2 initial={{ opacity: 0, y:20 }} whileInView={{ opacity: 1, y:0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="text-3xl sm:text-4xl font-extrabold text-[#003459] inline-flex items-center">
+            <ChatBubbleLeftRightIcon className="w-9 h-9 mr-3 text-[#ed1c24]" />
             How Can We Help You?
-          </h2>
-          <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+          </motion.h2>
+          <motion.p initial={{ opacity: 0, y:20 }} whileInView={{ opacity: 1, y:0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.1 }} className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
             Select a category below to find the contact information you need.
-          </p>
+          </motion.p>
         </div>
-        {isLoading ? (
-          <div className="w-full py-20 text-center">
-            <ArrowPathIcon className="w-8 h-8 mx-auto text-[#0d7680] animate-spin" />
-          </div>
-        ) : categories.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-12">
+        
+        {categories.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12">
             {categories.map((category) => (
               <ContactCard
                 key={category.contactus_id}
@@ -398,9 +216,9 @@ const ContactSection: React.FC = () => {
           </div>
         ) : (
           <div className="w-full py-20 flex flex-col items-center justify-center px-4 text-center">
-            <InformationCircleIcon className="w-12 h-12 mx-auto text-[#0d7680]" />
+            <InformationCircleIcon className="w-12 h-12 mx-auto text-gray-400" />
             <h3 className="mt-4 text-2xl font-bold text-gray-800">No Content Available</h3>
-            <p className="mt-2 text-gray-600">No contact categories found.</p>
+            <p className="mt-2 text-gray-600">No contact categories were found.</p>
           </div>
         )}
       </div>
@@ -408,40 +226,76 @@ const ContactSection: React.FC = () => {
   );
 };
 
-// --- Main ContactHomePage Component ---
+// Main ContactHomePage Component (with refined loading logic)
 const ContactHomePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [sliderData, setSliderData] = useState<ContactHomeData[]>([]);
+  const [categories, setCategories] = useState<ContactCategory[]>([]);
+  const [contactInfos, setContactInfos] = useState<ContactInfo[]>([]);
 
-  // Simulate combined loading state for slideshow and contact section
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000); // Adjust based on actual fetch time
-    return () => clearTimeout(timer);
+    const loadPageData = async () => {
+      const fetchDataPromise = Promise.allSettled([
+        axiosInstance.get<ContactHomeData[]>("/api/contactHomeSlider"),
+        axiosInstance.get<{ contacts: ContactCategory[] }>("/api/allContactUs"),
+        axiosInstance.get<{ contact_infos: ContactInfo[] }>("/api/contactInfo"),
+      ]);
+
+      const minimumTimePromise = new Promise((resolve) => setTimeout(resolve, 800));
+      const [results] = await Promise.all([fetchDataPromise, minimumTimePromise]);
+      const [sliderResult, categoriesResult, infosResult] = results;
+
+      if (sliderResult.status === "fulfilled" && Array.isArray(sliderResult.value.data)) {
+        setSliderData(sliderResult.value.data);
+      } else {
+        toast.error("Failed to load hero content.");
+      }
+
+      if (categoriesResult.status === "fulfilled" && categoriesResult.value.data?.contacts) {
+        setCategories(categoriesResult.value.data.contacts);
+      } else {
+        toast.error("Failed to load contact categories.");
+      }
+
+      if (infosResult.status === "fulfilled" && infosResult.value.data?.contact_infos) {
+        setContactInfos(infosResult.value.data.contact_infos);
+      } else {
+        toast.warn("Could not load all contact details.");
+      }
+
+      setIsLoading(false);
+    };
+    
+    loadPageData();
   }, []);
+
+  const contentVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: 0.5, delay: 0.2 } },
+  };
 
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans flex flex-col">
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        newestOnTop
-        closeOnClick
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="colored"
-      />
+      <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
+      
       <AnimatePresence>
         {isLoading && <LandingLoader />}
       </AnimatePresence>
-      <header>
-        <ContactHomeSlideshow />
-      </header>
-      <main className="flex-grow">
-        <ContactSection />
-      </main>
-      <footer>
+
+      <motion.div
+        className="flex-grow flex flex-col"
+        initial="hidden"
+        animate={isLoading ? "hidden" : "visible"}
+        variants={contentVariants}
+      >
+        <header>
+          <ContactHomeSlideshow data={sliderData} />
+        </header>
+        <main className="flex-grow">
+          <ContactSection categories={categories} allContactInfos={contactInfos} />
+        </main>
         <Footer />
-      </footer>
+      </motion.div>
     </div>
   );
 };

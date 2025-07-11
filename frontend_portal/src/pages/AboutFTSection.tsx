@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
@@ -59,17 +59,18 @@ interface ValueData {
   updated_at: string;
 }
 
-// --- COMPONENTS ---
+// --- SIMPLIFIED & REUSABLE COMPONENTS ---
+
 const LandingLoader: React.FC = () => {
   const containerVariants: Variants = {
     hidden: { opacity: 1 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.2 } },
+    visible: { opacity: 1, transition: { staggerChildren: 0.15 } },
     exit: { opacity: 0, transition: { duration: 0.5, ease: "easeInOut" } },
   };
 
   const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
   };
 
   return (
@@ -90,29 +91,8 @@ const LandingLoader: React.FC = () => {
   );
 };
 
-const AboutHeroSection: React.FC = () => {
-  const [data, setData] = useState<AboutSliderData[]>([]);
+const AboutHeroSection: React.FC<{ data: AboutSliderData[] }> = ({ data }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchAboutSlider = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const sliderResponse = await axiosInstance.get<AboutSliderData[]>("/api/slider-imgs");
-      setData(Array.isArray(sliderResponse.data) ? sliderResponse.data : []);
-    } catch (err: any) {
-      setError("Failed to fetch hero content.");
-      toast.error("Failed to fetch hero content.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAboutSlider();
-  }, [fetchAboutSlider]);
 
   useEffect(() => {
     if (data.length <= 1) return;
@@ -120,33 +100,13 @@ const AboutHeroSection: React.FC = () => {
     return () => clearInterval(interval);
   }, [data.length]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-900 to-blue-600">
-        <ArrowPathIcon className="w-8 h-8 animate-spin text-white mr-3" />
-        <span className="text-2xl font-semibold text-white font-inter">Loading Hero...</span>
-      </div>
-    );
+  if (!data.length) {
+    return null;
   }
 
-  if (error || !data.length) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-center p-6">
-        <InformationCircleIcon className="w-12 h-12 text-red-500 mb-4" />
-        <h2 className="text-3xl font-bold text-white font-inter">
-          {data.length ? "An Error Occurred" : "No Content Available"}
-        </h2>
-        <p className="text-lg text-gray-300 my-4 max-w-md font-inter">{error || "We couldn't load the content for this section. Please try again later."}</p>
-        <button
-          onClick={fetchAboutSlider}
-          className="flex items-center px-6 py-3 bg-gradient-to-r from-red-600 to-red-400 text-white font-semibold rounded-full hover:from-red-700 hover:to-red-500 transition-all duration-300 font-inter"
-        >
-          <ArrowPathIcon className="w-5 h-5 mr-2" />
-          Try Again
-        </button>
-      </div>
-    );
-  }
+  const baseURL = axiosInstance.defaults.baseURL?.replace(/\/$/, "") || "";
+  const imagePath = data[currentSlide].home_img?.replace(/^\//, "") || "";
+  const imageSrc = imagePath ? `${baseURL}/${imagePath}` : "https://via.placeholder.com/1920x1080?text=Image+Missing";
 
   return (
     <section className="relative h-screen w-full overflow-hidden">
@@ -156,16 +116,16 @@ const AboutHeroSection: React.FC = () => {
           initial={{ opacity: 0, scale: 1.05 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 1.05 }}
-          transition={{ duration: 1.2, ease: "easeInOut" }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
           className="absolute inset-0"
         >
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10" />
           <img
-            src={data[currentSlide].home_img ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${data[currentSlide].home_img.replace(/^\//, "")}` : "https://via.placeholder.com/1920x1080?text=Image+Missing"}
+            src={imageSrc}
             alt={data[currentSlide].heading}
             className="w-full h-full object-cover"
             onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/1920x1080?text=Image+Error")}
-            loading="lazy"
+            loading="eager"
           />
         </motion.div>
       </AnimatePresence>
@@ -177,7 +137,7 @@ const AboutHeroSection: React.FC = () => {
               key={`h1-${currentSlide}`}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: "easeOut" }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
               className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-6 font-inter"
             >
               {data[currentSlide].heading}
@@ -186,7 +146,7 @@ const AboutHeroSection: React.FC = () => {
               key={`p-${currentSlide}`}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
+              transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
               className="text-lg sm:text-xl font-normal text-gray-200 mb-6 font-inter"
             >
               {data[currentSlide].description || "No description available"}
@@ -194,7 +154,7 @@ const AboutHeroSection: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: "easeOut", delay: 0.4 }}
+              transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
               className="flex gap-4 mb-12"
             >
               <button
@@ -219,7 +179,7 @@ const AboutHeroSection: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.5, duration: 1, ease: "easeOut" }}
+        transition={{ delay: 1, duration: 0.6, ease: "easeOut" }}
         className="absolute bottom-4 left-1/2 -translate-x-1/2 z-40"
       >
         <ChevronDownIcon className="w-8 h-8 text-white animate-bounce" />
@@ -228,60 +188,13 @@ const AboutHeroSection: React.FC = () => {
   );
 };
 
-const SubscriptionCountersSection: React.FC = () => {
-  const [subscriptions, setSubscriptions] = useState<SubscriptionData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchSubscriptions = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await axiosInstance.get<{ data: SubscriptionData[] }>("/api/allsubscriptions");
-      setSubscriptions(Array.isArray(response.data.data) ? response.data.data : []);
-    } catch (err: any) {
-      setError("Failed to load our audience numbers.");
-      toast.error("Failed to load audience data.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchSubscriptions();
-  }, [fetchSubscriptions]);
-
-  if (loading) {
-    return (
-      <section className="py-20 bg-blue-900">
-        <div className="flex justify-center items-center">
-          <ArrowPathIcon className="w-8 h-8 animate-spin text-white mr-3" />
-          <span className="text-xl font-semibold text-white font-inter">Loading Our Reach...</span>
-        </div>
-      </section>
-    );
-  }
-
-  if (error || !subscriptions.length) {
-    return (
-      <section className="py-20 bg-blue-900">
-        <div className="max-w-4xl mx-auto px-4 text-center text-white">
-          <InformationCircleIcon className="w-12 h-12 mx-auto text-red-400 mb-4" />
-          <h2 className="text-3xl font-bold mb-2 font-inter">Content Unavailable</h2>
-          <p className="mb-6 text-lg text-blue-200 font-inter">{error || "Audience data could not be retrieved at this time."}</p>
-          <button
-            onClick={fetchSubscriptions}
-            className="flex items-center mx-auto px-6 py-3 bg-gradient-to-r from-red-600 to-red-400 text-white font-semibold rounded-full hover:from-red-700 hover:to-red-500 transition-all duration-300 font-inter"
-          >
-            <ArrowPathIcon className="w-5 h-5 mr-2" />
-            Retry
-          </button>
-        </div>
-      </section>
-    );
+const SubscriptionCountersSection: React.FC<{ subscriptions: SubscriptionData[] }> = ({ subscriptions }) => {
+  if (!subscriptions.length) {
+    return null;
   }
 
   const marqueeDuration = subscriptions.length * 6;
+  const baseURL = axiosInstance.defaults.baseURL?.replace(/\/$/, "") || "";
 
   return (
     <section className="py-16 sm:py-20 lg:py-28 bg-[#0A51A1] overflow-hidden">
@@ -291,14 +204,11 @@ const SubscriptionCountersSection: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
         >
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight font-inter">
             Our Reach Across Platforms
           </h2>
-          <p className="mt-4 text-lg text-blue-200 max-w-2xl mx-auto font-inter">
-            
-          </p>
         </motion.div>
       </div>
 
@@ -308,23 +218,14 @@ const SubscriptionCountersSection: React.FC = () => {
 
         <motion.div
           className="flex gap-8"
-          animate={{
-            x: ["0%", "-50%"],
-            transition: {
-              ease: "linear",
-              duration: marqueeDuration,
-              repeat: Infinity,
-            },
-          }}
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{ ease: "linear", duration: marqueeDuration, repeat: Infinity }}
         >
           {[...subscriptions, ...subscriptions].map((sub, index) => (
-            <div
-              key={`${sub.subscription_id}-${index}`}
-              className="relative flex flex-col justify-end items-center bg-white rounded-2xl shadow-lg w-64 pt-20 pb-8 px-6 flex-shrink-0 border-4 border-solid border-[#003459]"
-            >
+            <div key={`${sub.subscription_id}-${index}`} className="relative flex flex-col justify-end items-center bg-white rounded-2xl shadow-lg w-64 pt-20 pb-8 px-6 flex-shrink-0 border-4 border-solid border-[#003459]">
               <div className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full overflow-hidden bg-white p-2 shadow-xl border-4 border-white z-10">
                 <img
-                  src={`${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${sub.logo_img_file.replace(/^\//, "")}`}
+                  src={sub.logo_img_file ? `${baseURL}/${sub.logo_img_file.replace(/^\//, "")}` : "https://via.placeholder.com/128x128?text=Logo"}
                   alt={sub.category}
                   className="w-full h-full object-contain rounded-full"
                   onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/128x128?text=Logo")}
@@ -335,13 +236,10 @@ const SubscriptionCountersSection: React.FC = () => {
                 <CountUp
                   start={1}
                   end={sub.total_viewers}
-                  duration={2.5}
+                  duration={2}
                   formattingFn={(value) => `${new Intl.NumberFormat('en-US').format(Math.floor(value))}+`}
-                >
-                  {({ countUpRef }: { countUpRef: React.RefObject<HTMLSpanElement> }) => (
-                    <span ref={countUpRef} className="text-4xl font-bold text-[#ed1c24] font-inter" />
-                  )}
-                </CountUp>
+                  className="text-4xl font-bold text-[#ed1c24] font-inter"
+                />
                 <p className="text-md font-bold text-gray-700 font-inter mt-2">{sub.category}</p>
               </div>
             </div>
@@ -352,73 +250,9 @@ const SubscriptionCountersSection: React.FC = () => {
   );
 };
 
-const AboutMwananchiSection: React.FC = () => {
-  const [content, setContent] = useState<MwananchiAboutData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchAboutData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await axiosInstance.get<{ records: MwananchiAboutData[] }>("/api/about-mwananchi/all");
-      if (response.data?.records?.length > 0) {
-        setContent(response.data.records[0]);
-      } else {
-        throw new Error("No 'About Us' content was found.");
-      }
-    } catch (err: any) {
-      const errorMessage = err.message || "Failed to fetch company information.";
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAboutData();
-  }, [fetchAboutData]);
-
-  if (loading) {
-    return (
-      <section className="py-16 sm:py-20 lg:py-28 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-pulse">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="h-[400px] sm:h-[500px] bg-gray-200 rounded-2xl"></div>
-            <div>
-              <div className="h-8 bg-gray-300 rounded-md w-1/3 mb-6"></div>
-              <div className="h-10 bg-gray-300 rounded-md w-1/2 mb-4"></div>
-              <div className="space-y-3">
-                <div className="h-4 bg-gray-200 rounded"></div>
-                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                <div className="h-4 bg-gray-200 rounded"></div>
-                <div className="h-4 bg-gray-200 rounded w-4/6"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (error || !content) {
-    return (
-      <section className="py-16 sm:py-20 lg:py-28 bg-white">
-        <div className="max-w-4xl mx-auto px-4 text-center text-gray-700">
-          <InformationCircleIcon className="w-12 h-12 mx-auto text-red-500 mb-4" />
-          <h2 className="text-3xl font-bold mb-2 text-gray-800 font-inter">Failed to Load Content</h2>
-          <p className="mb-6 text-lg font-inter">{error}</p>
-          <button
-            onClick={fetchAboutData}
-            className="flex items-center mx-auto px-6 py-3 bg-gradient-to-r from-red-600 to-red-400 text-white font-semibold rounded-full hover:from-red-700 hover:to-red-500 transition-all duration-300 font-inter"
-          >
-            <ArrowPathIcon className="w-5 h-5 mr-2" />
-            Retry
-          </button>
-        </div>
-      </section>
-    );
+const AboutMwananchiSection: React.FC<{ content: MwananchiAboutData | null }> = ({ content }) => {
+  if (!content) {
+    return null;
   }
 
   const paragraphs = content.description.split(/\n\s*\n/);
@@ -431,19 +265,13 @@ const AboutMwananchiSection: React.FC = () => {
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <h2 className="text-base font-semibold text-red-600 uppercase tracking-wider font-inter">
-              About Mwananchi
-            </h2>
-            <h3 className="mt-2 text-3xl sm:text-4xl font-extrabold text-blue-900 tracking-tight font-inter">
-              {content.category}
-            </h3>
+            <h2 className="text-base font-semibold text-red-600 uppercase tracking-wider font-inter">About Mwananchi</h2>
+            <h3 className="mt-2 text-3xl sm:text-4xl font-extrabold text-blue-900 tracking-tight font-inter">{content.category}</h3>
             <div className="mt-8 space-y-6">
               {paragraphs.map((paragraph, index) => (
-                <p key={index} className="text-lg text-gray-600 leading-relaxed font-inter">
-                  {paragraph}
-                </p>
+                <p key={index} className="text-lg text-gray-600 leading-relaxed font-inter">{paragraph}</p>
               ))}
             </div>
           </motion.div>
@@ -453,7 +281,7 @@ const AboutMwananchiSection: React.FC = () => {
               initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.7, ease: "easeOut" }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
             >
               <div className="w-full h-full rounded-2xl overflow-hidden shadow-xl bg-black">
                 <div className="aspect-w-16 aspect-h-9 h-full">
@@ -464,7 +292,7 @@ const AboutMwananchiSection: React.FC = () => {
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                     className="w-full h-full"
-                  ></iframe>
+                  />
                 </div>
               </div>
             </motion.div>
@@ -476,111 +304,53 @@ const AboutMwananchiSection: React.FC = () => {
 };
 
 const VisionMissionValuesSection: React.FC = () => {
-  return (
-    <section className="py-16 sm:py-20 lg:py-28 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-blue-900 tracking-tight font-inter">
-            Our Vision and Mission
-          </h2>
-          <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto font-inter">
-          
-          </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <motion.div
-            className="bg-white/80 backdrop-blur-md rounded-2xl border-4 border-solid border-[#003459] p-6 transition-all duration-300 hover:shadow-xl"
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-          >
-            <h3 className="text-xl font-bold text-gray-800 font-inter">Our Vision</h3>
-            <p className="mt-3 text-gray-600 text-base leading-relaxed font-inter">
-              To be the leading digital multimedia company in Tanzania.
-            </p>
-          </motion.div>
-          <motion.div
-            className="bg-white/80 backdrop-blur-md rounded-2xl border-4 border-solid border-[#003459] p-6 transition-all duration-300 hover:shadow-xl"
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
-          >
-            <h3 className="text-xl font-bold text-gray-800 font-inter">Our Mission</h3>
-            <p className="mt-3 text-gray-600 text-base leading-relaxed font-inter">
-              To enrich the lives of people and empower them to promote positive change in society through superior media.
-            </p>
-          </motion.div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const OurValuesSection: React.FC = () => {
-  const [values, setValues] = useState<ValueData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchValues = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await axiosInstance.get<{ values: ValueData[] }>("/api/values/all");
-      setValues(Array.isArray(response.data.values) ? response.data.values : []);
-    } catch (err: any) {
-      setError("Failed to fetch values");
-      toast.error("Failed to fetch values.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchValues();
-  }, [fetchValues]);
-
-  if (loading) {
     return (
-      <section className="py-16 sm:py-20 lg:py-28 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <ArrowPathIcon className="w-10 h-10 mx-auto text-blue-900 animate-spin" />
-          <p className="mt-4 text-gray-600 font-inter">Loading Values...</p>
+      <section className="py-16 sm:py-20 lg:py-28 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-blue-900 tracking-tight font-inter">
+              Our Vision and Mission
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <motion.div
+              className="bg-white/80 backdrop-blur-md rounded-2xl border-4 border-solid border-[#003459] p-6 transition-all duration-300 hover:shadow-xl"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            >
+              <h3 className="text-xl font-bold text-gray-800 font-inter">Our Vision</h3>
+              <p className="mt-3 text-gray-600 text-base leading-relaxed font-inter">To be the leading digital multimedia company in Tanzania.</p>
+            </motion.div>
+            <motion.div
+              className="bg-white/80 backdrop-blur-md rounded-2xl border-4 border-solid border-[#003459] p-6 transition-all duration-300 hover:shadow-xl"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+            >
+              <h3 className="text-xl font-bold text-gray-800 font-inter">Our Mission</h3>
+              <p className="mt-3 text-gray-600 text-base leading-relaxed font-inter">To enrich the lives of people and empower them to promote positive change in society through superior media.</p>
+            </motion.div>
+          </div>
         </div>
       </section>
     );
+  };
+  
+const OurValuesSection: React.FC<{ values: ValueData[] }> = ({ values }) => {
+  if (!values.length) {
+    return null;
   }
 
-  if (error || !values.length) {
-    return (
-      <section className="py-16 sm:py-20 lg:py-28 bg-white">
-        <div className="max-w-4xl mx-auto px-4 text-center text-gray-700">
-          <InformationCircleIcon className="w-12 h-12 mx-auto text-red-500 mb-4" />
-          <h2 className="text-3xl font-bold mb-2 text-gray-800 font-inter">Failed to Load Values</h2>
-          <p className="mb-6 text-lg font-inter">{error || "No values found at this time."}</p>
-          <button
-            onClick={fetchValues}
-            className="flex items-center mx-auto px-6 py-3 bg-gradient-to-r from-red-600 to-red-400 text-white font-semibold rounded-full hover:from-red-700 hover:to-red-500 transition-all duration-300 font-inter"
-          >
-            <ArrowPathIcon className="w-5 h-5 mr-2" />
-            Retry
-          </button>
-        </div>
-      </section>
-    );
-  }
+  const baseURL = axiosInstance.defaults.baseURL?.replace(/\/$/, "") || "";
 
   return (
     <section className="py-16 sm:py-20 lg:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-blue-900 tracking-tight font-inter">
-            Our Core Values
-          </h2>
-          <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto font-inter">
-           
-          </p>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-blue-900 tracking-tight font-inter">Our Core Values</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
           {values.map((value, index) => (
@@ -593,7 +363,7 @@ const OurValuesSection: React.FC = () => {
               transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 * index }}
             >
               <img
-                src={`${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${value.img_file.replace(/^\//, "")}`}
+                src={value.img_file ? `${baseURL}/${value.img_file.replace(/^\//, "")}` : "https://via.placeholder.com/150x150?text=Icon"}
                 alt={value.category}
                 className="w-24 h-24 object-contain mb-4"
                 onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/150x150?text=Icon")}
@@ -608,199 +378,169 @@ const OurValuesSection: React.FC = () => {
   );
 };
 
-const AboutContentSection: React.FC = () => {
-  const [cards, setCards] = useState<AboutCardData[]>([]);
-  const [loading, setLoading] = useState(true);
+const AboutContentSection: React.FC<{ cards: AboutCardData[] }> = ({ cards }) => {
+    if (!cards.length) {
+        return (
+            <section className="py-16 sm:py-20 lg:py-28 bg-gray-50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-700">
+                    <InformationCircleIcon className="w-12 h-12 mx-auto text-gray-400" />
+                    <p className="mt-4 text-lg font-inter">No content highlights found at this time.</p>
+                </div>
+            </section>
+        );
+    }
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [brandRes, newsRes, eventRes] = await Promise.allSettled([
+    const cardVariants: Variants = {
+        offscreen: { y: 50, opacity: 0 },
+        onscreen: { y: 0, opacity: 1, transition: { type: "spring", bounce: 0.3, duration: 0.7 } },
+    };
+
+    const baseURL = axiosInstance.defaults.baseURL?.replace(/\/$/, "") || "";
+
+    return (
+        <section className="py-16 sm:py-20 lg:py-28 bg-gray-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-blue-900 tracking-tight font-inter">Discover More About Us</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {cards.map((card) => (
+                        <motion.div
+                            key={`${card.type}-${card.id}`}
+                            className="group relative flex flex-col bg-white/80 backdrop-blur-md rounded-2xl border-4 border-solid border-[#003459] overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2"
+                            variants={cardVariants}
+                            initial="offscreen"
+                            whileInView="onscreen"
+                            viewport={{ once: true, amount: 0.4 }}
+                        >
+                            <div className="relative h-56 w-full">
+                                <img
+                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                    src={card.imageUrl ? `${baseURL}/${card.imageUrl.replace(/^\//, "")}` : "https://via.placeholder.com/600x400?text=Image+Missing"}
+                                    alt={card.title}
+                                    onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/600x400?text=Image+Error")}
+                                    loading="lazy"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                                <span className="absolute top-4 left-4 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider font-inter">{card.type}</span>
+                            </div>
+                            <div className="p-6 flex flex-col flex-grow">
+                                <h3 className="text-xl font-bold text-gray-800 font-inter">{card.title}</h3>
+                                <p className="mt-3 text-gray-600 text-base font-normal flex-grow leading-relaxed font-inter">{card.description.length > 120 ? `${card.description.substring(0, 120)}...` : card.description}</p>
+                                <div className="mt-6">
+                                    <Link to={card.linkUrl} className="inline-flex items-center gap-2 text-base font-bold text-blue-900 group-hover:text-red-600 transition-colors duration-300 font-inter">
+                                        Find out more
+                                        <ArrowRightIcon className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
+                                    </Link>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+};
+
+
+// --- MAIN PAGE COMPONENT (REFINED) ---
+const AboutFTSection: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [sliderData, setSliderData] = useState<AboutSliderData[]>([]);
+  const [subscriptions, setSubscriptions] = useState<SubscriptionData[]>([]);
+  const [mwananchiContent, setMwananchiContent] = useState<MwananchiAboutData | null>(null);
+  const [values, setValues] = useState<ValueData[]>([]);
+  const [cards, setCards] = useState<AboutCardData[]>([]);
+
+  useEffect(() => {
+    const loadPageData = async () => {
+      // Promise to fetch all data concurrently
+      const fetchDataPromise = Promise.allSettled([
+        axiosInstance.get<AboutSliderData[]>("/api/slider-imgs"),
+        axiosInstance.get<{ data: SubscriptionData[] }>("/api/allsubscriptions"),
+        axiosInstance.get<{ records: MwananchiAboutData[] }>("/api/about-mwananchi/all"),
+        axiosInstance.get<{ values: ValueData[] }>("/api/values/all"),
         axiosInstance.get("/api/latestbrand"),
         axiosInstance.get("/api/latestnew"),
         axiosInstance.get("/api/latestEvent"),
       ]);
 
-      const createCard = (
-        data: any,
-        type: AboutCardData["type"],
-        idKey: string,
-        title: string,
-        descKey: string,
-        imgKey: string,
-        link: string,
-        dateKey: string
-      ): AboutCardData | null => {
-        if (data) {
-          return {
-            id: data[idKey],
-            type,
-            title,
-            description: data[descKey],
-            imageUrl: data[imgKey],
-            linkUrl: link,
-            createdAt: data[dateKey],
-          };
-        }
-        return null;
+      // Promise to ensure the loader is visible for a minimum duration
+      // This prevents a "flash" of the loader on fast connections
+      const minimumLoadTimePromise = new Promise(resolve => setTimeout(resolve, 800));
+
+      // Wait for both data fetching and minimum load time to complete
+      const [results] = await Promise.all([fetchDataPromise, minimumLoadTimePromise]);
+      
+      // Process slider data
+      if (results[0].status === "fulfilled" && Array.isArray(results[0].value.data)) {
+        setSliderData(results[0].value.data);
+      } else {
+        toast.error("Failed to fetch hero content.");
+      }
+
+      // Process subscriptions data
+      if (results[1].status === "fulfilled" && Array.isArray(results[1].value.data.data)) {
+        setSubscriptions(results[1].value.data.data);
+      } else {
+        toast.error("Failed to load audience data.");
+      }
+
+      // Process about data
+      if (results[2].status === "fulfilled" && results[2].value.data?.records?.length > 0) {
+        setMwananchiContent(results[2].value.data.records[0]);
+      } else {
+        toast.error("Failed to fetch company information.");
+      }
+
+      // Process values data
+      if (results[3].status === "fulfilled" && Array.isArray(results[3].value.data.values)) {
+        setValues(results[3].value.data.values);
+      } else {
+        toast.error("Failed to fetch company values.");
+      }
+
+      // Process card data (from brand, news, event)
+      const createCard = (data: any, type: AboutCardData["type"], idKey: string, title: string, descKey: string, imgKey: string, link: string, dateKey: string): AboutCardData | null => {
+        if (!data || !data[idKey]) return null;
+        return {
+          id: data[idKey], type, title: data.title || title, description: data[descKey] || "", imageUrl: data[imgKey] || null, linkUrl: link, createdAt: data[dateKey] || new Date().toISOString()
+        };
       };
+      
+      const potentialCards: (AboutCardData | null)[] = [];
+      if (results[4].status === "fulfilled") potentialCards.push(createCard(results[4].value.data, "Brand", "brand_id", results[4].value.data?.category || "Our Brand", "description", "brand_img", "/our-brands", "created_at"));
+      if (results[5].status === "fulfilled") potentialCards.push(createCard(results[5].value.data?.news, "News", "news_id", "Latest News", "description", "news_img", "/company/news", "created_at"));
+      if (results[6].status === "fulfilled") potentialCards.push(createCard(results[6].value.data?.event, "Events", "event_id", results[6].value.data?.event?.event_category || "Event", "description", "img_file", "/all-events", "created_at"));
+      
+      setCards(potentialCards.filter((card): card is AboutCardData => card !== null));
 
-      const potentialCards = [
-        brandRes.status === "fulfilled" &&
-          createCard(
-            brandRes.value.data,
-            "Brand",
-            "brand_id",
-            brandRes.value.data.category || "Our Brand",
-            "description",
-            "brand_img",
-            "/our-brands",
-            "created_at"
-          ),
-        newsRes.status === "fulfilled" &&
-          createCard(
-            newsRes.value.data.news,
-            "News",
-            "news_id",
-            "Latest News",
-            "description",
-            "news_img",
-            "/company/news",
-            "created_at"
-          ),
-        eventRes.status === "fulfilled" &&
-          createCard(
-            eventRes.value.data.event,
-            "Events",
-            "event_id",
-            eventRes.value.data.event.event_category,
-            "description",
-            "img_file",
-            "/all-events",
-            "created_at"
-          ),
-      ];
+      // All data processed, hide the loader
+      setIsLoading(false);
+    };
 
-      setCards(potentialCards.filter(Boolean) as AboutCardData[]);
-    } catch {
-      toast.error("Failed to fetch content highlights.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const cardVariants: Variants = {
-    offscreen: { y: 50, opacity: 0 },
-    onscreen: {
-      y: 0,
-      opacity: 1,
-      transition: { type: "spring", bounce: 0.3, duration: 0.8 },
-    },
-  };
-
-  return (
-    <section className="py-16 sm:py-20 lg:py-28 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-blue-900 tracking-tight font-inter">
-            Discover More About Us
-          </h2>
-          <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto font-inter">
-            
-          </p>
-        </div>
-        {loading ? (
-          <div className="text-center mt-12">
-            <ArrowPathIcon className="w-10 h-10 mx-auto text-blue-900 animate-spin" />
-            <p className="mt-4 text-gray-600 font-inter">Loading Highlights...</p>
-          </div>
-        ) : cards.length ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {cards.map((card) => (
-              <motion.div
-                key={`${card.type}-${card.id}`}
-                className="group relative flex flex-col bg-white/80 backdrop-blur-md rounded-2xl border-4 border-solid border-[#003459] overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2"
-                variants={cardVariants}
-                initial="offscreen"
-                whileInView="onscreen"
-                viewport={{ once: true, amount: 0.4 }}
-              >
-                <div className="relative h-56 w-full">
-                  <img
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    src={
-                      card.imageUrl
-                        ? `${axiosInstance.defaults.baseURL?.replace(/\/$/, "")}/${card.imageUrl.replace(/^\//, "")}`
-                        : "https://via.placeholder.com/600x400?text=Image+Missing"
-                    }
-                    alt={card.title}
-                    onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/600x400?text=Image+Error")}
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                  <span className="absolute top-4 left-4 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider font-inter">
-                    {card.type}
-                  </span>
-                </div>
-                <div className="p-6 flex flex-col flex-grow">
-                  <h3 className="text-xl font-bold text-gray-800 font-inter">{card.title}</h3>
-                  <p className="mt-3 text-gray-600 text-base font-normal flex-grow leading-relaxed font-inter">
-                    {card.description.length > 120 ? `${card.description.substring(0, 120)}...` : card.description}
-                  </p>
-                  <div className="mt-6">
-                    <Link
-                      to={card.linkUrl}
-                      className="inline-flex items-center gap-2 text-base font-bold text-blue-900 group-hover:text-red-600 transition-colors duration-300 font-inter"
-                    >
-                      Find out more
-                      <ArrowRightIcon className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-                    </Link>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center mt-12 text-gray-700">
-            <InformationCircleIcon className="w-12 h-12 mx-auto text-gray-400" />
-            <p className="mt-4 text-lg font-inter">No highlights found at this time.</p>
-          </div>
-        )}
-      </div>
-    </section>
-  );
-};
-
-// --- MAIN PAGE COMPONENT ---
-const AboutFTSection: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1500);
-    return () => clearTimeout(timer);
-  }, []);
+    loadPageData();
+  }, []); // Empty dependency array ensures this runs only once.
 
   return (
     <div className="min-h-screen text-gray-800 font-inter flex flex-col bg-gray-50">
       <ToastContainer position="top-right" autoClose={3000} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="colored" />
+      
       <AnimatePresence>
         {isLoading && <LandingLoader />}
       </AnimatePresence>
+      
       {!isLoading && (
         <>
           <header>
-            <AboutHeroSection />
+            <AboutHeroSection data={sliderData} />
           </header>
           <main className="flex-grow">
-            <AboutMwananchiSection />
+            <AboutMwananchiSection content={mwananchiContent} />
             <VisionMissionValuesSection />
-            <OurValuesSection />
-            <SubscriptionCountersSection />
-            <AboutContentSection />
+            <OurValuesSection values={values} />
+            <SubscriptionCountersSection subscriptions={subscriptions} />
+            <AboutContentSection cards={cards} />
           </main>
           <footer>
             <Footer />
